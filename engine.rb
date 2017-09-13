@@ -43,19 +43,19 @@ module Ygg
       state_from_array items
     end
 
-    def next_step_actions(options = {})
+    def next_step_intentions(options = {})
       options = options.dup.freeze
-      @state.values.flat_map { |item| item.actions_for_next_step(options) }
+      @state.values.flat_map { |item| item.intentions_for_next_step(options) }
     end
 
     def item_by_name(name)
       @state[name]
     end
 
-    def apply_actions(actions, options = {})
+    def apply_intentions(intentions, options = {})
       options = options.dup.freeze
 
-      actions.each do |a|
+      intentions.each do |a|
         a.try_apply(self, options)
       end
     end
@@ -90,19 +90,19 @@ module Ygg
       @state[:name]  # By default, at least
     end
 
-    def actions_for_next_step(*args)
+    def intentions_for_next_step(*args)
       raise "StateItem must be subclassed to be used directly!"
     end
 
   end
 
-  class Action < StateItem
+  class Intention < StateItem
     def allowed?(engine, options = {})
-      raise "Unimplemented action!"
+      raise "Unimplemented intention!"
     end
 
     def apply(engine, options = {})
-      raise "Unimplemented action!"
+      raise "Unimplemented intention!"
     end
 
     def try_apply(engine, options = {})
