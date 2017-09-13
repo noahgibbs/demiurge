@@ -4,7 +4,7 @@ module GoblinTown
   class MossCave < Ygg::StateItem
     attr_reader :state
 
-    def initialize(name:, moss: 0, growmoss_every: 0)
+    def initialize(name:, moss: 0, growmoss_every: 3)
       @state = { name: name, moss: moss, growmoss_every: growmoss_every }
       @growmoss_action = GrowMoss.new(:item_name => name)
     end
@@ -32,7 +32,7 @@ module GoblinTown
       item.state[:moss] += 1
       if item.state[:moss] >= item.state[:growmoss_every]
         # Okay, now add an action
-	STDERR.puts "This is a grow action"
+	STDERR.puts "We're growing some new moss here."
         item.state[:moss] = 0
       end
     end
@@ -52,3 +52,5 @@ goblin_town = Ygg::StoryEngine.new :state_array => state
 
 actions = goblin_town.next_step_actions
 STDERR.puts "Actions: #{actions.inspect}"
+
+goblin_town.apply_actions(actions)

@@ -56,7 +56,7 @@ module Ygg
       options = options.dup.freeze
 
       actions.each do |a|
-        a.try_apply(@state, options)
+        a.try_apply(self, options)
       end
     end
 
