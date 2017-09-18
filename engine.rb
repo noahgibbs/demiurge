@@ -1,5 +1,16 @@
 require "multi_json"
 
+# TODO: how to refactor the engine? There's immutable state, there are
+# rules in StateItems and Engines. But how to put it together? Perhaps
+# StateItems and Engines become rules that transform state
+# (e.g. functions that return new state.) But then, how to handle
+# cases where a StateItem messes with various state that doesn't
+# "belong" to it? Create a briefly-mutable new copy of the state and
+# then freeze it? Hard to figure out how to do all this both cleanly
+# and without large, sprawling copies of huge JSON state trees, but
+# without a given StateItem having to declare exactly which state it
+# can touch and who else can't touch it.
+
 module Ygg
   class StoryEngine
     INIT_PARAMS = [ [:state_array, :json_file] ]
@@ -35,10 +46,7 @@ module Ygg
     def state_from_serialized_array(arr, options = {})
       options = options.dup.freeze
 
-      items = arr.map do |a|
-        type, state = *a
-        StateItem.deserialize(type, state, options)
-      end
+      items = arr.map { |type, state| StateItem.deserialize(type, state, options) }
 
       state_from_array items
     end
@@ -74,6 +82,28 @@ module Ygg
     # Deserialize a single item from state, not JSON
     def self.deserialize(type, state, option = {})
       get_type(type).new(state)
+    end
+
+    # This operation duplicates standard data that can be reconstituted from
+    # JSON, to make a frozen copy.
+    def copyfreeze(items)
+      case items
+      when Hash
+        result = {}
+        items.each do |k, v|
+          result[k] = copyfreeze(v)
+        end
+        result.freeze
+      when Array
+        items.map { |i| copyfreeze(i) }
+      when Numeric
+        items
+      when String
+        items.dup.freeze
+      else
+        STDERR.puts "Unrecognized item type #{items.class.inspect} in copyfreeze!"
+        items.dup.freeze
+      end
     end
 
     def self.get_type(t)
