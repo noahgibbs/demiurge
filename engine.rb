@@ -11,48 +11,37 @@ require "multi_json"
 # without a given StateItem having to declare exactly which state it
 # can touch and who else can't touch it.
 
+# STATUS UPDATE: okay, I now have an inefficient but very safe idea
+# for how to do this and have mostly implemented it. Basically, make a
+# new copied state tree, update it with the intentions, then
+# copyfreeze it to make the state tree for the following
+# timestep. That's fine, but I'm still doing a poor job of explicitly
+# managing the JSON-type state tree separate from the "dedicated
+# objects with references into the JSON data" parts. Right now, @state
+# is the latter and the former is basically implicit rather than
+# explicit. But if you change the frozen tree data, you need to change
+# out the objects too, with the current approach. Argh!
+
 module Ygg
   class StoryEngine
-    INIT_PARAMS = [ [:state_array, :json_file] ]
+    INIT_PARAMS = [ "state" ]
 
     def initialize(params)
       illegal_params = params.keys - INIT_PARAMS.flatten
       raise("Illegal params passed to StoryEngine.new: #{illegal_params.inspect}!") unless illegal_params.empty?
 
-      INIT_PARAMS.select { |p| p.respond_to?(:each) }.each do |param_group|
-        group_keys = params.keys.select { |pk| param_group.include?(pk) }
-
-	raise("Can pass at most one of #{param_group.map(&:to_s).join(", ")}, you passed #{group_keys.map(&:to_s).join(" and ")}!") if group_keys.size > 1
-      end
-
-      if params[:json_file]
-        json_state = MultiJson.load(File.read(params[:json_file]))
-	raise("JSON file must contain a top-level array!") unless json_state.is_a?(Array)
-	@state = state_from_serialized_array(json_state)
-      else
-        @state = state_from_array(params[:state_array] || [])
-      end
+      @state = Ygg::StateTree.state_from_structured_array(params["state"] || [])
+      nil
     end
 
-    def state_from_array(arr, options = {})
-      options = options.dup.freeze
-      state_hash = {}
-      arr.each do |item|
-        state_hash[item.name] = item
-      end
-      state_hash
-    end
+    def structured_state(options = {})
+      options = options.dup.freeze unless options.frozen?
 
-    def state_from_serialized_array(arr, options = {})
-      options = options.dup.freeze
-
-      items = arr.map { |type, state| StateItem.deserialize(type, state, options) }
-
-      state_from_array items
+      StateTree.structured_array_from_state(@state, options)
     end
 
     def next_step_intentions(options = {})
-      options = options.dup.freeze
+      options = options.dup.freeze unless options.frozen?
       @state.values.flat_map { |item| item.intentions_for_next_step(options) }
     end
 
@@ -62,31 +51,52 @@ module Ygg
 
     def apply_intentions(intentions, options = {})
       options = options.dup.freeze
+      speculative_state = StateTree.deepcopy(@state)
+      valid_state = @state
+      @state = speculative_state
 
-      intentions.each do |a|
-        a.try_apply(self, options)
+      begin
+        intentions.each do |a|
+          a.try_apply(self, options)
+        end
+      rescue
+        STDERR.puts "Exception when updating! Throwing away speculative state!"
+        @state = valid_state
       end
+
+      # Make sure to copyfreeze. Nobody gets to keep references to the state-tree's internals.
+      @state = StateTree.copyfreeze(speculative_state)
     end
 
   end
 
-  class StateItem
-    def initialize(state)
-      @state = state
+  class StateTree
+    def self.state_from_array(arr, options = {})
+      options = options.dup.freeze unless options.frozen?
+      state_hash = {}
+      arr.each do |item|
+        state_hash[item.name] = item
+      end
+      state_hash.freeze
     end
 
-    def serialize(options = {})
-      MultiJSON.dump( [self.class.name, @state] )
+    def self.state_from_structured_array(arr, options = {})
+      options = options.dup.freeze unless options.frozen?
+
+      items = arr.map { |type, state| StateItem.from_structure(type.freeze, copyfreeze(state), options) }
+
+      state_from_array items, options
     end
 
-    # Deserialize a single item from state, not JSON
-    def self.deserialize(type, state, option = {})
-      get_type(type).new(state)
+    def self.structured_array_from_state(state_hash, options = {})
+      options = options.dup.freeze unless options.frozen?
+
+      state_hash.values.map { |item| item.get_structure(options) }
     end
 
     # This operation duplicates standard data that can be reconstituted from
     # JSON, to make a frozen copy.
-    def copyfreeze(items)
+    def self.copyfreeze(items)
       case items
       when Hash
         result = {}
@@ -98,12 +108,67 @@ module Ygg
         items.map { |i| copyfreeze(i) }
       when Numeric
         items
+      when NilClass
+        items
+      when TrueClass
+        items
+      when FalseClass
+        items
       when String
-        items.dup.freeze
+        if items.frozen?
+          items
+        else
+          items.dup.freeze
+	end
       else
         STDERR.puts "Unrecognized item type #{items.class.inspect} in copyfreeze!"
         items.dup.freeze
       end
+    end
+
+    # This operation duplicates standard data that can be reconstituted from
+    # JSON, to make a non-frozen copy.
+    def self.deepcopy(items)
+      case items
+      when Hash
+        result = {}
+        items.each do |k, v|
+          result[k] = deepcopy(v)
+        end
+        result
+      when Array
+        items.map { |i| deepcopy(i) }
+      when Numeric
+        items
+      when NilClass
+        items
+      when TrueClass
+        items
+      when FalseClass
+        items
+      when String
+        items.dup
+      else
+        STDERR.puts "Unrecognized item type #{items.class.inspect} in copyfreeze!"
+        items.dup
+      end
+    end
+
+  end
+
+  # A StateItem encapsulates a chunk of frozen, immutable state. It provides behavior to the bare data.
+  class StateItem
+    def initialize(state)
+      @state = state
+    end
+
+    def get_structure(options = {})
+      [self.class.name, @state]
+    end
+
+    # Create a single item from structured (generally frozen) state
+    def self.from_structure(type, state, option = {})
+      get_type(type).new(state)
     end
 
     def self.get_type(t)
@@ -113,11 +178,14 @@ module Ygg
 
     def self.register_type(name, klass)
       @@klasses ||= {}
+      if @@klasses[name] && @@klasses[name] != klass
+        raise "Re-registering name with different type! Name: #{name.inspect} Class: #{klass.inspect} OldClass: #{@@klasses[name].inspect}!"
+      end
       @@klasses[name] ||= klass
     end
 
     def name
-      @state[:name]  # By default, at least
+      @state["name"]  # By default, at least
     end
 
     def intentions_for_next_step(*args)
