@@ -4,10 +4,9 @@ module GoblinTown
   class MossCave < Ygg::StateItem
     attr_reader :state
 
-    def initialize(state)
-      @state = state
-      raise "State should be frozen!" unless state.frozen?
-      @growmoss_intention = GrowMoss.new("item_name" => state["name"])
+    def initialize(name, engine)
+      super
+      @growmoss_intention = GrowMoss.new(name)
     end
 
     def intentions_for_next_step(options)
@@ -16,12 +15,8 @@ module GoblinTown
   end
 
   class GrowMoss < Ygg::Intention
-    INIT_PARAMS = [ "item_name" ]
-
-    def initialize(state)
-      illegal_params = state.keys - INIT_PARAMS
-      raise "Illegal parameters creating GrowMoss intention: #{illegal_params.inspect}!" unless illegal_params.empty?
-      @state = state
+    def initialize(name)
+      @name = name
     end
 
     def allowed?(engine, options)
@@ -29,13 +24,11 @@ module GoblinTown
     end
 
     def apply(engine, options)
-      item = engine.item_by_name(@state["item_name"])
       STDERR.puts "Preparing to change state!"
-      item.state["moss"] += 1
-      if item.state["moss"] >= item.state["growmoss_every"]
-        # Okay, now add an intention
+      engine.set_state_for_property(@name, "moss", engine.state_for_property(@name, "moss") + 1)
+      if engine.state_for_property(@name, "moss") >= engine.state_for_property(@name, "growmoss_every")
 	STDERR.puts "We're growing some new moss here."
-        item.state["moss"] = 0
+        engine.set_state_for_property(@name, "moss", 0)
       end
     end
 
@@ -43,14 +36,16 @@ module GoblinTown
 end
 
 state = [
-  ["MossCave", { "name" => "mosscave1", "moss" => 0, "growmoss_every" => 3 }],
-  ["MossCave", { "name" => "mosscave2", "moss" => 0, "growmoss_every" => 3 }],
+  ["MossCave", "mosscave1", { "moss" => 0, "growmoss_every" => 3 }],
+  ["MossCave", "mosscave2", { "moss" => 0, "growmoss_every" => 3 }],
 ]
 
-Ygg::StateItem.register_type "GrowMoss", GoblinTown::GrowMoss
-Ygg::StateItem.register_type "MossCave", GoblinTown::MossCave
+types = {
+  "GrowMoss" => GoblinTown::GrowMoss,
+  "MossCave" => GoblinTown::MossCave,
+}
 
-goblin_town = Ygg::StoryEngine.new "state" => state
+goblin_town = Ygg::StoryEngine.new "types" => types, "state" => state
 
 STDERR.puts "State:\n#{MultiJson.dump goblin_town.structured_state, :pretty => true}"
 
@@ -62,3 +57,5 @@ intentions = goblin_town.next_step_intentions
 STDERR.puts "Intentions: #{intentions.inspect}"
 
 goblin_town.apply_intentions(intentions)
+
+STDERR.puts "State:\n#{MultiJson.dump goblin_town.structured_state, :pretty => true}"
