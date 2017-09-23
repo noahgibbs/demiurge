@@ -2,8 +2,6 @@ require_relative "engine.rb"
 
 module GoblinTown
   class MossCave < Ygg::StateItem
-    attr_reader :state
-
     def initialize(name, engine)
       super
       @growmoss_intention = GrowMoss.new(name)
