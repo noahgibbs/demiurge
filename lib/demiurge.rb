@@ -16,16 +16,13 @@ module Demiurge
   class StoryEngine
     INIT_PARAMS = [ "state", "types" ]
 
-    def initialize(params)
-      illegal_params = params.keys - INIT_PARAMS.flatten
-      raise("Illegal params passed to StoryEngine.new: #{illegal_params.inspect}!") unless illegal_params.empty?
-
-      if params["types"]
-        params["types"].each do |tname, tval|
+    def initialize(types: {}, state: {})
+      if types
+        types.each do |tname, tval|
           register_type(tname, tval)
         end
       end
-      state_from_structured_array(params["state"] || [])
+      state_from_structured_array(state || [])
       nil
     end
 
@@ -165,13 +162,17 @@ module Demiurge
 
   # A StateItem encapsulates a chunk of frozen, immutable state. It provides behavior to the bare data.
   class StateItem
+    def state_type
+      self.class.name.split("::")[-1]
+    end
+
     def initialize(name, engine)
       @name = name
       @engine = engine
     end
 
     def get_structure(options = {})
-      [self.class.name, @name, @engine.state_for_item(@name)]
+      [state_type, @name, @engine.state_for_item(@name)]
     end
 
     # Create a single item from structured (generally frozen) state

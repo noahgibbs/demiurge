@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby -w
+
+require "demiurge"
+require "demiurge/dsl"
+
+require "multi_json"
+
+if ARGV.size != 1
+  raise "Demirun must be run with exactly one argument, the file to parse!"
+end
+
+dsl_code = File.read ARGV[0]
+builder = Demiurge::TopLevelBuilder.new
+builder.instance_eval dsl_code # TODO: make sure this sets filename correctly, look up docs
+engine = builder.built_engine
+
+STDERR.puts "State:\n#{MultiJson.dump engine.structured_state, :pretty => true}"
+
+intentions = engine.next_step_intentions
+STDERR.puts "Intentions: #{intentions.inspect}"
+
+engine.apply_intentions(intentions)
+
+STDERR.puts "State:\n#{MultiJson.dump engine.structured_state, :pretty => true}"
