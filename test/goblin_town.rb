@@ -1,7 +1,7 @@
-require_relative "engine.rb"
+require "demiurge"
 
 module GoblinTown
-  class MossCave < Ygg::StateItem
+  class MossCave < Demiurge::StateItem
     def initialize(name, engine)
       super
       @growmoss_intention = GrowMoss.new(name)
@@ -12,7 +12,7 @@ module GoblinTown
     end
   end
 
-  class GrowMoss < Ygg::Intention
+  class GrowMoss < Demiurge::Intention
     def initialize(name)
       @name = name
     end
@@ -43,7 +43,7 @@ types = {
   "MossCave" => GoblinTown::MossCave,
 }
 
-goblin_town = Ygg::StoryEngine.new "types" => types, "state" => state
+goblin_town = Demiurge::StoryEngine.new types: types, state: state
 
 STDERR.puts "State:\n#{MultiJson.dump goblin_town.structured_state, :pretty => true}"
 
