@@ -49,10 +49,13 @@ module Demiurge
   end
 
   class LocationBuilder
+    attr_reader :actions
+
     def initialize(name)
       @name = name
       @everies = []
       @description = nil
+      @actions = {}
     end
 
     def description(d)
@@ -61,6 +64,7 @@ module Demiurge
 
     def every_X_ticks(action_name, t, &block)
       @everies << { "action" => action_name, "every" => t, "counter" => 0 }
+      @actions[action_name] = block
     end
 
     def built_location
@@ -80,6 +84,23 @@ module Demiurge
       super
     end
 
+    def self.register_actions_by_item_and_action_name(act)
+      @actions ||= {}
+      act.each do |item_name, act_hash|
+        if @actions[item_name]
+          dup_keys = @actions[item_name].keys | act_hash.keys
+          raise "Duplicate item actions for #{item_name.inspect}! List: #{dup_keys.inspect}" unless dup_keys.empty?
+          @actions[item_name].merge!(act_hash)
+        else
+          @actions[item_name] = act_hash
+        end
+      end
+    end
+
+    def self.action_for_item(item_name, action_name)
+      @actions[item_name][action_name]
+    end
+
     def intentions_for_next_step(options = {})
       everies = @engine.state_for_property(@name, "everies")
       return [] if everies.empty?
@@ -97,10 +118,8 @@ module Demiurge
     end
 
     def apply(engine, options)
-      STDERR.puts "Applying EveryXTicksIntention!"
       everies = engine.state_for_property(@name, "everies")
       everies.each do |every|
-        STDERR.puts "Increment counter for object #{@name} action #{every["action"]}..."
         every["counter"] += 1  # TODO: Use set_state_for_property?
         if every["counter"] >= every["every"]
           STDERR.puts "Time to execute action #{every["action"]}!"
