@@ -52,6 +52,7 @@ module Demiurge
     def initialize(name)
       @name = name
       @everies = []
+      @description = nil
     end
 
     def description(d)
@@ -68,9 +69,44 @@ module Demiurge
   end
 
   class DslArea < StateItem
+    def intentions_for_next_step(options = {})
+      # Nothing currently
+      nil
+    end
   end
 
   class DslLocation < StateItem
+    def initialize(name, engine)
+      super
+    end
+
+    def intentions_for_next_step(options = {})
+      everies = @engine.state_for_property(@name, "everies")
+      return [] if everies.empty?
+      intention = EveryXTicksIntention.new(@name)
+    end
   end
 
+  class EveryXTicksIntention < Intention
+    def initialize(name)
+      @name = name
+    end
+
+    def allowed?(engine, options)
+      true
+    end
+
+    def apply(engine, options)
+      STDERR.puts "Applying EveryXTicksIntention!"
+      everies = engine.state_for_property(@name, "everies")
+      everies.each do |every|
+        STDERR.puts "Increment counter for object #{@name} action #{every["action"]}..."
+        every["counter"] += 1  # TODO: Use set_state_for_property?
+        if every["counter"] >= every["every"]
+          STDERR.puts "Time to execute action #{every["action"]}!"
+          every["counter"] = 0 # TODO: use set_state_for_property?
+        end
+      end
+    end
+  end
 end

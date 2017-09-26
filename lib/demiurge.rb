@@ -34,7 +34,7 @@ module Demiurge
 
     def next_step_intentions(options = {})
       options = options.dup.freeze unless options.frozen?
-      @state_items.values.flat_map { |item| item.intentions_for_next_step(options) }
+      @state_items.values.flat_map { |item| item.intentions_for_next_step(options) || [] }
     end
 
     def item_by_name(name)
@@ -190,7 +190,7 @@ module Demiurge
 
   end
 
-  class Intention < StateItem
+  class Intention
     def allowed?(engine, options = {})
       raise "Unimplemented intention!"
     end

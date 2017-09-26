@@ -11,7 +11,7 @@ end
 
 dsl_code = File.read ARGV[0]
 builder = Demiurge::TopLevelBuilder.new
-builder.instance_eval dsl_code # TODO: make sure this sets filename correctly, look up docs
+builder.instance_eval dsl_code, ARGV[0]
 engine = builder.built_engine
 
 STDERR.puts "State:\n#{MultiJson.dump engine.structured_state, :pretty => true}"
