@@ -56,22 +56,30 @@ module Demiurge
 
     def initialize(name)
       @name = name
-      @everies = []
-      @description = nil
       @actions = {}
+      @state = {}
     end
 
     def description(d)
-      @description = d
+      @state["description"] = d
+    end
+
+    def __state_internal
+      @state
+    end
+
+    def state
+      @wrapper ||= DslLocationStateWrapper.new(self)
     end
 
     def every_X_ticks(action_name, t, &block)
-      @everies << { "action" => action_name, "every" => t, "counter" => 0 }
+      @state["everies"] ||= []
+      @state["everies"] << { "action" => action_name, "every" => t, "counter" => 0 }
       @actions[action_name] = block
     end
 
     def built_location
-      [ "DslLocation", @name, { "description" => @description, "everies" => @everies } ]
+      [ "DslLocation", @name, @state ]
     end
   end
 
@@ -87,7 +95,7 @@ module Demiurge
       super
     end
 
-    def state
+    def __state_internal
       @engine.state_for_item(@name)
     end
 
@@ -142,6 +150,10 @@ module Demiurge
       @location = location
     end
 
+    def has_key?(key)
+      @location.__state_internal.has_key?(key)
+    end
+
     def method_missing(method_name, *args, &block)
       if method_name.to_s[-1] == "="
         getter_name = method_name.to_s[0..-2]
@@ -151,13 +163,15 @@ module Demiurge
         setter_name = method_name.to_s + "="
       end
 
-      STDERR.puts "Method missing: #{method_name.inspect} / #{getter_name.inspect} / #{setter_name.inspect} / #{@location.state.inspect}"
-      if @location.state.has_key?(getter_name)
-        self.class.define_method(getter_name) do
-          @location.state[getter_name]
+      location = @location
+
+      STDERR.puts "Method missing: #{method_name.inspect} / #{getter_name.inspect} / #{setter_name.inspect} / #{location.state.inspect}"
+      if location.state.has_key?(getter_name) || method_name.to_s[-1] == "="
+        self.class.send(:define_method, getter_name) do
+          location.__state_internal[getter_name]
         end
-        self.class.define_method(setter_name) do |val|
-          @location.state[setter_name] = val
+        self.class.send(:define_method, setter_name) do |val|
+          location.__state_internal[getter_name] = val
         end
 
         # Call to new defined method
