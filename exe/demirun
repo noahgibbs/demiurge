@@ -22,3 +22,10 @@ STDERR.puts "Intentions: #{intentions.inspect}"
 engine.apply_intentions(intentions)
 
 STDERR.puts "State:\n#{MultiJson.dump engine.structured_state, :pretty => true}"
+
+STDERR.puts "Now two more steps..."
+intentions = engine.next_step_intentions
+engine.apply_intentions(intentions)
+intentions = engine.next_step_intentions
+engine.apply_intentions(intentions)
+STDERR.puts "Finished! State:\n#{MultiJson.dump engine.structured_state, :pretty => true}"
