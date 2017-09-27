@@ -162,6 +162,8 @@ module Demiurge
 
   # A StateItem encapsulates a chunk of frozen, immutable state. It provides behavior to the bare data.
   class StateItem
+    attr_reader :name
+
     def state_type
       self.class.name.split("::")[-1]
     end
@@ -178,10 +180,6 @@ module Demiurge
     # Create a single item from structured (generally frozen) state
     def self.from_name_type(engine, type, name, options = {})
       engine.get_type(type).new(name, engine)
-    end
-
-    def name
-      @name
     end
 
     def intentions_for_next_step(*args)
