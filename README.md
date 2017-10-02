@@ -23,6 +23,8 @@ Or install it yourself as:
 See test mini-games in the test directory. For more information, see
 lib/demiurge/engine.rb.
 
+    $ ruby -I./lib exe/demirun test/proto_goblin_town_1.rb
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
