@@ -93,8 +93,8 @@ module Demiurge
       @state = {}
 
       arr.each do |type, name, state|
-        @state_items[name] = StateItem.from_name_type(self, type.freeze, name.freeze, options)
         @state[name] = state
+        @state_items[name] = StateItem.from_name_type(self, type.freeze, name.freeze, options)
       end
     end
 
@@ -171,6 +171,10 @@ module Demiurge
     def initialize(name, engine)
       @name = name
       @engine = engine
+    end
+
+    def state
+      @engine.state_for_item(@name)
     end
 
     def get_structure(options = {})
