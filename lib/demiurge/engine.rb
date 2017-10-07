@@ -10,7 +10,7 @@ require "multi_json"
 # easier production runs where things can be mutated rather than
 # frozen and replaced.
 
-module Ygg
+module Demiurge
   class StoryEngine
     INIT_PARAMS = [ "state", "types" ]
 
