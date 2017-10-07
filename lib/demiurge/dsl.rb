@@ -1,7 +1,20 @@
 require_relative "../demiurge"
 
 module Demiurge
+  def self.engine_from_dsl_files(*filenames)
+    builder = Demiurge::TopLevelBuilder.new
+
+    filenames.each do |filename|
+      dsl_code = File.read(filename)
+      builder.instance_eval dsl_code, filename
+    end
+
+    builder.built_engine
+  end
+
   class TopLevelBuilder
+    @@types = {}
+
     def initialize
       @areas = []
       @locations = []
@@ -15,13 +28,17 @@ module Demiurge
       nil
     end
 
+    def self.register_type(name, klass)
+      if @@types[name.to_s]
+        raise("Attempting to re-register type #{name.inspect} with a different class!") unless @@types[name.to_s] == klass
+      else
+        @@types[name.to_s] = klass
+      end
+    end
+
     def built_engine
-      types = {
-        "DslLocation" => DslLocation,
-        "DslArea" => DslArea,
-      }
       state = @areas + @locations
-      engine = StoryEngine.new(types: types, state: state)
+      engine = StoryEngine.new(types: @@types, state: state)
       engine
     end
   end
@@ -92,7 +109,7 @@ module Demiurge
 
   class DslLocation < StateItem
     def initialize(name, engine)
-      super
+      super # Set @name and @engine
     end
 
     def __state_internal
@@ -165,7 +182,6 @@ module Demiurge
 
       location = @location
 
-      STDERR.puts "Method missing: #{method_name.inspect} / #{getter_name.inspect} / #{setter_name.inspect} / #{location.state.inspect}"
       if location.state.has_key?(getter_name) || method_name.to_s[-1] == "="
         self.class.send(:define_method, getter_name) do
           location.__state_internal[getter_name]
@@ -211,3 +227,6 @@ module Demiurge
     end
   end
 end
+
+Demiurge::TopLevelBuilder.register_type "DslArea", Demiurge::DslArea
+Demiurge::TopLevelBuilder.register_type "DslLocation", Demiurge::DslLocation

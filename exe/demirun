@@ -1,18 +1,16 @@
-#!/usr/bin/env ruby -w
+#!/usr/bin/env ruby -w -I./lib
 
 require "demiurge"
 require "demiurge/dsl"
+require "demiurge/tmx"
 
 require "multi_json"
 
-if ARGV.size != 1
-  raise "Demirun must be run with exactly one argument, the file to parse!"
+if ARGV.size < 1
+  raise "Please give at least one Demiurge DSL file to parse!"
 end
 
-dsl_code = File.read ARGV[0]
-builder = Demiurge::TopLevelBuilder.new
-builder.instance_eval dsl_code, ARGV[0]
-engine = builder.built_engine
+engine = Demiurge.engine_from_dsl_files(*ARGV)
 
 STDERR.puts "State:\n#{MultiJson.dump engine.structured_state, :pretty => true}"
 
