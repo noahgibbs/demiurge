@@ -113,7 +113,7 @@ module Demiurge
     # This recursively loads things like tileset .tsx files
     tiles = Tmx.load filename
 
-    spritestack[:name] = tiles.name
+    spritestack[:name] = tiles.name || File.basename(filename).split(".")[0]
     spritestack[:width] = tiles.width
     spritestack[:height] = tiles.height
     spritestack[:properties] = tiles.properties
