@@ -179,7 +179,9 @@ module Demiurge
       }
     end
 
-    { spritesheet: spritesheet, spritestack: spritestack }
+    objects = tiles.object_groups.flat_map { |og| og.objects.to_a }.map(&:to_h)
+
+    { spritesheet: spritesheet, spritestack: spritestack, objects: objects }
   end
 
   def self.animations_from_tilesets tilesets
