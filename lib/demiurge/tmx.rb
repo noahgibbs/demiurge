@@ -123,6 +123,11 @@ module Demiurge
     # or swimmability in it. In general, we'll just expose the data.
     objs[:collision] = collision_layer[:data]
 
+    # Remove the heights layer, add as separate heights top-level entry
+    heights_index = stack_layers.index { |l| ["height", "heights"].include?(l[:name].downcase)  }
+    heights_layer = stack_layers.delete_at heights_index
+    objs[:heights] = heights_layer
+
     fringe_index = stack_layers.index { |l| l[:name].downcase == "fringe" }
     stack_layers.each_with_index do |layer, index|
       # Assign a Z value based on layer depth, with fringe = 0 as a special case
@@ -130,6 +135,32 @@ module Demiurge
     end
 
     objs
+  end
+
+  def self.frames_from_tileset(tileset)
+    frames = []
+    framecount = 0
+
+    ycoords = [tileset.margin]
+    ycoords.push(ycoords[-1] + tileset.tileheight + tileset.spacing) until (ycoords[-1] + tileset.spacing) >= tileset.imageheight - tileset.margin - tileset.tileheight
+
+    xcoords = [tileset.margin]
+    xcoords.push(xcoords[-1] + tileset.tilewidth + tileset.spacing) until (xcoords[-1] + tileset.spacing) >= tileset.imagewidth - tileset.margin - tileset.tilewidth
+
+    ycoords.each do |y|
+      xcoords.each do |x|
+        framecount += 1
+        frames.push({
+                      gid: tileset.firstgid + framecount,
+                      image: "/tiles/" + tileset.image.split("/")[-1],
+                      x: x,
+                      y: y,
+                      width: tileset.tilewidth,
+                      height: tileset.tileheight })
+      end
+    end
+
+    frames
   end
 
   def self.sprites_from_tmx(filename)
@@ -154,7 +185,14 @@ module Demiurge
         image: "/tiles/" + tileset.image.split("/")[-1],
         image_width: tileset.imagewidth,
         image_height: tileset.imageheight,
+        tile_width: tileset.tilewidth,
+        tile_height: tileset.tileheight,
+        oversize: tileset.tilewidth != tiles.tilewidth || tileset.tileheight != tiles.tileheight,
+        spacing: tileset.spacing,
+        margin: tileset.margin,
+        imagetrans: tileset.imagetrans, # Currently unused, color to treat as transparent
         properties: tileset.properties,
+        frame_definitions: frames_from_tileset(tileset),
       }
     end
     spritesheet[:cyclic_animations] = animations_from_tilesets tiles.tilesets
@@ -163,11 +201,6 @@ module Demiurge
     spritesheet[:name] = spritesheet[:images].map { |i| i[:tileset_name] }.join("/")
     spritestack[:spritesheet] = spritesheet[:name]
 
-    if spritesheet[:images].map { |ts| ts[:tile_width] }.uniq.length > 1 ||
-       spritesheet[:images].map { |ts| ts[:tile_height] }.uniq.length > 1
-      raise "Can't have more than one tilewidth or tileheight in the same SpriteSheet right now!"
-    end
-
     spritestack[:layers] = tiles.layers.map do |layer|
       data = layer.data.each_slice(layer.width).to_a
       {
@@ -175,7 +208,9 @@ module Demiurge
         data: data,
         visible: layer.visible,
         opacity: layer.opacity,
-        properties: layer.properties
+        offsetx: layer.offsetx,  # Currently unused
+        offsety: layer.offsety,  # Currently unused
+        properties: layer.properties,
       }
     end
 
