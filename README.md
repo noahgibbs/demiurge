@@ -23,9 +23,6 @@ Or install it yourself as:
 See test mini-games in the test directory. For more information, see
 lib/demiurge/engine.rb.
 
-    # To run locally without installing demiurge as a gem
-    $ ruby -I./lib exe/demirun test/proto_goblin_town_1.rb
-
 For longer-term usage, Demiurge will normally be part of a larger
 program. Its intent is to manage behavior and state for a game or
 similar simulated world. In those cases, Demiurge will normally be
