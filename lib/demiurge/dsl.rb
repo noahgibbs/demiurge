@@ -199,14 +199,12 @@ module Demiurge
         setter_name = method_name.to_s + "="
       end
 
-      location = @location
-
-      if location.state.has_key?(getter_name) || method_name.to_s[-1] == "="
+      if @location.state.has_key?(getter_name) || method_name.to_s[-1] == "="
         self.class.send(:define_method, getter_name) do
-          location.__state_internal[getter_name]
+          @location.__state_internal[getter_name]
         end
         self.class.send(:define_method, setter_name) do |val|
-          location.__state_internal[getter_name] = val
+          @location.__state_internal[getter_name] = val
         end
 
         # Call to new defined method
