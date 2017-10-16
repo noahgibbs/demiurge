@@ -16,7 +16,13 @@ module Demiurge
   class Engine
     INIT_PARAMS = [ "state", "types" ]
 
-    def initialize(types: {}, state: {})
+    # When initializing, "types" is a hash mapping type name to the
+    # class that implements that name. Usually the name is the same as
+    # the class name with the module optionally stripped off.
+    # State is an array of state items, each an array with the type
+    # name first, followed by the item name (unique) and the current
+    # state of that item as a hash.
+    def initialize(types: {}, state: [])
       if types
         types.each do |tname, tval|
           register_type(tname, tval)
@@ -34,7 +40,8 @@ module Demiurge
 
     def next_step_intentions(options = {})
       options = options.dup.freeze unless options.frozen?
-      @state_items.values.flat_map { |item| item.intentions_for_next_step(options) || [] }
+      #@state_items.values.flat_map { |item| item.intentions_for_next_step(options) || [] }
+      @zones.flat_map { |item| item.intentions_for_next_step(options) || [] }
     end
 
     def item_by_name(name)
@@ -96,6 +103,7 @@ module Demiurge
         @state[name] = state
         @state_items[name] = StateItem.from_name_type(self, type.freeze, name.freeze, options)
       end
+      @zones = @state_items.values.select { |item| item.zone? }
     end
 
     # This operation duplicates standard data that can be reconstituted from
@@ -173,6 +181,15 @@ module Demiurge
       @engine = engine
     end
 
+    # This method determines whether the item will be treated as a
+    # top-level zone.  Inheriting from Demiurge::Zone will cause that
+    # to occur. So will redefining the zone? method to return true.
+    # Whether zone? returns true should not depend on state, which may
+    # not be set when this method is called.
+    def zone?
+      self.is_a?(::Demiurge::Zone)
+    end
+
     def state
       @engine.state_for_item(@name)
     end
@@ -190,6 +207,21 @@ module Demiurge
       raise "StateItem must be subclassed to be used directly!"
     end
 
+  end
+
+  # A Zone is a top-level location. It may (or may not) contain
+  # various sub-locations managed by the top-level zone, and it may be
+  # quite large or quite small. Zones are the "magic" by which
+  # Demiurge permits simulation of much larger areas than CPU allows,
+  # up to and including "infinite" procedural areas where only a small
+  # portion is continuously simulated.
+
+  # A simplistic engine may contain only a small number of top-level
+  # areas, each a zone in itself. A complex engine may have a small
+  # number of areas, but each does extensive managing of its
+  # sub-locations.
+
+  class Zone < StateItem
   end
 
   class Intention

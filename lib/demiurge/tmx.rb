@@ -29,7 +29,7 @@ require "tmx"
 # TMX parsing.
 
 module Demiurge
-  class AreaBuilder
+  class ZoneBuilder
     def tmx_location(name, &block)
       builder = TmxLocationBuilder.new(name)
       builder.instance_eval(&block)

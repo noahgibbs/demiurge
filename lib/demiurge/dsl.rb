@@ -32,14 +32,14 @@ module Demiurge
     @@types = {}
 
     def initialize
-      @areas = []
+      @zones = []
       @locations = []
     end
 
-    def area(name, &block)
-      builder = AreaBuilder.new(name)
+    def zone(name, &block)
+      builder = ZoneBuilder.new(name)
       builder.instance_eval(&block)
-      @areas << builder.built_area
+      @zones << builder.built_zone
       @locations += builder.built_locations
       nil
     end
@@ -53,13 +53,13 @@ module Demiurge
     end
 
     def built_engine
-      state = @areas + @locations
+      state = @zones + @locations
       engine = ::Demiurge::Engine.new(types: @@types, state: state)
       engine
     end
   end
 
-  class AreaBuilder
+  class ZoneBuilder
     def initialize(name)
       @name = name
       @locations = []
@@ -75,8 +75,8 @@ module Demiurge
       nil
     end
 
-    def built_area
-      [ "DslArea", @name, "location_names" => @locations.map { |l| l[1] } ]
+    def built_zone
+      [ "DslZone", @name, "location_names" => @locations.map { |l| l[1] } ]
     end
 
     def built_locations
@@ -116,10 +116,13 @@ module Demiurge
     end
   end
 
-  class DslArea < StateItem
+  # This is a very simple zone that just passes control to all children when determining intentions.
+  class DslZone < Zone
     def intentions_for_next_step(options = {})
-      # Nothing currently
-      nil
+      intentions = @engine.state_for_property(@name, "location_names").flat_map do |loc_name|
+        @engine.item_by_name(loc_name).intentions_for_next_step
+      end
+      intentions
     end
   end
 
@@ -244,5 +247,5 @@ module Demiurge
   end
 end
 
-Demiurge::TopLevelBuilder.register_type "DslArea", Demiurge::DslArea
+Demiurge::TopLevelBuilder.register_type "DslZone", Demiurge::DslZone
 Demiurge::TopLevelBuilder.register_type "DslLocation", Demiurge::DslLocation
