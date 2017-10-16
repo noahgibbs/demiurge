@@ -38,7 +38,7 @@ module Demiurge
 
     def built_engine
       state = @areas + @locations
-      engine = StoryEngine.new(types: @@types, state: state)
+      engine = ::Demiurge::Engine.new(types: @@types, state: state)
       engine
     end
   end

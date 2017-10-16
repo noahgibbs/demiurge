@@ -43,7 +43,7 @@ types = {
   "MossCave" => GoblinTown::MossCave,
 }
 
-goblin_town = Demiurge::StoryEngine.new types: types, state: state
+goblin_town = Demiurge::Engine.new types: types, state: state
 
 STDERR.puts "State:\n#{MultiJson.dump goblin_town.structured_state, :pretty => true}"
 

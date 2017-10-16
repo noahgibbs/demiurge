@@ -13,7 +13,7 @@ require "multi_json"
 # frozen and replaced.
 
 module Demiurge
-  class StoryEngine
+  class Engine
     INIT_PARAMS = [ "state", "types" ]
 
     def initialize(types: {}, state: {})
