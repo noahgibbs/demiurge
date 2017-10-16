@@ -2,11 +2,27 @@ require_relative "../demiurge"
 
 module Demiurge
   def self.engine_from_dsl_files(*filenames)
+    filename_string_pairs = filenames.map { |fn| [fn, File.read(fn)] }
+    engine_from_dsl_text(filename_string_pairs)
+  end
+
+  # Note: may supply either strings or filename/string pairs.
+  # In the latter case, eval errors will give the filename along
+  # with the error.
+  def self.engine_from_dsl_text(*specs)
     builder = Demiurge::TopLevelBuilder.new
 
-    filenames.each do |filename|
-      dsl_code = File.read(filename)
-      builder.instance_eval dsl_code, filename
+    specs.each do |spec|
+      if spec.is_a?(String)
+        builder.instance_eval spec
+      elsif spec.is_a?(Array)
+        if spec.size != 2
+          raise "Not sure what to do with a #{spec.size}-elt array, normally this is a filename/string pair!"
+        end
+        builder.instance_eval spec[1], spec[0]
+      else
+        raise "Not sure what to do in engine_from_dsl_text with a #{spec.class}!"
+      end
     end
 
     builder.built_engine

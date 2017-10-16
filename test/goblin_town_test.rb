@@ -35,12 +35,12 @@ module GoblinTown
   end
 end
 
-class DemiurgeTest < Minitest::Test
+class GoblinTownTest < Minitest::Test
   def test_that_it_has_a_version_number
     refute_nil ::Demiurge::VERSION
   end
 
-  def test_it_does_something_useful
+  def test_trivial_non_dsl_actions
     state = [
       ["MossCave", "mosscave1", { "moss" => 0, "growmoss_every" => 3 }],
       ["MossCave", "mosscave2", { "moss" => 0, "growmoss_every" => 3 }],
