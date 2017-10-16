@@ -142,6 +142,9 @@ yet ready for you to just drop it in and use it unchanged. For that
 reason, assume you'll need to do some Demiurge development for
 yourself, whether or not you ever contribute it upstream.
 
+For more information on Demiurge's architecture, see the HACKING.md
+document in this directory.
+
 After checking out the repo, run `bin/setup` to install
 dependencies. Then, run `rake test` to run the tests. You can also run
 `bin/console` for an interactive prompt that will allow you to
