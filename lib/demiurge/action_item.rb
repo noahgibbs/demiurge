@@ -13,23 +13,6 @@ module Demiurge
       @engine.state_for_item(@name)
     end
 
-    def self.register_actions_by_item_and_action_name(act)
-      @actions ||= {}
-      act.each do |item_name, act_hash|
-        if @actions[item_name]
-          dup_keys = @actions[item_name].keys | act_hash.keys
-          raise "Duplicate item actions for #{item_name.inspect}! List: #{dup_keys.inspect}" unless dup_keys.empty?
-          @actions[item_name].merge!(act_hash)
-        else
-          @actions[item_name] = act_hash
-        end
-      end
-    end
-
-    def self.action_for_item(item_name, action_name)
-      @actions[item_name][action_name]
-    end
-
     def intentions_for_next_step(options = {})
       everies = @engine.state_for_property(@name, "everies")
       return [] if everies.empty?
@@ -37,21 +20,21 @@ module Demiurge
     end
 
     def run_action(action_name)
-      block = ActionItem.action_for_item(@name, action_name)
+      block = @engine.action_for_item(@name, action_name)
       raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless block
-      @block_runner ||= DslItemBlockRunner.new(self)
+      @block_runner ||= ActionItemBlockRunner.new(self)
       @block_runner.instance_eval(&block)
       nil
     end
   end
 
-  class DslItemBlockRunner
+  class ActionItemBlockRunner
     def initialize(item)
       @item = item
     end
 
     def state
-      @state_wrapper ||= DslItemStateWrapper.new(@item)
+      @state_wrapper ||= ActionItemStateWrapper.new(@item)
     end
 
     def action(*args)
@@ -59,7 +42,7 @@ module Demiurge
     end
   end
 
-  class DslItemStateWrapper
+  class ActionItemStateWrapper
     def initialize(item)
       @item = item
     end
@@ -90,7 +73,7 @@ module Demiurge
       end
 
       # Nope, no matching state.
-      STDERR.puts "No such state key as #{method_name.inspect} in DslItemStateWrapper#method_missing!"
+      STDERR.puts "No such state key as #{method_name.inspect} in ActionItemStateWrapper#method_missing!"
       super
     end
 

@@ -28,6 +28,40 @@ module Demiurge
     builder.built_engine
   end
 
+  class ActionItemBuilder
+    attr_reader :actions
+
+    def initialize(name)
+      @name = name
+      @state = {}
+      @actions = {}
+    end
+
+    def __state_internal
+      @state
+    end
+
+    def state
+      @wrapper ||= ActionItemStateWrapper.new(self)
+    end
+
+    def every_X_ticks(action_name, t, &block)
+      @state["everies"] ||= []
+      @state["everies"] << { "action" => action_name, "every" => t, "counter" => 0 }
+      @actions[action_name] = block
+    end
+
+    def on(event, action_name, &block)
+      @state["on_handlers"] ||= {}
+      @state["on_handlers"][event] = action_name
+      @actions[action_name] = block
+    end
+
+    def built_actions
+      @actions
+    end
+  end
+
   class TopLevelBuilder
     @@types = {}
 
@@ -35,20 +69,63 @@ module Demiurge
       @zones = []
       @locations = []
       @agents = []
+      @item_names = {}
+      @item_actions = {}
+    end
+
+    def register_new_serialized_objects(objs, actions = nil)
+      objs.each_with_index do |obj, index|
+        name = obj[1]
+        raise "Duplicated object name #{name.inspect}!" if @item_names[name]
+        @item_names[name] = true
+
+        @item_actions[name] = actions[index] if actions && actions[index]
+      end
+      objs
     end
 
     def zone(name, &block)
       builder = ZoneBuilder.new(name)
       builder.instance_eval(&block)
-      @zones << builder.built_zone
-      @locations += builder.built_locations
+      new_zone = builder.built_zone
+      zone_actions = builder.built_actions
+
+      # Merge with any existing zone with the same name.
+      # This allows zone re-opening in multiple Ruby files.
+      same_zone = @zones.detect { |z| z[1] == new_zone[1] }
+      if same_zone
+        array_merged_keys = [ "location_names", "everies" ]
+        hash_merged_keys = [ "on_handlers" ]
+        new_state_keys = new_zone[2].keys - array_merged_keys - hash_merged_keys
+        old_state_keys = same_zone[2].keys - array_merged_keys - hash_merged_keys
+        dup_keys = new_state_keys & old_state_keys
+        raise("Zone #{new_zone[1].inspect} is reopened and duplicates state keys: #{dup_keys.inspect}!") unless dup_keys.empty?
+
+        array_merged_keys.each do |merged_key_name|
+          new_values = new_zone[2][merged_key_name] || []
+          old_values = same_zone[2][merged_key_name] || []
+          new_zone[2][merged_key_name] = old_values + new_values
+        end
+        hash_merged_keys.each do |merged_key_name|
+          new_values = new_zone[2][merged_key_name] || {}
+          old_values = same_zone[2][merged_key_name] || {}
+          new_zone[2][merged_key_name] = old_values.merge(new_values)
+        end
+        same_zone[2].merge!(new_zone[2]) # This will overwrite location names
+      else
+        @zones << register_new_serialized_objects([new_zone], [zone_actions])[0]
+      end
+
+      @locations += register_new_serialized_objects(builder.built_locations, builder.location_actions)
       nil
     end
 
     def agent(name, &block)
       builder = AgentBuilder.new(name)
       builder.instance_eval(&block)
-      @agents << builder.built_agent
+      agent = builder.built_agent
+      actions = builder.built_actions
+      @agents << register_new_serialized_objects([agent], [actions])[0]
       nil
     end
 
@@ -63,37 +140,39 @@ module Demiurge
     def built_engine
       state = @zones + @locations + @agents
       engine = ::Demiurge::Engine.new(types: @@types, state: state)
+      engine.register_actions_by_item_and_action_name(@item_actions)
       engine
     end
   end
 
-  class AgentBuilder
+  class AgentBuilder < ActionItemBuilder
     def initialize
     end
 
     def built_agent
-      ["DslAgent", @name]
+      ["DslAgent", @name, @state]
     end
   end
 
-  class ZoneBuilder
+  class ZoneBuilder < ActionItemBuilder
+    attr_reader :location_actions
+
     def initialize(name)
-      @name = name
+      super
       @locations = []
-      @actions = {}
+      @location_actions = []
     end
 
     def location(name, &block)
       builder = LocationBuilder.new(name)
       builder.instance_eval(&block)
-      location = builder.built_location
-      @locations << location
-      ActionItem.register_actions_by_item_and_action_name(location[1] => builder.actions)
+      @locations << builder.built_location
+      @location_actions << builder.built_actions
       nil
     end
 
     def built_zone
-      [ "DslZone", @name, "location_names" => @locations.map { |l| l[1] } ]
+      [ "DslZone", @name, @state.merge("location_names" => @locations.map { |l| l[1] }) ]
     end
 
     def built_locations
@@ -101,32 +180,13 @@ module Demiurge
     end
   end
 
-  class LocationBuilder
-    attr_reader :actions
-
+  class LocationBuilder < ActionItemBuilder
     def initialize(name)
-      @name = name
-      @actions = {}
-      @state = {}
+      super
     end
 
     def description(d)
       @state["description"] = d
-    end
-
-    def __state_internal
-      @state
-    end
-
-    def state
-      @wrapper ||= DslItemStateWrapper.new(self)
-    end
-
-    def every_X_ticks(action_name, t, &block)
-      @state["everies"] ||= []
-      @state["everies"] << { "action" => action_name, "every" => t, "counter" => 0 }
-      raise("Duplicate item/action combination for action #{action_name.inspect}!") if @actions[action_name]
-      @actions[action_name] = block
     end
 
     def built_location
@@ -134,6 +194,7 @@ module Demiurge
     end
   end
 
+  # Do these types need to exist at all? Can we have some kind of parent type get instantiated here and have it work?
   class DslZone < Zone
   end
 
