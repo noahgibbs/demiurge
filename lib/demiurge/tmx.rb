@@ -35,7 +35,7 @@ module Demiurge
       builder.instance_eval(&block)
       location = builder.built_location
       @locations << location
-      DslLocation.register_actions_by_item_and_action_name(location[1] => builder.actions)
+      DslStateItem.register_actions_by_item_and_action_name(location[1] => builder.actions)
       nil
     end
   end
@@ -83,6 +83,7 @@ module Demiurge
         "manasource_tile_layout" => {},
         "tile_layout" => {},
       }
+      STDERR.puts "Loading entry from tile cache! Current entries: #{@tile_cache.values.map(&:value).map(&:size).inspect}"
       if smtl
         @tile_cache["manasource_tile_layout"][smtl] ||= Demiurge.sprites_from_manasource_tmx(smtl)
       elsif stl
@@ -95,10 +96,6 @@ module Demiurge
 end
 
 Demiurge::TopLevelBuilder.register_type "DslTmxLocation", Demiurge::DslTmxLocation
-
-# TODO: object layers
-# TODO: image layers
-# TODO: oversize sprites (x1x2, etc)
 
 module Demiurge
   # This is to support TMX files for ManaSource, ManaWorld, Land of

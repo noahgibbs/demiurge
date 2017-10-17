@@ -3,7 +3,7 @@ require_relative "../demiurge"
 module Demiurge
   def self.engine_from_dsl_files(*filenames)
     filename_string_pairs = filenames.map { |fn| [fn, File.read(fn)] }
-    engine_from_dsl_text(filename_string_pairs)
+    engine_from_dsl_text(*filename_string_pairs)
   end
 
   # Note: may supply either strings or filename/string pairs.
@@ -34,6 +34,7 @@ module Demiurge
     def initialize
       @zones = []
       @locations = []
+      @agents = []
     end
 
     def zone(name, &block)
@@ -41,6 +42,13 @@ module Demiurge
       builder.instance_eval(&block)
       @zones << builder.built_zone
       @locations += builder.built_locations
+      nil
+    end
+
+    def agent(name, &block)
+      builder = AgentBuilder.new(name)
+      builder.instance_eval(&block)
+      @agents << builder.built_agent
       nil
     end
 
@@ -53,9 +61,18 @@ module Demiurge
     end
 
     def built_engine
-      state = @zones + @locations
+      state = @zones + @locations + @agents
       engine = ::Demiurge::Engine.new(types: @@types, state: state)
       engine
+    end
+  end
+
+  class AgentBuilder
+    def initialize
+    end
+
+    def built_agent
+      ["DslAgent", @name]
     end
   end
 
@@ -71,7 +88,7 @@ module Demiurge
       builder.instance_eval(&block)
       location = builder.built_location
       @locations << location
-      DslLocation.register_actions_by_item_and_action_name(location[1] => builder.actions)
+      ActionItem.register_actions_by_item_and_action_name(location[1] => builder.actions)
       nil
     end
 
@@ -102,12 +119,13 @@ module Demiurge
     end
 
     def state
-      @wrapper ||= DslLocationStateWrapper.new(self)
+      @wrapper ||= DslItemStateWrapper.new(self)
     end
 
     def every_X_ticks(action_name, t, &block)
       @state["everies"] ||= []
       @state["everies"] << { "action" => action_name, "every" => t, "counter" => 0 }
+      raise("Duplicate item/action combination for action #{action_name.inspect}!") if @actions[action_name]
       @actions[action_name] = block
     end
 
@@ -116,134 +134,17 @@ module Demiurge
     end
   end
 
-  # This is a very simple zone that just passes control to all children when determining intentions.
   class DslZone < Zone
-    def intentions_for_next_step(options = {})
-      intentions = @engine.state_for_property(@name, "location_names").flat_map do |loc_name|
-        @engine.item_by_name(loc_name).intentions_for_next_step
-      end
-      intentions
-    end
   end
 
-  class DslLocation < StateItem
-    def initialize(name, engine)
-      super # Set @name and @engine
-    end
-
-    def __state_internal
-      @engine.state_for_item(@name)
-    end
-
-    def self.register_actions_by_item_and_action_name(act)
-      @actions ||= {}
-      act.each do |item_name, act_hash|
-        if @actions[item_name]
-          dup_keys = @actions[item_name].keys | act_hash.keys
-          raise "Duplicate item actions for #{item_name.inspect}! List: #{dup_keys.inspect}" unless dup_keys.empty?
-          @actions[item_name].merge!(act_hash)
-        else
-          @actions[item_name] = act_hash
-        end
-      end
-    end
-
-    def self.action_for_item(item_name, action_name)
-      @actions[item_name][action_name]
-    end
-
-    def intentions_for_next_step(options = {})
-      everies = @engine.state_for_property(@name, "everies")
-      return [] if everies.empty?
-      EveryXTicksIntention.new(@name)
-    end
-
-    def run_action(action_name)
-      block = DslLocation.action_for_item(@name, action_name)
-      raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless block
-      @block_runner ||= DslLocationBlockRunner.new(self)
-      @block_runner.instance_eval(&block)
-      nil
-    end
+  class DslLocation < ActionItem
   end
 
-  class DslLocationBlockRunner
-    def initialize(location)
-      @location = location
-    end
-
-    def state
-      @state_wrapper ||= DslLocationStateWrapper.new(@location)
-    end
-
-    def action(*args)
-      STDERR.puts "Not yet using action: #{args.inspect}"
-    end
+  class DslAgent < ActionItem
   end
 
-  class DslLocationStateWrapper
-    def initialize(location)
-      @location = location
-    end
-
-    def has_key?(key)
-      @location.__state_internal.has_key?(key)
-    end
-
-    def method_missing(method_name, *args, &block)
-      if method_name.to_s[-1] == "="
-        getter_name = method_name.to_s[0..-2]
-        setter_name = method_name.to_s
-      else
-        getter_name = method_name.to_s
-        setter_name = method_name.to_s + "="
-      end
-
-      if @location.state.has_key?(getter_name) || method_name.to_s[-1] == "="
-        self.class.send(:define_method, getter_name) do
-          @location.__state_internal[getter_name]
-        end
-        self.class.send(:define_method, setter_name) do |val|
-          @location.__state_internal[getter_name] = val
-        end
-
-        # Call to new defined method
-        return self.send(method_name, *args, &block)
-      end
-
-      # Nope, no matching state.
-      STDERR.puts "No such state key as #{method_name.inspect} in DslLocationStateWrapper#method_missing!"
-      super
-    end
-
-    def respond_to_missing?(method_name, include_private = false)
-      @location.state.has_key?(method_name.to_s) || super
-    end
-  end
-
-  class EveryXTicksIntention < Intention
-    def initialize(name)
-      @name = name
-    end
-
-    def allowed?(engine, options)
-      true
-    end
-
-    def apply(engine, options)
-      everies = engine.state_for_property(@name, "everies")
-      everies.each do |every|
-        every["counter"] += 1
-        if every["counter"] >= every["every"]
-          STDERR.puts "Time to execute action #{every["action"].inspect} on item #{@name.inspect} (every #{every["every"]} ticks)!"
-          item = engine.item_by_name(@name)
-          item.run_action(every["action"])
-          every["counter"] = 0
-        end
-      end
-    end
-  end
 end
 
 Demiurge::TopLevelBuilder.register_type "DslZone", Demiurge::DslZone
 Demiurge::TopLevelBuilder.register_type "DslLocation", Demiurge::DslLocation
+Demiurge::TopLevelBuilder.register_type "DslAgent", Demiurge::DslAgent

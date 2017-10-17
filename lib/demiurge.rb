@@ -1,4 +1,6 @@
 require "demiurge/version"
+require "demiurge/action_item"
+require "demiurge/zone"
 
 require "multi_json"
 
@@ -14,8 +16,6 @@ require "multi_json"
 
 module Demiurge
   class Engine
-    INIT_PARAMS = [ "state", "types" ]
-
     # When initializing, "types" is a hash mapping type name to the
     # class that implements that name. Usually the name is the same as
     # the class name with the module optionally stripped off.
@@ -168,7 +168,10 @@ module Demiurge
 
   end
 
-  # A StateItem encapsulates a chunk of frozen, immutable state. It provides behavior to the bare data.
+  # A StateItem encapsulates a chunk of frozen, immutable state. It
+  # provides behavior to the bare data. Note that ActionItem, defined
+  # elsewhere, makes this easier to use by providing a simple block
+  # DSL instead of requiring raw calls with the engine API.
   class StateItem
     attr_reader :name
 
@@ -190,6 +193,15 @@ module Demiurge
       self.is_a?(::Demiurge::Zone)
     end
 
+    # This method determines whether the item will be treated as an
+    # agent.  Inheriting from Demiurge::Agent will cause that to
+    # occur. So will redefining the agent? method to return true.
+    # Whether agent? returns true should not depend on state, which
+    # may not be set when this method is called.
+    def agent?
+      self.is_a?(::Demiurge::Agent)
+    end
+
     def state
       @engine.state_for_item(@name)
     end
@@ -209,21 +221,6 @@ module Demiurge
 
   end
 
-  # A Zone is a top-level location. It may (or may not) contain
-  # various sub-locations managed by the top-level zone, and it may be
-  # quite large or quite small. Zones are the "magic" by which
-  # Demiurge permits simulation of much larger areas than CPU allows,
-  # up to and including "infinite" procedural areas where only a small
-  # portion is continuously simulated.
-
-  # A simplistic engine may contain only a small number of top-level
-  # areas, each a zone in itself. A complex engine may have a small
-  # number of areas, but each does extensive managing of its
-  # sub-locations.
-
-  class Zone < StateItem
-  end
-
   class Intention
     def allowed?(engine, options = {})
       raise "Unimplemented intention!"
@@ -236,5 +233,12 @@ module Demiurge
     def try_apply(engine, options = {})
       apply(engine, options) if allowed?(engine, options)
     end
+  end
+
+  # "Agent" is currently advisory - it tells zones how to handle the
+  # StateItem which isn't a location, and is attached to various
+  # behaviors. This corresponds roughly to a "mobile" in many games.
+
+  class Agent < StateItem
   end
 end
