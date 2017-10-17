@@ -1,6 +1,14 @@
 require "demiurge/version"
+
+# Predeclare classes that other required files will use.
+module Demiurge
+  class StateItem; end
+  class Intention < StateItem; end
+end
+
 require "demiurge/action_item"
 require "demiurge/zone"
+require "demiurge/agent"
 
 require "multi_json"
 
@@ -267,12 +275,5 @@ module Demiurge
     def try_apply(engine, options = {})
       apply(engine, options) if allowed?(engine, options)
     end
-  end
-
-  # "Agent" is currently advisory - it tells zones how to handle the
-  # StateItem which isn't a location, and is attached to various
-  # behaviors. This corresponds roughly to a "mobile" in many games.
-
-  class Agent < StateItem
   end
 end

@@ -1,7 +1,4 @@
 module Demiurge
-  class StateItem; end
-  class Intention < StateItem; end
-
   # A Demiurge::ActionItem keeps track of actions from Ruby code
   # blocks and implements the Demiurge block DSL.
   class ActionItem < StateItem
