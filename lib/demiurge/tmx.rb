@@ -5,14 +5,14 @@ require "tmx"
 # TMX support here includes basic/normal TMX support for products of
 # the Tiled map editor (see "http://mapeditor.org" and
 # "http://docs.mapeditor.org/en/latest/reference/tmx-map-format/") and
-# more complex tiled map support for formats based on the Mana Source
+# more complex tiled map support for formats based on the ManaSource
 # game engine, including variants like Source of Tales, Land of Fire,
-# The Mana World and others. For more information on the Mana Source
+# The Mana World and others. For more information on the ManaSource
 # mapping format, see "http://doc.manasource.org/mapping.html".
 
 # In general, Tiled and "raw" TMX try to be all things to all
 # games. If you can use a tile editor for it, Tiled would like to do
-# that for you.  Mana Source is a more specialized engine and
+# that for you.  ManaSource is a more specialized engine and
 # introduces new concepts like named "Fringe" layers to make it clear
 # how a humanoid sprite walks through the map, named "Collision"
 # layers for walkability and swimmability, known-format "objects" for
@@ -21,8 +21,8 @@ require "tmx"
 # things belongs in the (opt-in) ManaSource TMX parsing code.
 
 # In the long run, it's very likely that there will be other TMX
-# "dialects" like Mana Source's. Indeed, Demiurge might eventually
-# specify its own TMX dialect to support non-Mana Source features like
+# "dialects" like ManaSource's. Indeed, Demiurge might eventually
+# specify its own TMX dialect to support non-ManaSource features like
 # procedural map generation. My intention is to add them in the same
 # way - they may be requested in the Demiurge World files in the DSL,
 # and they will be an additional parsing pass on the result of "basic"
@@ -33,9 +33,8 @@ module Demiurge
     def tmx_location(name, &block)
       builder = TmxLocationBuilder.new(name)
       builder.instance_eval(&block)
-      location = builder.built_location
-      @locations << location
-      DslStateItem.register_actions_by_item_and_action_name(location[1] => builder.actions)
+      @locations << builder.built_location
+      @location_actions << builder.built_actions
       nil
     end
   end
@@ -83,7 +82,6 @@ module Demiurge
         "manasource_tile_layout" => {},
         "tile_layout" => {},
       }
-      STDERR.puts "Loading entry from tile cache! Current entries: #{@tile_cache.values.map(&:value).map(&:size).inspect}"
       if smtl
         @tile_cache["manasource_tile_layout"][smtl] ||= Demiurge.sprites_from_manasource_tmx(smtl)
       elsif stl
