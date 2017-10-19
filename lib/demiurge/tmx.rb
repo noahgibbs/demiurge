@@ -58,18 +58,18 @@ module Demiurge
 
     def built_location
       raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout"] || @state["manasource_tile_layout"]
-      [ "DslTmxLocation", @name, @state ]
+      [ "TmxLocation", @name, @state ]
     end
   end
 
-  class DslTmxLocation < DslLocation
+  class TmxLocation < Location
     def initialize(name,engine)
       super
     end
 
     def tiles
       raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless state["tile_layout"] || state["manasource_tile_layout"]
-      DslTmxLocation.tile_cache_entry(state["manasource_tile_layout"], state["tile_layout"])
+      TmxLocation.tile_cache_entry(state["manasource_tile_layout"], state["tile_layout"])
     end
 
     # Technically a StateItem of any kind has to be okay with its
@@ -95,7 +95,7 @@ module Demiurge
   end
 end
 
-Demiurge::TopLevelBuilder.register_type "DslTmxLocation", Demiurge::DslTmxLocation
+Demiurge::TopLevelBuilder.register_type "TmxLocation", Demiurge::TmxLocation
 
 module Demiurge
   # This is to support TMX files for ManaSource, ManaWorld, Land of
@@ -114,15 +114,15 @@ module Demiurge
 
     # Remove the collision layer, add as separate collision top-level entry
     collision_index = stack_layers.index { |l| l[:name].downcase == "collision" }
-    collision_layer = stack_layers.delete_at collision_index
+    collision_layer = stack_layers.delete_at collision_index if collision_index
 
     # Some games make this true/false, others have separate visibility
     # or swimmability in it. In general, we'll just expose the data.
-    objs[:collision] = collision_layer[:data]
+    objs[:collision] = collision_layer[:data] if collision_layer
 
     # Remove the heights layer, add as separate heights top-level entry
     heights_index = stack_layers.index { |l| ["height", "heights"].include?(l[:name].downcase)  }
-    heights_layer = stack_layers.delete_at heights_index
+    heights_layer = stack_layers.delete_at heights_index if heights_index
     objs[:heights] = heights_layer
 
     fringe_index = stack_layers.index { |l| l[:name].downcase == "fringe" }

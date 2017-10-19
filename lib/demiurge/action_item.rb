@@ -30,7 +30,7 @@ module Demiurge
 
     def intentions_for_next_step(options = {})
       everies = @engine.state_for_property(@name, "everies")
-      return [] if everies.empty?
+      return [] if everies.nil? || everies.empty?
       EveryXTicksIntention.new(@name)
     end
 

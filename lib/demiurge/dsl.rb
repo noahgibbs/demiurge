@@ -94,7 +94,7 @@ module Demiurge
       # This allows zone re-opening in multiple Ruby files.
       same_zone = @zones.detect { |z| z[1] == new_zone[1] }
       if same_zone
-        array_merged_keys = [ "location_names", "everies" ]
+        array_merged_keys = [ "location_names", "agent_names", "everies" ]
         hash_merged_keys = [ "on_handlers" ]
         new_state_keys = new_zone[2].keys - array_merged_keys - hash_merged_keys
         old_state_keys = same_zone[2].keys - array_merged_keys - hash_merged_keys
@@ -117,15 +117,7 @@ module Demiurge
       end
 
       @locations += register_new_serialized_objects(builder.built_locations, builder.location_actions)
-      nil
-    end
-
-    def agent(name, &block)
-      builder = AgentBuilder.new(name)
-      builder.instance_eval(&block)
-      agent = builder.built_agent
-      actions = builder.built_actions
-      @agents << register_new_serialized_objects([agent], [actions])[0]
+      @agents += register_new_serialized_objects(builder.built_agents, builder.agent_actions)
       nil
     end
 
@@ -146,9 +138,6 @@ module Demiurge
   end
 
   class AgentBuilder < ActionItemBuilder
-    def initialize
-    end
-
     def built_agent
       ["Agent", @name, @state]
     end
@@ -156,11 +145,14 @@ module Demiurge
 
   class ZoneBuilder < ActionItemBuilder
     attr_reader :location_actions
+    attr_reader :agent_actions
 
     def initialize(name)
       super
       @locations = []
       @location_actions = []
+      @agents = []
+      @agent_actions = []
     end
 
     def location(name, &block)
@@ -173,12 +165,26 @@ module Demiurge
       nil
     end
 
+    def agent(name, &block)
+      builder = AgentBuilder.new(name)
+      builder.instance_eval(&block)
+      agent = builder.built_agent
+      actions = builder.built_actions
+      @agents << agent
+      @agent_actions << actions
+      nil
+    end
+
     def built_zone
-      [ "Zone", @name, @state.merge("location_names" => @locations.map { |l| l[1] }) ]
+      [ "Zone", @name, @state.merge("location_names" => @locations.map { |l| l[1] }, "agent_names" => @agents.map { |a| a[1] }) ]
     end
 
     def built_locations
       @locations
+    end
+
+    def built_agents
+      @agents
     end
   end
 
