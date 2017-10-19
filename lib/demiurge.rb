@@ -8,6 +8,7 @@ end
 
 require "demiurge/action_item"
 require "demiurge/zone"
+require "demiurge/location"
 require "demiurge/agent"
 
 require "multi_json"
@@ -37,6 +38,7 @@ module Demiurge
         end
       end
       state_from_structured_array(state || [])
+      @subscriptions_by_tracker = {}
       nil
     end
 
@@ -146,6 +148,47 @@ module Demiurge
         @state_items[name] = StateItem.from_name_type(self, type.freeze, name.freeze, options)
       end
       @zones = @state_items.values.select { |item| item.zone? }
+    end
+
+    def notification_spec(s)
+      return s if s == :all
+      return [s].flatten
+    end
+
+    # This method 'subscribes' a block to various types of
+    # notifications. The block will be called with the notifications
+    # when they occur.
+    def subscribe_to_notifications(notification_types: :all, zones: :all, locations: :local, predicate: nil, items: :all, tracker: nil, &block)
+      sub_structure = {
+        types: notification_spec(notification_types),
+        zones: notification_spec(zones),
+        locations: notification_spec(locations),
+        items: notification_spec(items),
+        predicate: predicate,
+        tracker: tracker,
+        block: block,
+      }
+      @subscriptions_by_tracker[tracker] ||= []
+      @subscriptions_by_tracker[tracker].push sub_structure
+    end
+
+    def unsubscribe_from_notifications(tracker)
+      @subscriptions_by_tracker[tracker].each do |subscription|
+        # Remove from other structures tracking subscriptions
+      end
+      @subscriptions_by_tracker.delete(tracker)
+    end
+
+    def send_notification(notification_type:, zone:, location:, item_acting:)
+      @subscriptions_by_tracker.each do |tracker, sub_structure|
+        next unless sub_structure[:types] == :all || sub_structure[:types].include?(notification_type)
+        next unless sub_structure[:zones] == :all || sub_structure[:zones].include?(zone)
+        next unless sub_structure[:locations] == :all || sub_structure[:locations].include?(zone)
+        next unless sub_structure[:items] == :all || sub_structure[:items].include?(item_acting)
+        next unless sub_structure[:predicate] == nil || sub_structure[:predicate].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
+
+        sub_structure[:block].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
+      end
     end
 
     # This operation duplicates standard data that can be reconstituted from
@@ -258,10 +301,21 @@ module Demiurge
     end
 
     def intentions_for_next_step(*args)
-      raise "StateItem must be subclassed to be used directly!"
+      raise "StateItem must be subclassed to be used!"
     end
 
   end
+
+  # An Intention is an unresolved event. Some part of the simulated
+  # world "wishes" to take an action. This need not be a sentient
+  # being - any change to the world should occur with an Intention
+  # then being resolved into changes in state and events -- or
+  # not. It's also possible for an intention to resolve to nothing at
+  # all. For instance, an intention to move in an impossible direction
+  # could simply become no movement, no state change and no event.
+  #
+  # Intentions go through verification, resolution and eventually
+  # notification.
 
   class Intention
     def allowed?(engine, options = {})

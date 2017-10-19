@@ -1,8 +1,8 @@
 module Demiurge
-  # "Agent" is currently advisory - it tells zones how to handle the
-  # StateItem which isn't a location, and is attached to various
-  # behaviors. This corresponds roughly to a "mobile" in many games.
 
-  class Agent < StateItem
+  # Agents correspond roughly to "mobiles" in many games. An agent
+  # isn't particularly different from other Demiurge objects, but it's
+  # useful to have some helper classes for things like pathfinding.
+  class Agent < ActionItem
   end
 end

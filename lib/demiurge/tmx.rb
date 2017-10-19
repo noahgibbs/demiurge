@@ -33,7 +33,9 @@ module Demiurge
     def tmx_location(name, &block)
       builder = TmxLocationBuilder.new(name)
       builder.instance_eval(&block)
-      @locations << builder.built_location
+      location = builder.built_location
+      location[2].merge!("zone" => @name)
+      @locations << location
       @location_actions << builder.built_actions
       nil
     end

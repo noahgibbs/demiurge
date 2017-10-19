@@ -2,8 +2,26 @@ module Demiurge
   # A Demiurge::ActionItem keeps track of actions from Ruby code
   # blocks and implements the Demiurge block DSL.
   class ActionItem < StateItem
+    attr_reader :engine
+
     def initialize(name, engine)
       super # Set @name and @engine
+    end
+
+    def location_name
+      @engine.state_for_property(@name, "location")
+    end
+
+    def location
+      @engine.item_by_name(location_name)
+    end
+
+    def zone
+      location.zone
+    end
+
+    def zone_name
+      location.zone_name
     end
 
     def __state_internal
@@ -34,8 +52,9 @@ module Demiurge
       @state_wrapper ||= ActionItemStateWrapper.new(@item)
     end
 
-    def action(*args)
-      STDERR.puts "Not yet using action: #{args.inspect}"
+    def notification(data, notification_type: :sound, zone: @item.zone, location: @item.location, item_acting: @item)
+      STDERR.puts "Testing notification of type #{notification_type.inspect}"
+      @item.engine.send_notification(notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
     end
   end
 
@@ -93,7 +112,6 @@ module Demiurge
       everies.each do |every|
         every["counter"] += 1
         if every["counter"] >= every["every"]
-          STDERR.puts "Time to execute action #{every["action"].inspect} on item #{@name.inspect} (every #{every["every"]} ticks)!"
           item = engine.item_by_name(@name)
           item.run_action(every["action"])
           every["counter"] = 0

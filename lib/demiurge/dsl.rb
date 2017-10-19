@@ -150,7 +150,7 @@ module Demiurge
     end
 
     def built_agent
-      ["DslAgent", @name, @state]
+      ["Agent", @name, @state]
     end
   end
 
@@ -166,13 +166,15 @@ module Demiurge
     def location(name, &block)
       builder = LocationBuilder.new(name)
       builder.instance_eval(&block)
-      @locations << builder.built_location
+      location = builder.built_location
+      location[2].merge!("zone" => @name)
+      @locations << location
       @location_actions << builder.built_actions
       nil
     end
 
     def built_zone
-      [ "DslZone", @name, @state.merge("location_names" => @locations.map { |l| l[1] }) ]
+      [ "Zone", @name, @state.merge("location_names" => @locations.map { |l| l[1] }) ]
     end
 
     def built_locations
@@ -190,22 +192,12 @@ module Demiurge
     end
 
     def built_location
-      [ "DslLocation", @name, @state ]
+      [ "Location", @name, @state ]
     end
-  end
-
-  # Do these types need to exist at all? Can we have some kind of parent type get instantiated here and have it work?
-  class DslZone < Zone
-  end
-
-  class DslLocation < ActionItem
-  end
-
-  class DslAgent < ActionItem
   end
 
 end
 
-Demiurge::TopLevelBuilder.register_type "DslZone", Demiurge::DslZone
-Demiurge::TopLevelBuilder.register_type "DslLocation", Demiurge::DslLocation
-Demiurge::TopLevelBuilder.register_type "DslAgent", Demiurge::DslAgent
+Demiurge::TopLevelBuilder.register_type "Zone", Demiurge::Zone
+Demiurge::TopLevelBuilder.register_type "Location", Demiurge::Location
+Demiurge::TopLevelBuilder.register_type "Agent", Demiurge::Agent

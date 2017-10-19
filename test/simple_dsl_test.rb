@@ -10,7 +10,7 @@ DSL_TEXT = <<GOBLIN_DSL
 
       every_X_ticks("grow", 3) do
         state.moss += 1
-        action description: "The moss slowly grows longer and more lush here."
+        notification description: "The moss slowly grows longer and more lush here."
       end
     end
 
@@ -20,13 +20,14 @@ DSL_TEXT = <<GOBLIN_DSL
 
       every_X_ticks("grow", 3) do
         state.moss += 1
-        action description: "The moss in the cracks seems to get thicker and softer moment by moment."
+        notification description: "The moss in the cracks seems to get thicker and softer moment by moment."
       end
     end
   end
 
-  #player do
-  #  start_zone "moss caves"
+  #agent "player" do
+  #  type "PlayerAgent"
+  #  state.start_zone = "moss caves"
   #end
 GOBLIN_DSL
 

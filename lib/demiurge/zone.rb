@@ -12,6 +12,26 @@ module Demiurge
   # sub-locations.
 
   class Zone < ActionItem
+    # A Zone isn't located "inside" somewhere else. It is located in/at itself.
+    def location
+      self
+    end
+
+    # A Zone isn't located "inside" somewhere else. It is located in/at itself.
+    def location_name
+      @name
+    end
+
+    # A Zone's zone is itself.
+    def zone
+      self
+    end
+
+    # A Zone's zone is itself.
+    def zone_name
+      @name
+    end
+
     # By default, a zone just passes control to all its locations.
     def intentions_for_next_step(options = {})
       intentions = @engine.state_for_property(@name, "location_names").flat_map do |loc_name|
