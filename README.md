@@ -46,6 +46,10 @@ going to have a strong "flavor" of whatever underlying physics you
 select. There is no such thing as "just plain physics, with no strong
 bias that changes the behavior of agents within it."
 
+This README doesn't tell you everything about creating and simulating
+a world with Demiurge. See CONCEPTS.md for an initial grounding in
+those ideas.
+
 ## Demiurge DSL (World Files)
 
 Demiurge contains an optional Domain-Specific Language (also called a
