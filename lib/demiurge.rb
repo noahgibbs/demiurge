@@ -1,4 +1,5 @@
 require "demiurge/version"
+require "demiurge/util"
 
 # Predeclare classes that other required files will use.
 module Demiurge
@@ -25,6 +26,8 @@ require "multi_json"
 
 module Demiurge
   class Engine
+    include ::Demiurge::Util # For copyfreeze and deepcopy
+
     # When initializing, "types" is a hash mapping type name to the
     # class that implements that name. Usually the name is the same as
     # the class name with the module optionally stripped off.
@@ -137,6 +140,9 @@ module Demiurge
       @item_actions[item_name][action_name]
     end
 
+    # This sets the Engine's internal state from a structured array of
+    # items.  This is a good way, for instance, to restore state from
+    # a JSON dump or a hypothetical that didn't work out.
     def state_from_structured_array(arr, options = {})
       options = options.dup.freeze unless options.frozen?
 
@@ -148,12 +154,16 @@ module Demiurge
         @state_items[name] = StateItem.from_name_type(self, type.freeze, name.freeze, options)
       end
       @zones = @state_items.values.select { |item| item.zone? }
+      nil
     end
 
+    # Internal method used by subscribe_to_notifications for notification matching.
+    private
     def notification_spec(s)
       return s if s == :all
       return [s].flatten
     end
+    public
 
     # This method 'subscribes' a block to various types of
     # notifications. The block will be called with the notifications
@@ -188,66 +198,6 @@ module Demiurge
         next unless sub_structure[:predicate] == nil || sub_structure[:predicate].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
 
         sub_structure[:block].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
-      end
-    end
-
-    # This operation duplicates standard data that can be reconstituted from
-    # JSON, to make a frozen copy.
-    def copyfreeze(items)
-      case items
-      when Hash
-        result = {}
-        items.each do |k, v|
-          result[k] = copyfreeze(v)
-        end
-        result.freeze
-      when Array
-        items.map { |i| copyfreeze(i) }
-      when Numeric
-        items
-      when NilClass
-        items
-      when TrueClass
-        items
-      when FalseClass
-        items
-      when String
-        if items.frozen?
-          items
-        else
-          items.dup.freeze
-	end
-      else
-        STDERR.puts "Unrecognized item type #{items.class.inspect} in copyfreeze!"
-        items.dup.freeze
-      end
-    end
-
-    # This operation duplicates standard data that can be reconstituted from
-    # JSON, to make a non-frozen copy.
-    def deepcopy(items)
-      case items
-      when Hash
-        result = {}
-        items.each do |k, v|
-          result[k] = deepcopy(v)
-        end
-        result
-      when Array
-        items.map { |i| deepcopy(i) }
-      when Numeric
-        items
-      when NilClass
-        items
-      when TrueClass
-        items
-      when FalseClass
-        items
-      when String
-        items.dup
-      else
-        STDERR.puts "Unrecognized item type #{items.class.inspect} in copyfreeze!"
-        items.dup
       end
     end
 
