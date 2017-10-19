@@ -169,14 +169,18 @@ module Demiurge
     private
     def notification_spec(s)
       return s if s == :all
-      return [s].flatten
+      if s.respond_to?(:each)
+        return s.map { |item| notification_spec(item) }
+      end
+      return s.name if s.respond_to?(:name)  # Demiurge Entities should be replaced by their names
+      s
     end
     public
 
     # This method 'subscribes' a block to various types of
     # notifications. The block will be called with the notifications
     # when they occur.
-    def subscribe_to_notifications(notification_types: :all, zones: :all, locations: :local, predicate: nil, items: :all, tracker: nil, &block)
+    def subscribe_to_notifications(notification_types: :all, zones: :all, locations: :all, predicate: nil, items: :all, tracker: nil, &block)
       sub_structure = {
         types: notification_spec(notification_types),
         zones: notification_spec(zones),
@@ -197,15 +201,21 @@ module Demiurge
       @subscriptions_by_tracker.delete(tracker)
     end
 
-    def send_notification(notification_type:, zone:, location:, item_acting:)
-      @subscriptions_by_tracker.each do |tracker, sub_structure|
-        next unless sub_structure[:types] == :all || sub_structure[:types].include?(notification_type)
-        next unless sub_structure[:zones] == :all || sub_structure[:zones].include?(zone)
-        next unless sub_structure[:locations] == :all || sub_structure[:locations].include?(zone)
-        next unless sub_structure[:items] == :all || sub_structure[:items].include?(item_acting)
-        next unless sub_structure[:predicate] == nil || sub_structure[:predicate].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
+    def send_notification(data = {}, notification_type:, zone:, location:, item_acting:)
+      raise "Notification type must be a String, not #{notification_type.class}!" unless notification_type.is_a?(String)
+      raise "Location must be a String, not #{location.class}!" unless location.is_a?(String)
+      raise "Zone must be a String, not #{zone.class}!" unless zone.is_a?(String)
+      raise "Acting item must be a String or nil, not #{item_acting.class}!" unless item_acting.is_a?(String) || item_acting.nil?
+      @subscriptions_by_tracker.each do |tracker, sub_structures|
+        sub_structures.each do |sub_structure|
+          next unless sub_structure[:types] == :all || sub_structure[:types].include?(notification_type)
+          next unless sub_structure[:zones] == :all || sub_structure[:zones].include?(zone)
+          next unless sub_structure[:locations] == :all || sub_structure[:locations].include?(zone)
+          next unless sub_structure[:items] == :all || sub_structure[:items].include?(item_acting)
+          next unless sub_structure[:predicate] == nil || sub_structure[:predicate].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
 
-        sub_structure[:block].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
+          sub_structure[:block].call(data, notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
+        end
       end
     end
 

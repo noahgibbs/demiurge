@@ -52,8 +52,19 @@ module Demiurge
       @state_wrapper ||= ActionItemStateWrapper.new(@item)
     end
 
+    private
+    def to_demiurge_name(item)
+      return item if item.is_a?(String)
+      return item.name if item.respond_to?(:name)
+      raise "Not sure how to convert PORO to Demiurge name: #{item.inspect}!"
+    end
+    public
+
     def notification(data, notification_type: :sound, zone: @item.zone, location: @item.location, item_acting: @item)
       STDERR.puts "Testing notification of type #{notification_type.inspect}"
+      zone = to_demiurge_name(zone)
+      location = to_demiurge_name(location)
+      item_acting = to_demiurge_name(item_acting)
       @item.engine.send_notification(notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
     end
   end
