@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.0.3" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" nextobjectid="1">
+<map version="1.0" tiledversion="1.0.3" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" nextobjectid="12">
  <tileset firstgid="1" name="MageCity" tilewidth="32" tileheight="32" tilecount="360" columns="8">
   <image source="magecity.png" width="256" height="1450"/>
+ </tileset>
+ <tileset firstgid="361" name="Collision" tilewidth="32" tileheight="32" tilecount="2" columns="2">
+  <image source="collision.png" width="64" height="32"/>
  </tileset>
  <layer name="Ground 5" width="20" height="20">
   <data encoding="csv">
@@ -147,4 +150,33 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <layer name="Collision" width="20" height="20" visible="0">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,362,362,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,362,362,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,362,0,0,0,0,0,362,362,362,362,362,362,362,
+0,0,0,0,0,0,0,0,0,0,0,0,0,362,362,362,362,362,362,362,
+0,0,0,0,0,0,0,0,0,0,0,0,0,362,362,362,362,362,362,362,
+362,362,362,0,0,0,0,0,0,0,0,0,0,362,362,362,362,362,362,362,
+362,362,362,0,0,362,362,0,0,0,0,0,0,362,362,362,362,362,362,362,
+362,362,362,0,0,362,362,0,0,0,0,0,0,362,362,362,362,362,362,362,
+0,0,362,0,0,362,362,0,0,0,0,0,0,362,362,362,362,362,362,362,
+0,0,362,0,0,362,362,0,0,0,0,0,0,362,362,0,362,362,362,362,
+0,0,362,0,0,0,0,0,0,0,0,0,0,362,362,0,362,362,362,362,
+0,0,0,0,0,0,0,362,362,0,0,0,0,362,362,0,362,362,362,362,
+0,0,0,0,0,0,0,362,362,0,0,0,0,0,0,0,0,362,362,362,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,362,362,
+0,0,362,0,0,0,0,0,362,0,0,0,0,0,0,362,362,362,362,362,
+0,0,362,0,0,0,0,0,362,0,0,0,0,362,362,362,362,362,362,362,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,362,362,362,362,362,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,362,362,362,362,362
+</data>
+ </layer>
+ <objectgroup name="Objects">
+  <object id="9" name="start location" gid="361" x="320" y="128" width="32" height="32" visible="0"/>
+  <object id="10" name="waypoint 1" gid="361" x="288" y="352" width="32" height="32" visible="0"/>
+  <object id="11" name="waypoint 2" gid="361" x="128" y="352" width="32" height="32" visible="0"/>
+ </objectgroup>
 </map>
