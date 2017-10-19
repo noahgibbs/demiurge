@@ -72,6 +72,41 @@ This abstraction makes it easy to consider hypotheticals -- to ask,
 "if the state were different in this way, how would that change the
 world?"
 
+== Item Naming and Instances
+
+A Demiurge item (including Zones, Locations, Agents and many others)
+must have a single, fully unique name within a given Engine. In World
+Files, normally a human has to declare the name and that name needs to
+be unique.
+
+Names have a few restrictions. You can use alphanumeric characters
+(letters and numbers) along with spaces, dashes and underscores in the
+names. But other punctuation including quotes, hash signs, dollar signs
+and so on aren't permitted. These names are used internally as unique
+identifiers and you don't need to worry about showing them to humans,
+so don't worry about not being able to put punctuation you care about
+in the names. The names are case-sensitive -- that is, "Bobo" and
+"boBo" are completely different items because an upper-case and
+lower-case letter count as different from each other.
+
+Sometimes you want to declare an object and then have a lot of
+them. Something like a wooden spoon, a low-level slime monster or a
+player body object may get just one declaration in the World Files for
+a lot of individual objects in the world. Differences in state or
+appearance can add variation where you need it without requiring
+giant, bloated World Files with fifteen identical slime monsters that
+just have a "7" or a "12" after their name.
+
+Certain items, such as Zones in World Files may be reopened by
+declaring a Zone with the same name. But if so, they aren't two
+different Zones with the same name. Instead, the files declare a
+single Zone across multiple files. That's perfectly legal, just as you
+may declare a room in one World File while declaring creatures and
+items inside it in another World File. But it's all a single room,
+even if it's declared in multiple places for human convenience. If
+you're used to programming with Ruby classes, this idea of "reopening"
+the same zone in a new file will probably seem very familiar.
+
 == Events and State Changes
 
 Often an Intention turns into a change of state. For example, an item
@@ -116,6 +151,90 @@ First an Intention is "validated" - can it happen at all? If not, it
 is discarded as impossible, undesirable or otherwise "not going to
 happen" with no effects of any kind.
 
+At this point, the state must be unfrozen (or duplicated as mutable.)
 
+Then an Intention is offered - other entities may attempt to block,
+modify or otherwise interfere with what occurs. This may result in the
+Intention being blocked as in the validation stage (another entity
+effectively makes its result impossible, resulting in nothing
+happening) or its effects may be modified and/or other effects may
+immediately occur as a result.
 
-== Zones and Location
+As that process resolves, the Intention may modify state. It may also
+send Notifications. In general, a Notification reflects a completed
+operation and the receiver can only react, not change or block the
+action. While a Notification allows the receiver to modify state, that
+receiver should only modify its own state or send additional
+Notifications - it should not take "instant reactions", which should
+be resolved in the offer/modify/veto stage.
+
+After all these Notifications have resolved, including any
+Notifications raised in response to other Notifications, the tick
+begins again with the new state, which may be frozen during the early
+Intention phases.
+
+== Zones, Location and Position
+
+Location in Demiurge starts with the Zone. A Zone is a top-level
+entity that manages state and flow of execution roughly independently
+of other zones.
+
+Different Zones may have very different "physics" between them - a
+Zone might be entirely text descriptions, while a different Zone is
+managed entirely in 2D tile graphics, for instance and a third Zone
+could be an HTML UI. It's possible to do that within a single Zone in
+some cases, if the Zone's "physics" permit it, but such changes are
+expected between Zones.
+
+A Location within a Zone may have some difference, but needs to
+cooperate effectively with the Zone and with other Locations
+inside. In a 2D tile-based Zone, it may be important that Zone
+pathfinding works across multiple Locations, for instance. In a
+text-based Zone of mostly-independent locations, there may be a
+notification system that allows events in adjacent rooms to be visible
+in certain other rooms as text notifications.
+
+In general, a Zone defines the top-level "physics" and the nature of
+space and location within itself, and Locations coordinate to make
+that happen. Technically Locations are optional - it's possible for a
+Zone to skip Locations entirely. But ordinarily there is some form of
+subdivision.
+
+Locations are also allowed to contain other Locations, and may do so
+or not depending on the nature of their Zone.
+
+When one asks for an entity's "location", one may mean "what entity
+inside a Zone is it contained in?" However, there is not always a
+well-defined answer to that question. For instance, an "infinite
+space" Zone with no sub-locations that handles all object interactions
+directly may not have "Location" sub-objects within itself at
+all. What "location" is somebody at within the Zone? The Demiurge
+entity in question is just the Zone, since there are no smaller
+Location entities within it.
+
+And within a Location, an entity may occupy different positions. In a
+box of 3D space or a 2D tile map or a MUD-style room with objects
+inside, a given entity may be at "x: 27.4, y:-1547.2, z: 297.0" or "x:
+27, y: 5" or "next to the gray lamp."
+
+The Demiurge class "Demiurge::Location" is basically advisory -
+locations within a Zone aren't required to belong to that class, may
+be part of a tree of different location objects or may not exist at
+all.
+
+As a result, a "location" in Demiurge is about author intention, not
+really about what Demiurge does with the object in question. The Zone
+defines what being a location means, and it may vary widely from Zone
+to Zone.
+
+But then, how does one specify? With a Position.
+
+A Position is given relative to a Zone or an object inside the Zone,
+such as a Location (if one exists.) It is of the form
+"item\_name#coordinates" where "item\_name" is a canonical
+Demiurge item name, instanced or non-instanced. The coordinates may be
+in a form appropriate to their zone such as "7,25" or
+"29.45/81.6/Kappa" or "left\_of/gray\_greasy\_lamp". The coordinates
+should not contain a pound-sign, a dollar sign or other characters
+that aren't legal in a Demiurge item name.
+

@@ -73,6 +73,9 @@ module Demiurge
       @item_actions = {}
     end
 
+    # This "registers" the serialized objects in the sense that it
+    # tracks their names and actions to be added to the Engine when it
+    # is created later.
     def register_new_serialized_objects(objs, actions = nil)
       objs.each_with_index do |obj, index|
         name = obj[1]
@@ -121,6 +124,16 @@ module Demiurge
       nil
     end
 
+    # It's hard to figure out where and how to register types and
+    # plugins for the World File format. By their nature, they need to
+    # be in place before an Engine exists, so that's not the right
+    # place. If they didn't exist before engines, we'd somehow need to
+    # register them with each engine as it was created. Since Engines
+    # keep track of that, that's exactly the same problem we're trying
+    # to solve, just for the Engine builder. And it seems like
+    # "register this plugin with Demiurge World Files" is more of a
+    # process-global operation than a per-Engine operation.  So these
+    # wind up in awkward spots.
     def self.register_type(name, klass)
       if @@types[name.to_s]
         raise("Attempting to re-register type #{name.inspect} with a different class!") unless @@types[name.to_s] == klass
