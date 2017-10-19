@@ -4,7 +4,15 @@ class NotificationTest < Minitest::Test
   DSL_TEXT = <<-DSL
     zone "topzone" do
       location "one" do
+        on("some event", "my action name") do
+          notification type: :dweomer, description: "whoah, something happened!", zone: "otherzone"
+        end
       end
+    end
+
+    zone "otherzone" do
+      location "other one" do; end
+      location "other two" do; end
     end
   DSL
   def test_unsubscribe
@@ -27,5 +35,21 @@ class NotificationTest < Minitest::Test
 
     engine.send_notification(notification_type: "test1", zone: "topzone", location: "one", item_acting: "one")
     assert_equal 1, my_notifications.size
+  end
+
+  def test_basic_subscribe
+    engine = Demiurge.engine_from_dsl_text(["Subscription Test DSL", DSL_TEXT])
+    loc = engine.item_by_name("one")
+    refute_nil loc
+
+    my_notifications = []
+
+    engine.subscribe_to_notifications() do |notification|
+      my_notifications.push(notification)
+    end
+
+    loc.run_action "my action name" # Send a notification
+
+    assert_equal [{"item acting" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}], my_notifications
   end
 end

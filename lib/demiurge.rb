@@ -206,6 +206,14 @@ module Demiurge
       raise "Location must be a String, not #{location.class}!" unless location.is_a?(String)
       raise "Zone must be a String, not #{zone.class}!" unless zone.is_a?(String)
       raise "Acting item must be a String or nil, not #{item_acting.class}!" unless item_acting.is_a?(String) || item_acting.nil?
+
+      cleaned_data = {}
+      data.each do |key, val|
+        # TODO: verify somehow that this is JSON-serializable?
+        cleaned_data[key.to_s] = val
+      end
+      cleaned_data.merge!("type" => notification_type, "zone" => zone, "location" => location, "item acting" => item_acting)
+
       @subscriptions_by_tracker.each do |tracker, sub_structures|
         sub_structures.each do |sub_structure|
           next unless sub_structure[:types] == :all || sub_structure[:types].include?(notification_type)
@@ -214,7 +222,7 @@ module Demiurge
           next unless sub_structure[:items] == :all || sub_structure[:items].include?(item_acting)
           next unless sub_structure[:predicate] == nil || sub_structure[:predicate].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
 
-          sub_structure[:block].call(data, notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
+          sub_structure[:block].call(cleaned_data)
         end
       end
     end

@@ -60,12 +60,12 @@ module Demiurge
     end
     public
 
-    def notification(data, notification_type: :sound, zone: @item.zone, location: @item.location, item_acting: @item)
-      STDERR.puts "Testing notification of type #{notification_type.inspect}"
-      zone = to_demiurge_name(zone)
-      location = to_demiurge_name(location)
-      item_acting = to_demiurge_name(item_acting)
-      @item.engine.send_notification(notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
+    def notification(data)
+      notification_type = data.delete("notification_type") || data.delete(:notification_type) || data.delete("type") || data.delete(:type)
+      zone = to_demiurge_name(data.delete("zone") || data.delete(:zone) || @item.zone)
+      location = to_demiurge_name(data.delete("location") || data.delete(:location) || @item.location)
+      item_acting = to_demiurge_name(data.delete("item_acting") || data.delete(:item_acting) || @item)
+      @item.engine.send_notification(data, notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
     end
   end
 
