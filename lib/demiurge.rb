@@ -140,6 +140,10 @@ module Demiurge
       @item_actions[item_name][action_name]
     end
 
+    def valid_item_name?(name)
+      !!(name =~ /\A[-_ 0-9a-zA-Z]+\Z/)
+    end
+
     # This sets the Engine's internal state from a structured array of
     # items.  This is a good way, for instance, to restore state from
     # a JSON dump or a hypothetical that didn't work out.
@@ -150,6 +154,10 @@ module Demiurge
       @state = {}
 
       arr.each do |type, name, state|
+        name = name.to_s
+        if @state_items[name]
+          raise "Duplicate item name: #{name}! Failing!"
+        end
         @state[name] = state
         @state_items[name] = StateItem.from_name_type(self, type.freeze, name.freeze, options)
       end
