@@ -6,6 +6,8 @@ module Demiurge
 
     def initialize(name, engine)
       super # Set @name and @engine
+      Demiurge::TopLevelBuilder.register_type "TmxLocation", Demiurge::TmxLocation
+      @every_x_ticks_intention = EveryXTicksIntention.new(name)
     end
 
     def location_name
@@ -41,7 +43,7 @@ module Demiurge
     def intentions_for_next_step(options = {})
       everies = @engine.state_for_property(@name, "everies")
       return [] if everies.nil? || everies.empty?
-      EveryXTicksIntention.new(@name)
+      @every_x_ticks_intention
     end
 
     def run_action(action_name)
