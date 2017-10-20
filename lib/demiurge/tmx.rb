@@ -30,6 +30,11 @@ require "tmx"
 
 module Demiurge
   class ZoneBuilder
+    # This is currently an ugly monkeypatch to allow declaring a
+    # "tmx_location" separate from other kinds of declarable
+    # StateItems. This remains ugly until the plugin system catches up
+    # with the intrusiveness of what TMX needs to plug in (which isn't
+    # bad, but the plugin system barely exists.)
     def tmx_location(name, &block)
       builder = TmxLocationBuilder.new(name)
       builder.instance_eval(&block)
@@ -58,13 +63,79 @@ module Demiurge
 
     def built_location
       raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout"] || @state["manasource_tile_layout"]
-      [ "TmxLocation", @name, @state ]
+      [ "TmxLocation" || @type, @name, @state ]
+    end
+  end
+
+  # A TmxZone can extract things like exits and collision data from
+  # tile structures parsed from TMX files.
+  class TmxZone < TileZone
+    def adjacent_positions(pos)
+      location, pos_spec = pos.split("#", 2)
+      loc = @engine.item_by_name(location)
+      x, y = pos_spec.split(",").map(&:to_i)
+
+      [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].select { |xp, yp| loc.valid_coordinate?(xp, yp) }
     end
   end
 
   class TmxLocation < Location
     def initialize(name,engine)
       super
+    end
+
+    # For now, don't distinguish between walkable/swimmable or
+    # whatever, just say a collision value of 0 means valid,
+    # everything else is invalid.
+    #
+    # TODO: figure out some configurable way to specify what tile
+    # value means invalid for TMX maps with more complex collision
+    # logic.
+    def valid_position?(pos)
+      return false unless pos[0...@name.size] == @name
+      return false unless pos[@name.size] == "#"
+      x, y = pos[(@name.size + 1)..-1].split(",", 2).map(&:to_i)
+      valid_coordinate?(x, y)
+    end
+
+    def valid_coordinate?(x, y)
+      return false if x < 0 || y < 0
+      loc_tiles = self.tiles
+      return false if x >= tiles[:spritestack][:width] || y >= tiles[:spritestack][:height]
+      return true unless tiles[:collision]
+      return tiles[:collision][y][x] == 0
+    end
+
+    # For a TmxLocation's legal position, find somewhere not covered
+    # as a collision on the collision map.
+    def any_legal_position
+      loc_tiles = self.tiles
+      if tiles[:collision]
+        # We have a collision layer? Fabulous. Scan upper-left to lower-right until we get something non-collidable.
+        (0...tiles[:spritestack][:width]).each do |x|
+          (0...tiles[:spritestack][:height]).each do |y|
+            if tiles[:collision][x][y] == 0
+              # We found a walkable spot.
+              return "#{@name}##{x},#{y}"
+            end
+          end
+        end
+      else
+        # Is there a start location? If so, return it. Guaranteed good, right?
+        start_loc = tiles[:objects].detect { |obj| obj[:name] == "start location" }
+        if start_loc
+          x = start_loc[:x] / tiles[:spritestack][:tileheight]
+          y = start_loc[:y] / tiles[:spritestack][:tileheight]
+          return "#{@name}##{x},#{y}"
+        end
+        # If no start location and no collision data, is there a first location with coordinates?
+        if tiles[:objects].first[:x]
+          obj = tiles[:objects].first
+          return "#{@name}##{x},#{y}"
+        end
+        # Screw it, just return the upper left corner.
+        return "#{@name}#0,0"
+      end
     end
 
     def tiles
@@ -95,6 +166,7 @@ module Demiurge
   end
 end
 
+Demiurge::TopLevelBuilder.register_type "TmxZone", Demiurge::TmxZone
 Demiurge::TopLevelBuilder.register_type "TmxLocation", Demiurge::TmxLocation
 
 module Demiurge
