@@ -89,14 +89,6 @@ in the names. The names are case-sensitive -- that is, "Bobo" and
 "boBo" are completely different items because an upper-case and
 lower-case letter count as different from each other.
 
-Sometimes you want to declare an object and then have a lot of
-them. Something like a wooden spoon, a low-level slime monster or a
-player body object may get just one declaration in the World Files for
-a lot of individual objects in the world. Differences in state or
-appearance can add variation where you need it without requiring
-giant, bloated World Files with fifteen identical slime monsters that
-just have a "7" or a "12" after their name.
-
 Certain items, such as Zones in World Files may be reopened by
 declaring a Zone with the same name. But if so, they aren't two
 different Zones with the same name. Instead, the files declare a
@@ -106,6 +98,23 @@ items inside it in another World File. But it's all a single room,
 even if it's declared in multiple places for human convenience. If
 you're used to programming with Ruby classes, this idea of "reopening"
 the same zone in a new file will probably seem very familiar.
+
+Sometimes you want to declare an object and then have a lot of
+them. Something like a wooden spoon, a low-level slime monster or a
+player body object may get just one declaration in the World Files for
+a lot of individual objects in the world. Differences in state or
+appearance can add variation where you need it without requiring
+giant, bloated World Files with fifteen identical slime monsters that
+just have a "7" or a "12" after their name.
+
+There are a few kinds of special punctuation in names and name-like
+things that Demiurge may use for itself. For instance, a Position (see
+later in this file) is a location's item name followed by a pound sign
+and then some additional information, such as "my\_room#25,71". And
+instanced objects use a dollar sign and then a number as a suffix. So
+a dynamically-created maze room might be called "blorg-maze-room$25",
+while a specific Position inside that location might be
+"blorg-maze-room$25#3,17".
 
 == Events and State Changes
 
@@ -237,4 +246,18 @@ in a form appropriate to their zone such as "7,25" or
 "29.45/81.6/Kappa" or "left\_of/gray\_greasy\_lamp". The coordinates
 should not contain a pound-sign, a dollar sign or other characters
 that aren't legal in a Demiurge item name.
+
+== Instanced Entities
+
+Non-Zone entities can be Instanced - that is, they may be a set of
+rules for an object, but more than one object can follow those
+rules. Instead of declaring every wooden spoon separately in your
+World Files, you can declare a global "ideal" wooden spoon and then
+make many instances of it that all act in roughly the same way.
+
+Each instance has its own state so if you have different appearances
+or slightly different rules, it's not hard to have the different
+instances all share a single declaration.
+
+(Note: instancing isn't implemented yet.)
 
