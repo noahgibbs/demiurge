@@ -6,7 +6,6 @@ module Demiurge
 
     def initialize(name, engine)
       super # Set @name and @engine
-      Demiurge::TopLevelBuilder.register_type "TmxLocation", Demiurge::TmxLocation
       @every_x_ticks_intention = EveryXTicksIntention.new(name)
     end
 
