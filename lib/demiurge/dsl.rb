@@ -35,6 +35,8 @@ module Demiurge
       @name = name
       @state = {}
       @actions = {}
+      @position = nil
+      @type = nil  # This is the specific subclass to instantiate
     end
 
     def __state_internal
@@ -49,6 +51,14 @@ module Demiurge
       @state["everies"] ||= []
       @state["everies"] << { "action" => action_name, "every" => t, "counter" => 0 }
       @actions[action_name] = block
+    end
+
+    def position(pos)
+      @state["position"] = pos
+    end
+
+    def type(t)
+      @type = t.to_s
     end
 
     def on(event, action_name, &block)
@@ -97,6 +107,10 @@ module Demiurge
       # This allows zone re-opening in multiple Ruby files.
       same_zone = @zones.detect { |z| z[1] == new_zone[1] }
       if same_zone
+        if same_zone[2]["type"] && new_zone[2]["type"] && same_zone[2]["type"] != new_zone[2]["type"]
+          raise("A Zone can only have one type! No merging different types #{same_zone[2]["type"]} and #{new_zone[2]["type"]} in the same zone!")
+        end
+
         array_merged_keys = [ "location_names", "agent_names", "everies" ]
         hash_merged_keys = [ "on_handlers" ]
         new_state_keys = new_zone[2].keys - array_merged_keys - hash_merged_keys
@@ -152,7 +166,7 @@ module Demiurge
 
   class AgentBuilder < ActionItemBuilder
     def built_agent
-      ["Agent", @name, @state]
+      [@type || "Agent", @name, @state]
     end
   end
 
@@ -189,7 +203,7 @@ module Demiurge
     end
 
     def built_zone
-      [ "Zone", @name, @state.merge("location_names" => @locations.map { |l| l[1] }, "agent_names" => @agents.map { |a| a[1] }) ]
+      [ @type || "Zone", @name, @state.merge("location_names" => @locations.map { |l| l[1] }, "agent_names" => @agents.map { |a| a[1] }) ]
     end
 
     def built_locations
@@ -211,7 +225,7 @@ module Demiurge
     end
 
     def built_location
-      [ "Location", @name, @state ]
+      [ @type || "Location", @name, @state ]
     end
   end
 
