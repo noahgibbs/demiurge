@@ -32,6 +32,14 @@ module Demiurge
       @name
     end
 
+    # Note that "location" or "location_name" gets where the Zone
+    # *is*. But location_names attempts to get a list of locations
+    # *inside* the Zone. This may or may not work, depending on the
+    # type of the Zone.
+    def location_names
+      @engine.state_for_property(@name, "location_names")
+    end
+
     # By default, a zone just passes control to all its locations.
     def intentions_for_next_step(options = {})
       intentions = @engine.state_for_property(@name, "location_names").flat_map do |loc_name|
