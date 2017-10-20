@@ -1,0 +1,6 @@
+The core Demiurge engine tries to use only CC0-licensed content -- in
+effect, public domain. But it's nice to credit people when they make
+things for you. In that spirit:
+
+Thanks to Jurkan, author of collision.png, a simple CC0-licensed collision-layer tileset.
+Thanks to Hyptosis of lorestrome.com for CC0-licensed content including portraits and MageCity tilesets.
