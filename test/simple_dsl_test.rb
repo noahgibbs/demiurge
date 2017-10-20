@@ -2,6 +2,9 @@ require_relative 'test_helper'
 
 require "demiurge/dsl"
 
+class ZoneSubtype < Demiurge::Zone; end
+Demiurge::TopLevelBuilder.register_type "ZoneSubtype", ZoneSubtype
+
 class SimpleDslTest < Minitest::Test
   DSL_TEXT = <<-GOBLIN_DSL
     zone "moss caves" do
@@ -52,5 +55,15 @@ class SimpleDslTest < Minitest::Test
     engine.apply_intentions(intentions)
     assert_equal 1, engine.state_for_property("first moss cave", "moss")
     assert_equal 1, engine.state_for_property("second moss cave", "moss")
+  end
+
+  def test_dsl_type_specs
+    engine = Demiurge.engine_from_dsl_text(["Goblin DSL", <<-DSL_TEXT])
+zone "first zone" do
+  type "ZoneSubtype"
+end
+    DSL_TEXT
+    zone = engine.item_by_name("first zone")
+    assert_equal "ZoneSubtype", zone.class.to_s
   end
 end
