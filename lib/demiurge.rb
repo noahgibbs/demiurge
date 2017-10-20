@@ -73,6 +73,10 @@ module Demiurge
       @state[name][property] = value
     end
 
+    def zones
+      @zones
+    end
+
     def apply_intentions(intentions, options = {})
       options = options.dup.freeze
       speculative_state = deepcopy(@state)
@@ -233,6 +237,17 @@ module Demiurge
   # provides behavior to the bare data. Note that ActionItem, defined
   # elsewhere, makes this easier to use by providing a simple block
   # DSL instead of requiring raw calls with the engine API.
+  #
+  # Objects you'd normally think about (zones, locations, agents, etc)
+  # inherit from StateItem, often indirectly. The StateItem by itself
+  # is allowed to be highly abstract, and may have no convenient way
+  # to treat it like a "thing" in a "place." For instance, a global
+  # weather pattern across many zones lacks most 'normal' behaviors,
+  # but it makes a perfectly good StateItem as it changes and
+  # potentially reacts over time.
+  #
+  # For items with more convenient behavior to them see ActionItem,
+  # and/or specific classes like Agent, Zone, Location and so on.
   class StateItem
     attr_reader :name
 
@@ -271,7 +286,7 @@ module Demiurge
       [state_type, @name, @engine.state_for_item(@name)]
     end
 
-    # Create a single item from structured (generally frozen) state
+    # Create a single StateItem from structured (generally frozen) state
     def self.from_name_type(engine, type, name, options = {})
       engine.get_type(type).new(name, engine)
     end
