@@ -16,6 +16,16 @@ module Demiurge
       @engine.item_by_name(location_name)
     end
 
+    # A Position can be simply a location ("here's a room-type object
+    # and you're in it") or something more specific, such as a
+    # specific coordinate within a room. In general, a Position
+    # consists of a location's unique item name, optionally followed
+    # by a pound sign ("#") and zone-specific additional coordinates
+    # of some kind.
+    def position
+      @engine.state_for_property(@name, "position") || @engine.state_for_property(@name, "location")
+    end
+
     def zone
       location.zone
     end
