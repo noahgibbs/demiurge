@@ -25,7 +25,7 @@ module Demiurge
       if new_zone != old_zone
         raise "Cross-zone travel is unimplemented!"
       else
-        @engine.send_notification({ old_position: self.position, old_location: old_loc, new_position: pos, new_location: new_loc },
+        @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: pos, new_location: new_loc },
                                   notification_type: "move", zone: self.zone_name, location: self.location_name, item_acting: @name)
       end
     end
@@ -46,6 +46,7 @@ module Demiurge
           state["position"] = self.location.any_legal_position
         end
       end
+      state["wander_counter"] ||= 0
     end
 
     def intentions_for_next_step(options = {})
@@ -64,6 +65,9 @@ module Demiurge
 
     def apply(engine, options)
       agent = engine.item_by_name(@name)
+      state = engine.state_for_item(@name)
+      state["wander_counter"] += 1
+      return if state["wander_counter"] < 3
       next_coords = agent.zone.adjacent_positions(agent.position)
       if next_coords.empty?
         engine.send_notification({ description: "Oh no! Wandering agent #{@name.inspect} is stuck and can't get out!" }, notification_type: "admin warning", zone: agent.zone_name, location: agent.location_name, item_acting: @name)
@@ -72,6 +76,7 @@ module Demiurge
       chosen = next_coords.sample
       pos = "#{agent.location_name}##{chosen.join(",")}"
       agent.move_to_position(pos)
+      state["wander_counter"] = 0
     end
   end
 end
