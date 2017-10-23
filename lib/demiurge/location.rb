@@ -1,5 +1,16 @@
 module Demiurge
   class Location < ActionItem
+    def initialize(name, engine)
+      super
+    end
+
+    def finished_init
+      state["contents"] ||= []
+      state["contents"].each do |item|
+        move_item_inside(@engine.item_by_name(item))
+      end
+    end
+
     # A Location isn't located "inside" somewhere else. It is located in/at itself.
     def location_name
       @name
@@ -21,8 +32,19 @@ module Demiurge
       @engine.item_by_name(zone_name)
     end
 
-    def initialize(name, engine)
-      super(name, engine)
+    def ensure_does_not_contain(item_name)
+      state["contents"] -= [item_name]
+    end
+
+    def move_item_inside(item)
+      old_pos = item.position
+      if old_pos && old_pos != ""
+        old_loc_name = old_pos.split("#")[0]
+        old_loc = @engine.item_by_name(old_loc_name)
+        old_loc.ensure_does_not_contain(item.name)
+      end
+
+      state["contents"] += [ item.name ]
     end
 
     # Return a legal position of some kind within this Location.  By

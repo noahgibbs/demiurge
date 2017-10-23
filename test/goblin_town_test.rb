@@ -50,6 +50,7 @@ class GoblinTownTest < Minitest::Test
       "MossCave" => GoblinTown::MossCave,
     }
     goblin_town = Demiurge::Engine.new types: types, state: state
+    goblin_town.finished_init
     assert_equal 0, goblin_town.state_for_property("mosscave1", "moss")
     intentions = goblin_town.next_step_intentions
     assert_equal 2, intentions.size

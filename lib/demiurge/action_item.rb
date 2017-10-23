@@ -9,11 +9,21 @@ module Demiurge
       @every_x_ticks_intention = EveryXTicksIntention.new(name)
     end
 
+    def finished_init
+      loc = self.location
+      return if loc.zone?
+      return loc.move_item_inside(self) if loc.respond_to?(:move_item_inside)
+      # Else no clue. Do nothing.
+    end
+
     def location_name
-      @engine.state_for_property(@name, "location")
+      pos = @engine.state_for_property(@name, "position")
+      pos ? pos.split("#",2)[0] : nil
     end
 
     def location
+      ln = location_name
+      return nil if ln == "" || ln == nil
       @engine.item_by_name(location_name)
     end
 
@@ -24,15 +34,17 @@ module Demiurge
     # by a pound sign ("#") and zone-specific additional coordinates
     # of some kind.
     def position
-      @engine.state_for_property(@name, "position") || @engine.state_for_property(@name, "location")
+      @engine.state_for_property(@name, "position")
     end
 
     def zone
-      location.zone
+      l == location
+      l ? l.zone : nil
     end
 
     def zone_name
-      location.zone_name
+      l == location
+      l ? l.zone_name : nil
     end
 
     def __state_internal

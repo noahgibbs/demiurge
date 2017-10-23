@@ -37,6 +37,7 @@ class SimpleDslTest < Minitest::Test
 
   def test_trivial_dsl_actions
     engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
+    engine.finished_init
     second_cave_item = engine.item_by_name("second moss cave")
     refute_nil second_cave_item
 
@@ -63,6 +64,7 @@ zone "first zone" do
   type "ZoneSubtype"
 end
     DSL_TEXT
+    engine.finished_init
     zone = engine.item_by_name("first zone")
     assert_equal "ZoneSubtype", zone.class.to_s
   end

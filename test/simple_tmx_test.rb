@@ -15,6 +15,7 @@ class SimpleTmxTest < Minitest::Test
 
   def test_dsl_tmx_support
     engine = Demiurge.engine_from_dsl_text(["Mage City DSL", DSL_TEXT])
+    engine.finished_init
     loc = engine.item_by_name("east end")
     refute_nil loc
 

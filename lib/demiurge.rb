@@ -45,6 +45,14 @@ module Demiurge
       nil
     end
 
+    # Used after things are basically in place to assign double-sided
+    # state like what items and containers are where.  It should be
+    # called if a new world is being created from DSL files, but
+    # should be skipped if you're restoring state from a dump.
+    def finished_init
+      @state_items.values.each { |obj| obj.finished_init() if obj.respond_to?(:finished_init) }
+    end
+
     def structured_state(options = {})
       options = options.dup.freeze unless options.frozen?
 
@@ -77,6 +85,10 @@ module Demiurge
       @zones
     end
 
+    def all_item_names
+      @state_items.keys
+    end
+
     def apply_intentions(intentions, options = {})
       options = options.dup.freeze
       speculative_state = deepcopy(@state)
@@ -92,6 +104,8 @@ module Demiurge
         @state = valid_state
         raise
       end
+
+      send_notification({}, notification_type: "tick finished", location: "", zone: "", item_acting: nil)
 
       # Make sure to copyfreeze. Nobody gets to keep references to the state-tree's internals.
       @state = copyfreeze(speculative_state)

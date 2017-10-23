@@ -37,6 +37,7 @@ module Demiurge
       @actions = {}
       @position = nil
       @type = nil  # This is the specific subclass to instantiate
+      @display = nil # This is display-specific information that gets passed to the display library
     end
 
     def __state_internal
@@ -59,6 +60,13 @@ module Demiurge
 
     def type(t)
       @type = t.to_s
+    end
+
+    def display(&block)
+      # Need to figure out how to pass this through to the Display
+      # library.  By design, the simulation/state part of Demiurge
+      # ignores this completely.
+      @display = block
     end
 
     def on(event, action_name, &block)
@@ -160,6 +168,7 @@ module Demiurge
       state = @zones + @locations + @agents
       engine = ::Demiurge::Engine.new(types: @@types, state: state)
       engine.register_actions_by_item_and_action_name(@item_actions)
+      engine.finished_init
       engine
     end
   end

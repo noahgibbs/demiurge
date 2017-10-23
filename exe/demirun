@@ -11,6 +11,7 @@ if ARGV.size < 1
 end
 
 engine = Demiurge.engine_from_dsl_files(*ARGV)
+engine.finished_init
 
 STDERR.puts "State:\n#{MultiJson.dump engine.structured_state, :pretty => true}"
 
