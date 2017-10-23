@@ -38,12 +38,12 @@ module Demiurge
     end
 
     def zone
-      l == location
+      l = location
       l ? l.zone : nil
     end
 
     def zone_name
-      l == location
+      l = location
       l ? l.zone_name : nil
     end
 
@@ -54,7 +54,7 @@ module Demiurge
     def intentions_for_next_step(options = {})
       everies = @engine.state_for_property(@name, "everies")
       return [] if everies.nil? || everies.empty?
-      @every_x_ticks_intention
+      [@every_x_ticks_intention]
     end
 
     def run_action(action_name)
