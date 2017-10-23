@@ -57,5 +57,15 @@ module Demiurge
     def valid_position?(pos)
       pos == @name
     end
+
+    # Include everything under the location: anything have an action to perform?
+    def intentions_for_next_step(options = {})
+      intentions = super
+      state["contents"].each do |item_name|
+        item = @engine.item_by_name(item_name)
+        intentions += item.intentions_for_next_step(options)
+      end
+      intentions
+    end
   end
 end
