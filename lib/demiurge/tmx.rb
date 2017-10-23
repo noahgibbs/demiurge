@@ -114,7 +114,7 @@ module Demiurge
         # We have a collision layer? Fabulous. Scan upper-left to lower-right until we get something non-collidable.
         (0...tiles[:spritestack][:width]).each do |x|
           (0...tiles[:spritestack][:height]).each do |y|
-            if tiles[:collision][x][y] == 0
+            if tiles[:collision][y][x] == 0
               # We found a walkable spot.
               return "#{@name}##{x},#{y}"
             end

@@ -243,3 +243,4 @@ end
 Demiurge::TopLevelBuilder.register_type "Zone", Demiurge::Zone
 Demiurge::TopLevelBuilder.register_type "Location", Demiurge::Location
 Demiurge::TopLevelBuilder.register_type "Agent", Demiurge::Agent
+Demiurge::TopLevelBuilder.register_type "WanderingAgent", Demiurge::WanderingAgent
