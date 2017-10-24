@@ -64,6 +64,10 @@ module Demiurge
       @block_runner.instance_eval(&block)
       nil
     end
+
+    def get_action(action_name)
+      @engine.action_for_item(@name, action_name)
+    end
   end
 
   class ActionItemBlockRunner

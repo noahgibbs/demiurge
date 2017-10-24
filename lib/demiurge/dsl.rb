@@ -66,7 +66,7 @@ module Demiurge
       # Need to figure out how to pass this through to the Display
       # library.  By design, the simulation/state part of Demiurge
       # ignores this completely.
-      @display = block
+      @actions["$display"] = block
     end
 
     def on(event, action_name, &block)
