@@ -67,7 +67,8 @@ module Demiurge
       agent = engine.item_by_name(@name)
       state = engine.state_for_item(@name)
       state["wander_counter"] += 1
-      return if state["wander_counter"] < 3
+      wander_every = state["wander_every"] || 3
+      return if state["wander_counter"] < wander_every
       next_coords = agent.zone.adjacent_positions(agent.position)
       if next_coords.empty?
         engine.send_notification({ description: "Oh no! Wandering agent #{@name.inspect} is stuck and can't get out!" }, notification_type: "admin warning", zone: agent.zone_name, location: agent.location_name, item_acting: @name)
