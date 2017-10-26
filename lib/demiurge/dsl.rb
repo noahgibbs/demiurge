@@ -240,6 +240,8 @@ module Demiurge
 
 end
 
+Demiurge::TopLevelBuilder.register_type "ActionItem", Demiurge::ActionItem
+Demiurge::TopLevelBuilder.register_type "InertStateItem", Demiurge::InertStateItem
 Demiurge::TopLevelBuilder.register_type "Zone", Demiurge::Zone
 Demiurge::TopLevelBuilder.register_type "Location", Demiurge::Location
 Demiurge::TopLevelBuilder.register_type "Agent", Demiurge::Agent

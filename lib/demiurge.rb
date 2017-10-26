@@ -8,6 +8,7 @@ module Demiurge
 end
 
 require "demiurge/action_item"
+require "demiurge/inert_state_item"
 require "demiurge/zone"
 require "demiurge/location"
 require "demiurge/agent"
