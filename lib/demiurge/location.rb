@@ -9,6 +9,7 @@ module Demiurge
       state["contents"].each do |item|
         move_item_inside(@engine.item_by_name(item))
       end
+      state["exits"] ||= []
     end
 
     # A Location isn't located "inside" somewhere else. It is located in/at itself.
@@ -22,8 +23,9 @@ module Demiurge
     end
 
     # A Location's zone name is set at construction and never changed.
-    # I suppose we could take it out of the state, though that would
-    # make it more painful to track and construct in the World Files.
+    # I suppose we could take the zone out of the location's state,
+    # though that would make it more painful to track and construct in
+    # the World Files.
     def zone_name
       @engine.state_for_property(@name, "zone")
     end
@@ -48,7 +50,9 @@ module Demiurge
     end
 
     # Return a legal position of some kind within this Location.  By
-    # default, that's just the Location's name.
+    # default there is only one position, which is just the Location's
+    # name. More complicated locations (e.g. tilemaps or procedural
+    # areas) may have more interesting positions inside them.
     def any_legal_position
       @name
     end
@@ -56,6 +60,28 @@ module Demiurge
     # Is this position valid in this location?
     def valid_position?(pos)
       pos == @name
+    end
+
+    def add_exit(from:any_legal_position, to:, to_location: nil, properties:{})
+      to_loc, to_coords = to.split("#",2)
+      if to_location == nil
+        to_location = @engine.item_by_name(to_loc)
+      end
+      raise("'From' position #{from.inspect} is invalid when adding exit to #{@name.inspect}!") unless valid_position?(from)
+      raise("'To' position #{to.inspect} is invalid when adding exit to #{@name.inspect}!") unless to_location.valid_position?(to)
+      exit_obj = { "from" => from, "to" => to, "properties" => properties }
+      state["exits"] ||= []
+      state["exits"].push(exit_obj)
+      exit_obj
+    end
+
+    # This isn't guaranteed to be in a particular format for all
+    # Locations everywhere. Sometimes exits in this form don't even
+    # make sense. So: this is best-effort when queried from a random
+    # Location, and a known format only if you know the specific
+    # subclass of Location you're dealing with.
+    def exits
+      state["exits"]
     end
 
     # Include everything under the location: anything have an action to perform?

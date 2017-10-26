@@ -16,7 +16,6 @@ class PathfindingTest < Minitest::Test
 
   def test_positions
     engine = Demiurge.engine_from_dsl_text(["Mage City DSL", DSL_TEXT])
-    engine.finished_init
     loc = engine.item_by_name("east end")
     refute_nil loc
 

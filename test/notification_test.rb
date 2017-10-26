@@ -17,7 +17,6 @@ class NotificationTest < Minitest::Test
   DSL
   def test_unsubscribe
     engine = Demiurge.engine_from_dsl_text(["Subscription Test DSL", DSL_TEXT])
-    engine.finished_init
     loc = engine.item_by_name("topzone")
     refute_nil loc
 

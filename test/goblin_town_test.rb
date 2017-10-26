@@ -50,6 +50,9 @@ class GoblinTownTest < Minitest::Test
       "MossCave" => GoblinTown::MossCave,
     }
     goblin_town = Demiurge::Engine.new types: types, state: state
+    # Normally getting an engine from DSL will automatically call
+    # finished_init, but that's not what we do here.  So we do it
+    # manually.
     goblin_town.finished_init
     assert_equal 0, goblin_town.state_for_property("mosscave1", "moss")
     intentions = goblin_town.next_step_intentions

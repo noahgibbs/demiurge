@@ -48,15 +48,17 @@ module Demiurge
 
   class TmxLocationBuilder < LocationBuilder
     def tile_layout(tmx_spec)
-      # Make sure this loads correctly
+      # Make sure this loads correctly, but use the cache for efficiency.
+      TmxLocation.tile_cache_entry(nil, tmx_spec)
+
       Demiurge.sprites_from_tmx(tmx_spec)
 
       @state["tile_layout"] = tmx_spec
     end
 
     def manasource_tile_layout(tmx_spec)
-      # Make sure this loads correctly
-      Demiurge.sprites_from_manasource_tmx(tmx_spec)
+      # Make sure this loads correctly, but use the cache for efficiency.
+      TmxLocation.tile_cache_entry(tmx_spec, nil)
 
       @state["manasource_tile_layout"] = tmx_spec
     end
@@ -70,6 +72,40 @@ module Demiurge
   # A TmxZone can extract things like exits and collision data from
   # tile structures parsed from TMX files.
   class TmxZone < TileZone
+    # Let's resolve any exits through this zone. NOTE: cross-zone
+    # exits may be slightly wonky because the other zone hasn't
+    # necessarily performed its own finished_init yet.
+    def finished_init
+      exits = []
+      locations = state["location_names"].map { |ln| @engine.item_by_name(ln) }
+      locations.each do |location|
+        # ManaSource locations often store exits as objects in an
+        # object layer.  They don't cope with multiple locations that
+        # use the same TMX file since they identify the destination by
+        # the TMX filename.  In Demiurge, we don't let them cross zone
+        # boundaries to avoid unexpected behavior in other folks'
+        # zones.
+        if location.is_a?(TmxLocation) && location.state["manasource_tile_layout"]
+          location.tiles[:objects].select { |obj| obj[:type] == "warp" }.each do |obj|
+            dest_location = locations.detect { |loc| obj[:properties] && loc.tiles[:tmx_name] == obj[:properties]["dest_map"] }
+            if dest_location
+              dest_position = "#{dest_location.name}##{obj[:properties]["dest_x"]},#{obj[:properties]["dest_y"]}"
+              src_x_coord = obj[:x] / location.tiles[:spritesheet][:tilewidth]
+              src_y_coord = obj[:y] / location.tiles[:spritesheet][:tileheight]
+              src_position = "#{location.name}##{src_x_coord},#{src_y_coord}"
+              raise("Exit destination position #{dest_position.inspect} loaded from TMX location #{location.name.inspect} (TMX: #{location.tiles[:filename]}) is not valid!") unless dest_location.valid_position?(dest_position)
+              exits.push({ src_loc: location, src_pos: src_position, dest_pos: dest_position })
+            else
+              STDERR.puts "Unresolved TMX exit in #{location.name.inspect}: #{obj[:properties].inspect}!"
+            end
+          end
+        end
+      end
+      exits.each do |exit|
+        exit[:src_loc].add_exit(from: exit[:src_pos], to: exit[:dest_pos])
+      end
+    end
+
     def adjacent_positions(pos)
       location, pos_spec = pos.split("#", 2)
       loc = @engine.item_by_name(location)
@@ -175,8 +211,6 @@ module Demiurge
   # perfect since there's some variation between them, but it can
   # follow most major conventions.
 
-  # TODO: ambient layers from properties, a la Evol (see 000-0.tmx)
-
   def self.sprites_from_manasource_tmx(filename)
     objs = sprites_from_tmx filename
     #sheet = objs[:spritesheet]
@@ -261,7 +295,7 @@ module Demiurge
         margin: tileset.margin,
         imagetrans: tileset.imagetrans, # Currently unused, color to treat as transparent
         properties: tileset.properties,
-        frame_definitions: frames_from_tileset(tileset),
+        frame_definitions: frames_from_tileset(tileset),  # TODO: make it possible to ask for explicit frame mapping (for control) or implicit (for bandwidth savings)
       }
     end
     spritesheet[:cyclic_animations] = animations_from_tilesets tiles.tilesets
@@ -285,7 +319,7 @@ module Demiurge
 
     objects = tiles.object_groups.flat_map { |og| og.objects.to_a }.map(&:to_h)
 
-    { spritesheet: spritesheet, spritestack: spritestack, objects: objects }
+    { filename: filename, tmx_name: File.basename(filename).split(".")[0], spritesheet: spritesheet, spritestack: spritestack, objects: objects }
   end
 
   def self.animations_from_tilesets tilesets

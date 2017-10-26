@@ -42,7 +42,6 @@ GOBLIN_DSL_2
 class ZoneReopenTest < Minitest::Test
   def test_zone_reopen
     engine = Demiurge.engine_from_dsl_text(DSL_TEXT_1, DSL_TEXT_2)
-    engine.finished_init
     second_cave_item = engine.item_by_name("second moss cave")
     refute_nil second_cave_item
 

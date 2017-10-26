@@ -3,7 +3,6 @@ require_relative 'test_helper'
 class ItemNameTest < Minitest::Test
   def test_item_util_funcs
     engine = Demiurge.engine_from_dsl_text(["Item Name DSL", ""])
-    engine.finished_init
 
     assert_equal true, engine.valid_item_name?("abc")
     assert_equal true, engine.valid_item_name?("the-marquiz-de-sade")
