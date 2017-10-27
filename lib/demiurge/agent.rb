@@ -4,6 +4,13 @@ module Demiurge
   # isn't particularly different from other Demiurge objects, but it's
   # useful to have some helper classes for things like pathfinding.
   class Agent < ActionItem
+
+    # This will move the agent... And is going to be the wrong way to
+    # do this soon. There's a whole Intention/Offer/Resolve/Notify
+    # cycle that this skips, which is fine if and only if that's
+    # handled some other way and this is just the "resolve". But,
+    # like, how do we handle exits and special encounters/spaces and
+    # stuff?
     def move_to_position(pos)
       old_pos = self.position
       old_loc = self.location_name
@@ -13,13 +20,6 @@ module Demiurge
       new_loc_item = @engine.item_by_name(new_loc)
       new_zone = new_loc_item.zone_name
 
-      # This will move the agent... And is going to be the wrong way
-      # to do this soon. There's a whole
-      # Intention/Offer/Resolve/Notify cycle that this skips, which is
-      # fine if and only if that's handled some other way and this is
-      # just the "resolve". But, like, how do we handle exits
-      # automatically sending you to a new tileset and special
-      # encounters/spaces and stuff?
       self.state["position"] = pos
 
       if new_zone != old_zone

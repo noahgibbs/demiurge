@@ -57,7 +57,7 @@ module Demiurge
     # In some Zones this won't be meaningful. But for most "plain"
     # zones, this give possibilities of where is moveable for simple
     # AIs.
-    def adjacent_positions(pos)
+    def adjacent_positions(pos, options = {})
       []
     end
   end

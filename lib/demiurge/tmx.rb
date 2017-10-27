@@ -106,18 +106,52 @@ module Demiurge
       end
     end
 
-    def adjacent_positions(pos)
+    def adjacent_positions(pos, options = {})
       location, pos_spec = pos.split("#", 2)
       loc = @engine.item_by_name(location)
       x, y = pos_spec.split(",").map(&:to_i)
 
-      [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].select { |xp, yp| loc.valid_coordinate?(xp, yp) }
+      shape = options[:shape] || :humanoid
+      [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].select { |xp, yp| loc.can_accomodate_shape?(xp, yp, shape) }
     end
   end
 
   class TmxLocation < Location
     def initialize(name,engine)
       super
+    end
+
+    # This just determines if the position is valid at all.  It does
+    # *not* check walkable/swimmable or even if it's big enough for a
+    # humanoid to stand in.
+    def valid_position?(pos)
+      return false unless pos[0...@name.size] == @name
+      return false unless pos[@name.size] == "#"
+      x, y = pos[(@name.size + 1)..-1].split(",", 2).map(&:to_i)
+      valid_coordinate?(x, y)
+    end
+
+    # This checks the coordinate's validity, but not relative to any
+    # specific person/item/whatever that could occupy the space.
+    def valid_coordinate?(x, y)
+      return false if x < 0 || y < 0
+      return false if x >= tiles[:spritestack][:width] || y >= tiles[:spritestack][:height]
+      return true unless tiles[:collision]
+      return tiles[:collision][y][x] == 0
+    end
+
+    def can_accomodate_dimensions?(left_x, upper_y, width, height)
+      return false if left_x < 0 || upper_y < 0
+      right_x = left_x + width - 1
+      lower_y = upper_y + height - 1
+      return false if right_x >= tiles[:spritestack][:width] || lower_y >= tiles[:spritestack][:height]
+      return true unless tiles[:collision]
+      (left_x..right_x).each do |x|
+        (upper_y..lower_y).each do |y|
+          return false if tiles[:collision][y][x] != 0
+        end
+      end
+      return true
     end
 
     # For now, don't distinguish between walkable/swimmable or
@@ -127,19 +161,15 @@ module Demiurge
     # TODO: figure out some configurable way to specify what tile
     # value means invalid for TMX maps with more complex collision
     # logic.
-    def valid_position?(pos)
-      return false unless pos[0...@name.size] == @name
-      return false unless pos[@name.size] == "#"
-      x, y = pos[(@name.size + 1)..-1].split(",", 2).map(&:to_i)
-      valid_coordinate?(x, y)
-    end
-
-    def valid_coordinate?(x, y)
-      return false if x < 0 || y < 0
-      loc_tiles = self.tiles
-      return false if x >= tiles[:spritestack][:width] || y >= tiles[:spritestack][:height]
-      return true unless tiles[:collision]
-      return tiles[:collision][y][x] == 0
+    def can_accomodate_shape?(left_x, upper_y, shape)
+      case shape
+      when :humanoid
+        return can_accomodate_dimensions?(left_x, upper_y, 2, 1)
+      when :tiny
+        return can_accomodate_dimensions?(left_x, upper_y, 1, 1)
+      else
+        raise "Unknown shape #{shape.inspect} passed to can_accomodate_shape!"
+      end
     end
 
     # For a TmxLocation's legal position, find somewhere not covered
