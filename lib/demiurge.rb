@@ -55,14 +55,10 @@ module Demiurge
     end
 
     def structured_state(options = {})
-      options = options.dup.freeze unless options.frozen?
-
       @state_items.values.map { |item| item.get_structure(options) }
     end
 
     def next_step_intentions(options = {})
-      options = options.dup.freeze unless options.frozen?
-      #@state_items.values.flat_map { |item| item.intentions_for_next_step(options) || [] }
       @zones.flat_map { |item| item.intentions_for_next_step(options) || [] }
     end
 
@@ -90,8 +86,7 @@ module Demiurge
       @state_items.keys
     end
 
-    def apply_intentions(intentions, options = {})
-      options = options.dup.freeze
+    def apply_intentions(intentions, options = { :nofreeze => false })
       speculative_state = deepcopy(@state)
       valid_state = @state
       @state = speculative_state
@@ -108,8 +103,12 @@ module Demiurge
 
       send_notification({}, notification_type: "tick finished", location: "", zone: "", item_acting: nil)
 
-      # Make sure to copyfreeze. Nobody gets to keep references to the state-tree's internals.
-      @state = copyfreeze(speculative_state)
+      # Make sure to copy and possibly freeze. Nobody gets to keep references to the state-tree's internals.
+      if options[:nofreeze]
+        @state = deepcopy(speculative_state)
+      else
+        @state = copyfreeze(speculative_state)
+      end
     end
 
     def get_type(t)
