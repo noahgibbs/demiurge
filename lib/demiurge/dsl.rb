@@ -87,8 +87,21 @@ module Demiurge
       @zones = []
       @locations = []
       @agents = []
+      @extras = []
       @item_names = {}
       @item_actions = {}
+    end
+
+    # For now, this just declares an InertStateItem for a given name.
+    # It doesn't change the behavior at all. It just keeps that item
+    # name from being "orphaned" state that doesn't correspond to any
+    # state item.
+    #
+    # Later, this may be a way to describe how important or transitory
+    # state is - is it reset like a zone? Completely transient?
+    # Cleared per reboot?
+    def inert(item_name)
+      @extras.push(["InertStateItem", item_name, {}])
     end
 
     # This "registers" the serialized objects in the sense that it
@@ -165,7 +178,7 @@ module Demiurge
     end
 
     def built_engine
-      state = @zones + @locations + @agents
+      state = @zones + @locations + @agents + @extras
       engine = ::Demiurge::Engine.new(types: @@types, state: state)
       engine.register_actions_by_item_and_action_name(@item_actions)
       engine.finished_init
