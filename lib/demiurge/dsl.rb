@@ -48,10 +48,33 @@ module Demiurge
       @wrapper ||= ActionItemStateWrapper.new(self)
     end
 
+    # This all happens at DSL builder time, so we can't directly
+    # register an action yet - the item doesn't exist in the engine.
+    # But we can make sure the registered block and settings don't
+    # conflict within the builder.
+    def register_built_action(action)
+      raise("Must specify a string 'name' to register_build_action! Only gave #{action.inspect}!") unless action["name"]
+      legal_keys = [ "name", "block", "busy" ]
+      illegal_keys = action.keys - legal_keys
+      raise("Hash with illegal keys #{illegal_keys.inspect} passed to register_built_action!") unless illegal_keys.empty?
+      if @actions[action["name"]]
+        legal_keys.each do |key|
+          existing_val = @actions[action["name"]][key]
+          if existing_val && action[key] && existing_val != action[key]
+            raise "Can't register a second action #{action["name"].inspect} with conflicting key #{key.inspect} in register_built_action!"
+          end
+        end
+        @actions[action["name"]].merge!(action)
+      else
+        @actions[action["name"]] = action
+      end
+    end
+
     def every_X_ticks(action_name, t, &block)
+      raise("Must provide a positive number for how many ticks, not #{t.inspect}!") unless t.is_a?(Numeric) && t >= 0.0
       @state["everies"] ||= []
       @state["everies"] << { "action" => action_name, "every" => t, "counter" => 0 }
-      @actions[action_name] = block
+      register_built_action("name" => action_name, "block" => block)
     end
 
     def position(pos)
@@ -66,13 +89,20 @@ module Demiurge
       # Need to figure out how to pass this through to the Display
       # library.  By design, the simulation/state part of Demiurge
       # ignores this completely.
-      @actions["$display"] = block
+      register_built_action("name" => "$display", "block" => block)
     end
 
     def on(event, action_name, &block)
       @state["on_handlers"] ||= {}
       @state["on_handlers"][event] = action_name
-      @actions[action_name] = block
+      register_built_action("name" => action_name, "block" => block)
+    end
+
+    def define_action(action_name, options = {}, &block)
+      legal_options = [ "busy" ]
+      illegal_keys = options.keys - legal_options
+      raise("Illegal keys #{illegal_keys.inspect} passed to define_action of #{action_name.inspect}!") unless illegal_keys.empty?;
+      register_built_action({ "name" => action_name, "block" => block }.merge(options))
     end
 
     def built_actions

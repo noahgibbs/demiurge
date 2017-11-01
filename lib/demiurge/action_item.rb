@@ -58,8 +58,10 @@ module Demiurge
     end
 
     def run_action(action_name)
-      block = @engine.action_for_item(@name, action_name)
-      raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless block
+      action = @engine.action_for_item(@name, action_name)
+      raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless action
+      block = action["block"]
+      raise "Action was never defined for #{action_name.inspect} of object #{@name.inspect}!" unless block
       @block_runner ||= ActionItemBlockRunner.new(self)
       @block_runner.instance_eval(&block)
       nil
@@ -71,6 +73,7 @@ module Demiurge
   end
 
   class ActionItemBlockRunner
+    # This is the item receiving the block. It is usually the item taking the action.
     def initialize(item)
       @item = item
     end
@@ -87,12 +90,29 @@ module Demiurge
     end
     public
 
+    # Methods that can be used in a Demiurge block by default.  At
+    # some point, presumably we want to make this much more customized
+    # by allowing specific actions for specific ActionItems and so on.
+
     def notification(data)
       notification_type = data.delete("notification_type") || data.delete(:notification_type) || data.delete("type") || data.delete(:type)
       zone = to_demiurge_name(data.delete("zone") || data.delete(:zone) || @item.zone)
       location = to_demiurge_name(data.delete("location") || data.delete(:location) || @item.location)
       item_acting = to_demiurge_name(data.delete("item_acting") || data.delete(:item_acting) || @item)
       @item.engine.send_notification(data, notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
+    end
+
+    def queue_action(action_name, *args)
+      unless @item.is_a?(::Demiurge::Agent)
+        STDERR.puts "Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that isn't an agent! Skipping."
+        return
+      end
+      act = @item.get_action(action_name)
+      unless act
+        STDERR.puts "Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it! Skipping."
+        return
+      end
+      @item.queue_intention QueuedActionIntention.new(@item, action_name)
     end
   end
 
@@ -155,6 +175,26 @@ module Demiurge
           every["counter"] = 0
         end
       end
+    end
+  end
+
+  class QueuedActionIntention < Intention
+    def initialize(agent, action_name)
+      @agent = agent
+      @action = action_name
+    end
+
+    def allowed?(engine, options)
+      return true
+    end
+
+    def apply(engine, options)
+      @agent.run_action(@action)
+      @agent.state["busy"] += busy_turns
+    end
+
+    def busy_turns
+      action = @agent.get_action(@action)["busy"]
     end
   end
 end

@@ -3,7 +3,22 @@ module Demiurge
   # Agents correspond roughly to "mobiles" in many games. An agent
   # isn't particularly different from other Demiurge objects, but it's
   # useful to have some helper classes for things like pathfinding.
+  # Also, humans expect agents to have some finite ability to perform
+  # actions over time, so it's nice to regulate how much an agent can
+  # get done and how "busy" it is. This keeps an AI agent from just
+  # queueing up 30 move intentions and crossing the room in a single
+  # tick, for instance. It does *not* keep that same AI from having an
+  # intentional 30-square move that works in a single tick, but it
+  # slows the rate of actions. Agents get a single "real" intention,
+  # unlike, say, rooms, which can have lots going on at once.
   class Agent < ActionItem
+
+    def initialize(*args)
+      super
+      @intention_queue = []
+      @agent_maintenance = AgentMaintenanceIntention.new(@name)
+      state["busy"] ||= 0 # By default, start out idle.
+    end
 
     # This will move the agent... And is going to be the wrong way to
     # do this soon. There's a whole Intention/Offer/Resolve/Notify
@@ -30,8 +45,42 @@ module Demiurge
       end
     end
 
+    def intentions_for_next_step(options = {})
+      current = []
+      # TODO: just add an action to check if not busy? Then we could queue an action with an "every" and execute it on the same tick.
+      unless state["busy"] > 0 || @intention_queue.empty?
+        # Pull the first entry off the Intention queue
+        current = [@intention_queue.shift]
+      end
+      super + current + [@agent_maintenance]
+    end
+
+    def queue_intention(intention)
+      raise("Not an intention: #{intention.inspect}!") unless intention.is_a?(Intention)
+      @intention_queue.push(intention)
+    end
+
+    def clear_intention_queue
+      @intention_queue = []
+    end
   end
 
+  class AgentMaintenanceIntention < Intention
+    def initialize(name)
+      @name = name
+    end
+
+    def allowed?(engine, options)
+      true
+    end
+
+    def apply(engine, options)
+      agent = engine.item_by_name(@name)
+      agent.state["busy"] -= 1 if agent.state["busy"] > 0
+    end
+  end
+
+  # This agent will wander around. A simple way to make a decorative mobile.
   class WanderingAgent < Agent
     def initialize(name, engine)
       super
@@ -80,4 +129,5 @@ module Demiurge
       state["wander_counter"] = 0
     end
   end
+
 end

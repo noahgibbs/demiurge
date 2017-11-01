@@ -29,6 +29,8 @@ module Demiurge
   class Engine
     include ::Demiurge::Util # For copyfreeze and deepcopy
 
+    attr_reader :ticks
+
     # When initializing, "types" is a hash mapping type name to the
     # class that implements that name. Usually the name is the same as
     # the class name with the module optionally stripped off.
@@ -43,6 +45,7 @@ module Demiurge
       end
       state_from_structured_array(state || [])
       @subscriptions_by_tracker = {}
+      @ticks = 0
       nil
     end
 
@@ -102,6 +105,7 @@ module Demiurge
       end
 
       send_notification({}, notification_type: "tick finished", location: "", zone: "", item_acting: nil)
+      @ticks += 1
 
       # Make sure to copy and possibly freeze. Nobody gets to keep references to the state-tree's internals.
       if options[:nofreeze]
@@ -333,6 +337,20 @@ module Demiurge
 
     def try_apply(engine, options = {})
       apply(engine, options) if allowed?(engine, options)
+    end
+
+    # An Intention can keep an Agent (or potentially other entity)
+    # busy for some amount of time when it occurs. How long? That's a
+    # collaboration between this method and the entity. This method
+    # should return a number. By default, Agents will perform one unit
+    # of intentions per round, but that's advisory - nothing stops
+    # Bob-the-Octopus from performing more actions per round if that's
+    # what Bob's Agent object thinks is appropriate. For that matter,
+    # "Mercury's Avatar on Earth" could just allow queueing of
+    # unlimited actions of any kind on every tick, though it's not
+    # clear that'd make for a fun game entity.
+    def busy_turns
+      1
     end
   end
 end
