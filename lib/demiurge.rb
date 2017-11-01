@@ -166,6 +166,18 @@ module Demiurge
       !!(name =~ /\A[-_ 0-9a-zA-Z]+\Z/)
     end
 
+    def register_state_item(item, state)
+      name = item.name
+      if @state_items[name]
+        raise "Duplicate item name: #{name}! Failing!"
+      end
+      @state[name] = state
+      @state_items[name] = item
+      if item.zone?
+        @zones.push(item)
+      end
+    end
+
     # This sets the Engine's internal state from a structured array of
     # items.  This is a good way, for instance, to restore state from
     # a JSON dump or a hypothetical that didn't work out.
@@ -174,16 +186,11 @@ module Demiurge
 
       @state_items = {}
       @state = {}
+      @zones = []
 
       arr.each do |type, name, state|
-        name = name.to_s
-        if @state_items[name]
-          raise "Duplicate item name: #{name}! Failing!"
-        end
-        @state[name] = state
-        @state_items[name] = StateItem.from_name_type(self, type.freeze, name.freeze, options)
+        register_state_item(StateItem.from_name_type(self, type.freeze, name.to_s.freeze, options), state)
       end
-      @zones = @state_items.values.select { |item| item.zone? }
       nil
     end
 
