@@ -247,7 +247,7 @@ in a form appropriate to their zone such as "7,25" or
 should not contain a pound-sign, a dollar sign or other characters
 that aren't legal in a Demiurge item name.
 
-== Instanced Entities
+== Instantiable and Instanced Entities
 
 Non-Zone entities can be Instanced - that is, they may be a set of
 rules for an object, but more than one object can follow those
@@ -259,5 +259,21 @@ Each instance has its own state so if you have different appearances
 or slightly different rules, it's not hard to have the different
 instances all share a single declaration.
 
-(Note: instancing isn't implemented yet.)
+Instances are denoted by an unusual name - a dollar sign and an
+instance number follow the name. The name before the dollar sign is
+the same as the name of the object it's an instance of.
 
+An Instantiable object has no location or position, though it exists
+in a Zone. Instances made from it must have a position, though.
+
+There is no specific limit to how many instances a given object may
+have, though there may be limits to how they are created. For
+instance, a Spawner will often create a limited number of total agents
+and then stop until or unless one or more agents are destroyed in some
+way.
+
+Instanced objects can be created in World Files as a way to share
+rules. For instance, a single "Platonic Ideal" object may be made for
+common items, then instances of them scattered through the world. This
+prevents having to create a separate set of rules and actions for each
+individual item, duplicated in full.
