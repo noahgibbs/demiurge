@@ -33,11 +33,6 @@ class SimpleDslTest < Minitest::Test
         end
       end
     end
-
-    #agent "player" do
-    #  type "PlayerAgent"
-    #  state.start_zone = "moss caves"
-    #end
   GOBLIN_DSL
 
   def test_trivial_dsl_actions
