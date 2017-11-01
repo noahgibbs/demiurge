@@ -11,6 +11,7 @@ module Demiurge
 
     def finished_init
       loc = self.location
+      return if loc.nil?  # This item isn't located anywhere, though it may still have a zone.
       return if loc.zone?
       return loc.move_item_inside(self) if loc.respond_to?(:move_item_inside)
       # Else no clue. Do nothing.

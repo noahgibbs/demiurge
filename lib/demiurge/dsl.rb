@@ -217,7 +217,21 @@ module Demiurge
   end
 
   class AgentBuilder < ActionItemBuilder
+    def initialize(name, extra_state = {})
+      super(name)
+      @state.merge!(extra_state)
+    end
+
+    def instantiable(options = {}, &block)
+      @state["instantiable"] = "true"
+    end
+
     def built_agent
+      if @state["instantiable"] && @state["position"]
+        raise "Agent #{@name.inspect} cannot have a position (#{@state["position"].inspect}) and also be instantiable!"
+      elsif !@state["instantiable"] && !@state["position"]
+        raise "Agent #{@name.inspect} cannot have no position but not be instantiable!"
+      end
       [@type || "Agent", @name, @state]
     end
   end
@@ -241,6 +255,8 @@ module Demiurge
       location[2].merge!("zone" => @name)
       @locations << location
       @location_actions << builder.built_actions
+      @agents += builder.built_agents
+      @agent_actions << builder.agent_actions
       nil
     end
 
@@ -270,14 +286,34 @@ module Demiurge
   class LocationBuilder < ActionItemBuilder
     def initialize(name)
       super
+      @agents = []
+      @agent_actions = []
     end
 
     def description(d)
       @state["description"] = d
     end
 
+    def agent(name, &block)
+      builder = AgentBuilder.new(name, { "position" => @name } )
+      builder.instance_eval(&block)
+      agent = builder.built_agent
+      actions = builder.built_actions
+      @agents << agent
+      @agent_actions << actions
+      nil
+    end
+
     def built_location
       [ @type || "Location", @name, @state ]
+    end
+
+    def built_agents
+      @agents
+    end
+
+    def agent_actions
+      @agent_actions
     end
   end
 

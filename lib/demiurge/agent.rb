@@ -89,13 +89,13 @@ module Demiurge
 
     def finished_init
       super
-      unless state["position"]["#"]
+      state["wander_counter"] ||= 0
+      unless state["position"] && state["position"]["#"]
         # Move to legal position. If this is a TMX location or similar, it will assign a specific position.
         if self.location.respond_to?(:any_legal_position)
           state["position"] = self.location.any_legal_position
         end
       end
-      state["wander_counter"] ||= 0
     end
 
     def intentions_for_next_step(options = {})

@@ -26,6 +26,11 @@ class SimpleDslTest < Minitest::Test
           state.moss += 1
           notification description: "The moss in the cracks seems to get thicker and softer moment by moment."
         end
+
+        agent "wanderer" do
+          # Don't declare a location - this should get one automatically.
+          type "WanderingAgent"
+        end
       end
     end
 
@@ -39,11 +44,14 @@ class SimpleDslTest < Minitest::Test
     engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
     second_cave_item = engine.item_by_name("second moss cave")
     refute_nil second_cave_item
+    agent = engine.item_by_name("wanderer")
+    refute_nil agent
+    assert_equal "second moss cave", agent.location_name
 
     assert_equal 0, engine.state_for_property("first moss cave", "moss")
     assert_equal 0, engine.state_for_property("second moss cave", "moss")
     intentions = engine.next_step_intentions
-    assert_equal 2, intentions.size
+    assert_equal 4, intentions.size  # Two from the moss caves, two from the agent
 
     engine.apply_intentions(intentions)
     assert_equal 0, engine.state_for_property("first moss cave", "moss")
