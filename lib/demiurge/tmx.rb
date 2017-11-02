@@ -36,17 +36,22 @@ module Demiurge
     # with the intrusiveness of what TMX needs to plug in (which isn't
     # bad, but the plugin system barely exists.)
     def tmx_location(name, &block)
-      builder = TmxLocationBuilder.new(name)
+      builder = TmxLocationBuilder.new(name, @engine)
       builder.instance_eval(&block)
       location = builder.built_location
-      location[2].merge!("zone" => @name)
+      location.state["zone"] = @name
       @locations << location
-      @location_actions << builder.built_actions
+      @agents += builder.built_agents
       nil
     end
   end
 
   class TmxLocationBuilder < LocationBuilder
+    def initialize(*args)
+      super
+      @type = "TmxLocation"
+    end
+
     def tile_layout(tmx_spec)
       # Make sure this loads correctly, but use the cache for efficiency.
       TmxLocation.tile_cache_entry(nil, tmx_spec)
@@ -65,7 +70,7 @@ module Demiurge
 
     def built_location
       raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout"] || @state["manasource_tile_layout"]
-      [ "TmxLocation" || @type, @name, @state ]
+      super
     end
   end
 

@@ -7,6 +7,7 @@ module Demiurge
     def initialize(name, engine, state)
       super # Set @name and @engine and @state
       @every_x_ticks_intention = EveryXTicksIntention.new(name)
+      @actions = {}
     end
 
     def finished_init
@@ -58,8 +59,15 @@ module Demiurge
       [@every_x_ticks_intention]
     end
 
+    def register_actions(action_hash)
+      action_hash.each do |action_name, opts|
+        raise "Object #{@name.inspect} already has an action named #{action_name.inspect}!" if @actions[action_name]
+        @actions[action_name] = opts
+      end
+    end
+
     def run_action(action_name)
-      action = @engine.action_for_item(@name, action_name)
+      action = @actions[action_name]
       raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless action
       block = action["block"]
       raise "Action was never defined for #{action_name.inspect} of object #{@name.inspect}!" unless block
@@ -69,7 +77,7 @@ module Demiurge
     end
 
     def get_action(action_name)
-      @engine.action_for_item(@name, action_name)
+      @actions[action_name]
     end
   end
 

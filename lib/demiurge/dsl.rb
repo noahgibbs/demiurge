@@ -31,8 +31,9 @@ module Demiurge
   class ActionItemBuilder
     attr_reader :actions
 
-    def initialize(name)
+    def initialize(name, engine)
       @name = name
+      @engine = engine
       @state = {}
       @actions = {}
       @position = nil
@@ -104,10 +105,6 @@ module Demiurge
       raise("Illegal keys #{illegal_keys.inspect} passed to define_action of #{action_name.inspect}!") unless illegal_keys.empty?;
       register_built_action({ "name" => action_name, "block" => block }.merge(options))
     end
-
-    def built_actions
-      @actions
-    end
   end
 
   class TopLevelBuilder
@@ -119,7 +116,7 @@ module Demiurge
       @agents = []
       @extras = []
       @item_names = {}
-      @item_actions = {}
+      @engine = ::Demiurge::Engine.new(types: @@types, state: [])
     end
 
     # For now, this just declares an InertStateItem for a given name.
@@ -134,58 +131,20 @@ module Demiurge
       @extras.push(["InertStateItem", item_name, {}])
     end
 
-    # This "registers" the serialized objects in the sense that it
-    # tracks their names and actions to be added to the Engine when it
-    # is created later.
-    def register_new_serialized_objects(objs, actions = nil)
-      objs.each_with_index do |obj, index|
-        name = obj[1]
-        raise "Duplicated object name #{name.inspect}!" if @item_names[name]
-        @item_names[name] = true
-
-        @item_actions[name] = actions[index] if actions && actions[index]
-      end
-      objs
-    end
-
     def zone(name, &block)
-      builder = ZoneBuilder.new(name)
+      if @zones.any? { |z| z.name == name }
+        # Reopening an existing zone
+        builder = ZoneBuilder.new(name, @engine, "existing" => @zones.detect { |z| z.name == name })
+      else
+        builder = ZoneBuilder.new(name, @engine)
+      end
+
       builder.instance_eval(&block)
       new_zone = builder.built_zone
-      zone_actions = builder.built_actions
 
-      # Merge with any existing zone with the same name.
-      # This allows zone re-opening in multiple Ruby files.
-      same_zone = @zones.detect { |z| z[1] == new_zone[1] }
-      if same_zone
-        if same_zone[2]["type"] && new_zone[2]["type"] && same_zone[2]["type"] != new_zone[2]["type"]
-          raise("A Zone can only have one type! No merging different types #{same_zone[2]["type"]} and #{new_zone[2]["type"]} in the same zone!")
-        end
-
-        array_merged_keys = [ "location_names", "agent_names", "everies" ]
-        hash_merged_keys = [ "on_handlers" ]
-        new_state_keys = new_zone[2].keys - array_merged_keys - hash_merged_keys
-        old_state_keys = same_zone[2].keys - array_merged_keys - hash_merged_keys
-        dup_keys = new_state_keys & old_state_keys
-        raise("Zone #{new_zone[1].inspect} is reopened and duplicates state keys: #{dup_keys.inspect}!") unless dup_keys.empty?
-
-        array_merged_keys.each do |merged_key_name|
-          new_values = new_zone[2][merged_key_name] || []
-          old_values = same_zone[2][merged_key_name] || []
-          new_zone[2][merged_key_name] = old_values + new_values
-        end
-        hash_merged_keys.each do |merged_key_name|
-          new_values = new_zone[2][merged_key_name] || {}
-          old_values = same_zone[2][merged_key_name] || {}
-          new_zone[2][merged_key_name] = old_values.merge(new_values)
-        end
-        same_zone[2].merge!(new_zone[2]) # This will overwrite location names
-      else
-        @zones << register_new_serialized_objects([new_zone], [zone_actions])[0]
-      end
-
-      @locations += register_new_serialized_objects(builder.built_locations, builder.location_actions)
-      @agents += register_new_serialized_objects(builder.built_agents, builder.agent_actions)
+      @zones |= [ new_zone ] if new_zone  # Add if not already present
+      @locations += builder.built_locations
+      @agents += builder.built_agents
       nil
     end
 
@@ -208,70 +167,78 @@ module Demiurge
     end
 
     def built_engine
-      state = @zones + @locations + @agents + @extras
-      engine = ::Demiurge::Engine.new(types: @@types, state: state)
-      engine.register_actions_by_item_and_action_name(@item_actions)
-      engine.finished_init
-      engine
+      (@zones + @locations + @agents + @extras).each { |item| @engine.register_state_item(item) }
+      @engine.finished_init
+      @engine
     end
   end
 
   class AgentBuilder < ActionItemBuilder
-    def initialize(name, extra_state = {})
-      super(name)
+    def initialize(name, engine, extra_state = {})
+      super(name, engine)
       @state.merge!(extra_state)
     end
 
-    def instantiable(options = {}, &block)
-      @state["instantiable"] = "true"
-    end
-
     def built_agent
-      if @state["instantiable"] && @state["position"]
-        raise "Agent #{@name.inspect} cannot have a position (#{@state["position"].inspect}) and also be instantiable!"
-      elsif !@state["instantiable"] && !@state["position"]
-        raise "Agent #{@name.inspect} cannot have no position but not be instantiable!"
-      end
-      [@type || "Agent", @name, @state]
+      agent = ::Demiurge::StateItem.from_name_type(@engine, @type || "Agent", @name, @state)
+      agent.register_actions @actions
+      agent
     end
   end
 
   class ZoneBuilder < ActionItemBuilder
-    attr_reader :location_actions
-    attr_reader :agent_actions
-
-    def initialize(name)
-      super
+    def initialize(name, engine, options = {})
+      super(name, engine)
+      @existing = options["existing"]
       @locations = []
-      @location_actions = []
       @agents = []
-      @agent_actions = []
     end
 
     def location(name, &block)
-      builder = LocationBuilder.new(name)
+      builder = LocationBuilder.new(name, @engine)
       builder.instance_eval(&block)
       location = builder.built_location
-      location[2].merge!("zone" => @name)
+      location.state["zone"] = @name
       @locations << location
-      @location_actions << builder.built_actions
       @agents += builder.built_agents
-      @agent_actions << builder.agent_actions
       nil
     end
 
     def agent(name, &block)
-      builder = AgentBuilder.new(name)
+      builder = AgentBuilder.new(name, @engine)
       builder.instance_eval(&block)
-      agent = builder.built_agent
-      actions = builder.built_actions
-      @agents << agent
-      @agent_actions << actions
+      @agents << builder.built_agent
       nil
     end
 
     def built_zone
-      [ @type || "Zone", @name, @state.merge("location_names" => @locations.map { |l| l[1] }, "agent_names" => @agents.map { |a| a[1] }) ]
+      if @existing
+        # Point of order: what do we do if a zone isn't given a type
+        # on its first reference, but later is given one? In Ruby, for
+        # classes, that's actually disallowed... You *can* repeat the
+        # type in each zone-reopen to make sure the first one has it.
+        if @type && @type != @existing.state_type
+          raise "Zone #{@name.inspect} of type #{@existing.state_type.inspect} cannot be reopened to type #{@type.inspect}!"
+        end
+        @existing.state["location_names"] += @locations.map { |l| l.name }
+        @existing.state["agent_names"] += @agents.map { |a| a.name }
+        @existing.state["everies"] ||= []
+        @existing.state["everies"] += (@state["everies"] || [])
+        @existing.state["on_handlers"] ||= {}
+        @existing.state["on_handlers"].merge!(@state["on_handlers"] || {})
+
+        @state.delete("everies") # Delete known keys
+        @state.delete("on_handlers") # Delete known keys
+
+        unless @state.keys.empty?
+          raise "Don't know how to do zone merge with keys #{@state.keys.inspect}!"
+        end
+      else
+        state = @state.merge("location_names" => @locations.map { |l| l.name }, "agent_names" => @agents.map { |a| a.name })
+        zone = ::Demiurge::StateItem.from_name_type(@engine, @type || "Zone", @name, state)
+        zone.register_actions @actions
+        zone
+      end
     end
 
     def built_locations
@@ -284,10 +251,9 @@ module Demiurge
   end
 
   class LocationBuilder < ActionItemBuilder
-    def initialize(name)
+    def initialize(name, engine)
       super
       @agents = []
-      @agent_actions = []
     end
 
     def description(d)
@@ -295,25 +261,22 @@ module Demiurge
     end
 
     def agent(name, &block)
-      builder = AgentBuilder.new(name, { "position" => @name } )
+      builder = AgentBuilder.new(name, @engine, { "position" => @name } )
       builder.instance_eval(&block)
       agent = builder.built_agent
-      actions = builder.built_actions
       @agents << agent
-      @agent_actions << actions
       nil
     end
 
     def built_location
-      [ @type || "Location", @name, @state ]
+      # TODO: build the item-less engine first, then pass it into the various subclasses so they can create/instantiate?
+      loc = ::Demiurge::StateItem.from_name_type(@engine, @type || "Location", @name, @state)
+      loc.register_actions @actions
+      loc
     end
 
     def built_agents
       @agents
-    end
-
-    def agent_actions
-      @agent_actions
     end
   end
 

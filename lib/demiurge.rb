@@ -99,37 +99,6 @@ module Demiurge
       @klasses[name] ||= klass
     end
 
-    # StateItems are transient, but need to be hooked up to the
-    # various (code) actions for doing various things.  Those actions
-    # aren't serialized (ew), but instead are referred to by name, and
-    # the engine loads up all the item-name/action-name combinations
-    # when it reads the Ruby source files. This means an action can be
-    # referred to by its name when serialized, but the actual code
-    # changes any time the world files do - at least, if you reboot
-    # now and then.
-    #
-    # Non-transient StateItems should render this obsolete, so we can
-    # change this after that.
-    def register_actions_by_item_and_action_name(item_actions)
-      @item_actions ||= {}
-      item_actions.each do |item_name, act_hash|
-        if @item_actions[item_name]
-          dup_keys = @item_actions[item_name].keys | act_hash.keys
-          raise "Duplicate item actions for #{item_name.inspect}! List: #{dup_keys.inspect}" unless dup_keys.empty?
-          @item_actions[item_name].merge!(act_hash)
-        else
-          @item_actions[item_name] = act_hash
-        end
-      end
-    end
-
-    def action_for_item(item_name, action_name)
-      unless @item_actions && @item_actions[item_name]
-        raise "Can't get action #{item_name.inspect} / #{action_name.inspect} from #{@item_actions.inspect}!"
-      end
-      @item_actions[item_name][action_name]
-    end
-
     def valid_item_name?(name)
       !!(name =~ /\A[-_ 0-9a-zA-Z]+\Z/)
     end

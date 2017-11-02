@@ -17,6 +17,10 @@ DSL_TEXT_1 = <<GOBLIN_DSL_1
     on("event1", "handler1") do
       STDERR.puts "Sample action 1"
     end
+
+    every_X_ticks("first_every", 1) do
+      # Nothing interesting
+    end
   end
 GOBLIN_DSL_1
 
@@ -36,6 +40,10 @@ DSL_TEXT_2 = <<GOBLIN_DSL_2
     on("event2", "handler2") do
       STDERR.puts "Sample action 2"
     end
+
+    every_X_ticks("second_every", 3) do
+      # Nothing interesting
+    end
   end
 GOBLIN_DSL_2
 
@@ -46,6 +54,10 @@ class ZoneReopenTest < Minitest::Test
     refute_nil first_cave_item
     second_cave_item = engine.item_by_name("second moss cave")
     refute_nil second_cave_item
+
+    zone = engine.item_by_name("moss caves")
+    assert_equal ["event1", "event2"], zone.state["on_handlers"].keys.sort
+    assert_equal [{"action" => "first_every", "every"=>1, "counter"=>0}, {"action"=>"second_every", "every"=>3, "counter"=>0}], zone.state["everies"]
 
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
