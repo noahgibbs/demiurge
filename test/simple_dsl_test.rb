@@ -66,7 +66,6 @@ zone "first zone" do
   type "ZoneSubtype"
 end
     DSL_TEXT
-    engine.finished_init
     zone = engine.item_by_name("first zone")
     assert_equal "ZoneSubtype", zone.class.to_s
   end
