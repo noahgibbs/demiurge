@@ -54,7 +54,9 @@ module Demiurge
     # called if a new world is being created from DSL files, but
     # should be skipped if you're restoring state from a dump.
     def finished_init
+      raise("Duplicate finished_init call to engine!") if @finished_init
       @state_items.values.each { |obj| obj.finished_init() if obj.respond_to?(:finished_init) }
+      @finished_init = true
     end
 
     def structured_state(options = {})
