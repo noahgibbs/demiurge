@@ -1,15 +1,16 @@
 module Demiurge
   class Location < ActionItem
-    def initialize(name, engine)
+    def initialize(name, engine, state)
       super
+      state["contents"] ||= []
+      state["exits"] ||= []
     end
 
     def finished_init
-      state["contents"] ||= []
+      # Can't move all items inside until they all exist, which isn't guaranteed until init is finished.
       state["contents"].each do |item|
         move_item_inside(@engine.item_by_name(item))
       end
-      state["exits"] ||= []
     end
 
     # A Location isn't located "inside" somewhere else. It is located in/at itself.
@@ -27,15 +28,15 @@ module Demiurge
     # though that would make it more painful to track and construct in
     # the World Files.
     def zone_name
-      @engine.state_for_property(@name, "zone")
+      @state["zone"]
     end
 
     def zone
-      @engine.item_by_name(zone_name)
+      @engine.item_by_name(@state["zone"])
     end
 
     def ensure_does_not_contain(item_name)
-      state["contents"] -= [item_name]
+      @state["contents"] -= [item_name]
     end
 
     def move_item_inside(item)
@@ -46,7 +47,7 @@ module Demiurge
         old_loc.ensure_does_not_contain(item.name)
       end
 
-      state["contents"] += [ item.name ]
+      @state["contents"] += [ item.name ]
     end
 
     # Return a legal position of some kind within this Location.  By
@@ -70,8 +71,8 @@ module Demiurge
       raise("'From' position #{from.inspect} is invalid when adding exit to #{@name.inspect}!") unless valid_position?(from)
       raise("'To' position #{to.inspect} is invalid when adding exit to #{@name.inspect}!") unless to_location.valid_position?(to)
       exit_obj = { "from" => from, "to" => to, "properties" => properties }
-      state["exits"] ||= []
-      state["exits"].push(exit_obj)
+      @state["exits"] ||= []
+      @state["exits"].push(exit_obj)
       exit_obj
     end
 
@@ -81,13 +82,13 @@ module Demiurge
     # Location, and a known format only if you know the specific
     # subclass of Location you're dealing with.
     def exits
-      state["exits"]
+      @state["exits"]
     end
 
     # Include everything under the location: anything have an action to perform?
     def intentions_for_next_step(options = {})
       intentions = super
-      state["contents"].each do |item_name|
+      @state["contents"].each do |item_name|
         item = @engine.item_by_name(item_name)
         intentions += item.intentions_for_next_step(options)
       end

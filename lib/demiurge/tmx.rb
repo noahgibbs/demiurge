@@ -117,10 +117,6 @@ module Demiurge
   end
 
   class TmxLocation < Location
-    def initialize(name,engine)
-      super
-    end
-
     # This just determines if the position is valid at all.  It does
     # *not* check walkable/swimmable or even if it's big enough for a
     # humanoid to stand in.

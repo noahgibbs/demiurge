@@ -2,7 +2,7 @@ require_relative 'test_helper'
 
 module GoblinTown
   class MossCave < Demiurge::StateItem
-    def initialize(name, engine)
+    def initialize(name, engine, state)
       super
       @growmoss_intention = GrowMoss.new(name)
     end
@@ -26,9 +26,10 @@ module GoblinTown
     end
 
     def apply(engine, options)
-      engine.set_state_for_property(@name, "moss", engine.state_for_property(@name, "moss") + 1)
-      if engine.state_for_property(@name, "moss") >= engine.state_for_property(@name, "growmoss_every")
-        engine.set_state_for_property(@name, "moss", 0)
+      item = engine.item_by_name(@name)
+      item.state["moss"] += 1
+      if item.state["moss"] >= item.state["growmoss_every"]
+        item.state["moss"] = 0
       end
     end
 
@@ -54,7 +55,8 @@ class GoblinTownTest < Minitest::Test
     # finished_init, but that's not what we do here.  So we do it
     # manually.
     goblin_town.finished_init
-    assert_equal 0, goblin_town.state_for_property("mosscave1", "moss")
+    cave = goblin_town.item_by_name("mosscave1")
+    assert_equal 0, cave.state["moss"]
     intentions = goblin_town.next_step_intentions
     assert_equal 2, intentions.size
     assert intentions[0].is_a?(GoblinTown::GrowMoss)

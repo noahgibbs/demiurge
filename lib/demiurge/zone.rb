@@ -42,13 +42,13 @@ module Demiurge
     # *inside* the Zone. This may or may not do anything useful,
     # depending on the type of the Zone.
     def location_names
-      @engine.state_for_property(@name, "location_names")
+      @state["location_names"]
     end
 
     # By default, a zone just passes control to all its locations,
     # gathering up their intentions into a list.
     def intentions_for_next_step(options = {})
-      intentions = @engine.state_for_property(@name, "location_names").flat_map do |loc_name|
+      intentions = @state["location_names"].flat_map do |loc_name|
         @engine.item_by_name(loc_name).intentions_for_next_step
       end
       intentions

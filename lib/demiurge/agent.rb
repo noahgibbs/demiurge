@@ -86,7 +86,7 @@ module Demiurge
 
   # This agent will wander around. A simple way to make a decorative mobile.
   class WanderingAgent < Agent
-    def initialize(name, engine)
+    def initialize(name, engine, state)
       super
       @wander_intention = WanderIntention.new(name)
     end
@@ -107,6 +107,7 @@ module Demiurge
     end
   end
 
+  # This is a simple Wandering agent for use with Tmx and similar grid-based maps.
   class WanderIntention < Intention
     def initialize(name)
       @name = name
@@ -118,10 +119,9 @@ module Demiurge
 
     def apply(engine, options)
       agent = engine.item_by_name(@name)
-      state = engine.state_for_item(@name)
-      state["wander_counter"] += 1
-      wander_every = state["wander_every"] || 3
-      return if state["wander_counter"] < wander_every
+      agent.state["wander_counter"] += 1
+      wander_every = agent.state["wander_every"] || 3
+      return if agent.state["wander_counter"] < wander_every
       next_coords = agent.zone.adjacent_positions(agent.position)
       if next_coords.empty?
         engine.send_notification({ description: "Oh no! Wandering agent #{@name.inspect} is stuck and can't get out!" }, notification_type: "admin warning", zone: agent.zone_name, location: agent.location_name, item_acting: @name)
@@ -130,7 +130,7 @@ module Demiurge
       chosen = next_coords.sample
       pos = "#{agent.location_name}##{chosen.join(",")}"
       agent.move_to_position(pos)
-      state["wander_counter"] = 0
+      agent.state["wander_counter"] = 0
     end
   end
 

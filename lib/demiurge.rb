@@ -15,19 +15,9 @@ require "demiurge/agent"
 
 require "multi_json"
 
-# Okay, so with state set per-object, and StateItem objects having no
-# local copy, it becomes an interface question: how to write
-# less-horrible code in a DSL setting to paper over the fact that the
-# item doesn't control its own state, and has to be fully disposable.
-
-# This makes it easy to run in "debug mode" where state and StateItems
-# are both rotated constantly (destroyed and recreated) while allowing
-# easier production runs where things can be mutated rather than
-# frozen and replaced.
-
 module Demiurge
   class Engine
-    include ::Demiurge::Util # For copyfreeze and deepcopy
+    #include ::Demiurge::Util # For copyfreeze and deepcopy
 
     attr_reader :ticks
 
@@ -71,18 +61,6 @@ module Demiurge
       @state_items[name]
     end
 
-    def state_for_item(name)
-      @state[name]
-    end
-
-    def state_for_property(name, property)
-      @state[name][property]
-    end
-
-    def set_state_for_property(name, property, value)
-      @state[name][property] = value
-    end
-
     def zones
       @zones
     end
@@ -91,10 +69,8 @@ module Demiurge
       @state_items.keys
     end
 
-    def apply_intentions(intentions, options = { :nofreeze => false })
-      speculative_state = deepcopy(@state)
-      valid_state = @state
-      @state = speculative_state
+    def apply_intentions(intentions, options = { })
+      state_backup = structured_state()
 
       begin
         intentions.each do |a|
@@ -102,19 +78,12 @@ module Demiurge
         end
       rescue
         STDERR.puts "Exception when updating! Throwing away speculative state!"
-        @state = valid_state
+        state_from_structured_array(state_backup)
         raise
       end
 
       send_notification({}, notification_type: "tick finished", location: "", zone: "", item_acting: nil)
       @ticks += 1
-
-      # Make sure to copy and possibly freeze. Nobody gets to keep references to the state-tree's internals.
-      if options[:nofreeze]
-        @state = deepcopy(speculative_state)
-      else
-        @state = copyfreeze(speculative_state)
-      end
     end
 
     def get_type(t)
@@ -139,11 +108,8 @@ module Demiurge
     # changes any time the world files do - at least, if you reboot
     # now and then.
     #
-    # A reasonable question: why not attach the actions to the state
-    # items any time they're created? The short answer is that
-    # StateItems may be transient, and we don't want to have to
-    # remember all the code we loaded to let them reload
-    # themselves. Instead we remember all loaded code in the engine.
+    # Non-transient StateItems should render this obsolete, so we can
+    # change this after that.
     def register_actions_by_item_and_action_name(item_actions)
       @item_actions ||= {}
       item_actions.each do |item_name, act_hash|
@@ -168,12 +134,11 @@ module Demiurge
       !!(name =~ /\A[-_ 0-9a-zA-Z]+\Z/)
     end
 
-    def register_state_item(item, state)
+    def register_state_item(item)
       name = item.name
       if @state_items[name]
         raise "Duplicate item name: #{name}! Failing!"
       end
-      @state[name] = state
       @state_items[name] = item
       if item.zone?
         @zones.push(item)
@@ -191,7 +156,7 @@ module Demiurge
       @zones = []
 
       arr.each do |type, name, state|
-        register_state_item(StateItem.from_name_type(self, type.freeze, name.to_s.freeze, options), state)
+        register_state_item(StateItem.from_name_type(self, type.freeze, name.to_s.freeze, state, options))
       end
       nil
     end
@@ -282,9 +247,10 @@ module Demiurge
       self.class.name.split("::")[-1]
     end
 
-    def initialize(name, engine)
+    def initialize(name, engine, state)
       @name = name
       @engine = engine
+      @state = state
     end
 
     # This method determines whether the item will be treated as a
@@ -306,16 +272,16 @@ module Demiurge
     end
 
     def state
-      @engine.state_for_item(@name)
+      @state
     end
 
     def get_structure(options = {})
-      [state_type, @name, @engine.state_for_item(@name)]
+      [state_type, @name, @state]
     end
 
     # Create a single StateItem from structured (generally frozen) state
-    def self.from_name_type(engine, type, name, options = {})
-      engine.get_type(type).new(name, engine)
+    def self.from_name_type(engine, type, name, state, options = {})
+      engine.get_type(type).new(name, engine, state)
     end
 
     def intentions_for_next_step(*args)
@@ -335,6 +301,8 @@ module Demiurge
   # Intentions go through verification, resolution and eventually
   # notification.
 
+  # TODO: with non-transient StateItems, I think we can skip passing "engine" into all of these...
+  # Basically, anything can take a StateItem to its constructor and get everything it needs.
   class Intention
     def allowed?(engine, options = {})
       raise "Unimplemented intention!"

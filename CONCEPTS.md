@@ -25,7 +25,10 @@ clock.
 The world "entity" for a thing in the world is fairly vague. It may
 refer to an "item", a "creature", an "area" (another vague word) or
 something else. An entity is "a thing or things in the world" rather
-than one specific abstraction that Demiurge defines.
+than one specific abstraction that Demiurge defines. Entities
+generally can act and be acted on, can pick things up and be picked
+up, can take place in a location or be that location. In general, a
+single individual entity will only do a few of those things, though.
 
 == Intentions, Actions and Events
 
@@ -59,10 +62,10 @@ state.
 State in Demiurge must be serializable as JSON. That gives a
 combination of numbers, strings, true/false/undefined special values,
 lists and objects (dictionaries/hashes) as the set of all state
-data. There is a single full state "tree" in Demiurge, where each
-State Item gets a chunk of state attached to its item name. Each item
-name must be unique. There may be lots of a particular *kind* of state
-item, but each one gets its own unique name and its own chunk of state.
+data. Each State Item gets a chunk of state and manages its own
+rules. Each State Item's item name must be unique. There may be lots
+of a particular *kind* of state item, but each one gets its own unique
+name and its own chunk of state.
 
 A "State Item" applies rules to state. As a programmatic object, it
 can apply its rules (which are fixed) to its state (which can change
@@ -74,15 +77,16 @@ world?"
 
 == Item Naming and Instances
 
-A Demiurge item (including Zones, Locations, Agents and many others)
+A Demiurge entity (including Zones, Locations, Agents and many others)
 must have a single, fully unique name within a given Engine. In World
 Files, normally a human has to declare the name and that name needs to
 be unique.
 
 Names have a few restrictions. You can use alphanumeric characters
-(letters and numbers) along with spaces, dashes and underscores in the
-names. But other punctuation including quotes, hash signs, dollar signs
-and so on aren't permitted. These names are used internally as unique
+(letters and numbers, including Unicode letters and numbers) along
+with spaces, dashes and underscores in the names. But other
+punctuation including quotes, hash signs, dollar signs and so on
+aren't permitted. These names are used internally as unique
 identifiers and you don't need to worry about showing them to humans,
 so don't worry about not being able to put punctuation you care about
 in the names. The names are case-sensitive -- that is, "Bobo" and
@@ -90,14 +94,15 @@ in the names. The names are case-sensitive -- that is, "Bobo" and
 lower-case letter count as different from each other.
 
 Certain items, such as Zones in World Files may be reopened by
-declaring a Zone with the same name. But if so, they aren't two
-different Zones with the same name. Instead, the files declare a
-single Zone across multiple files. That's perfectly legal, just as you
-may declare a room in one World File while declaring creatures and
-items inside it in another World File. But it's all a single room,
-even if it's declared in multiple places for human convenience. If
-you're used to programming with Ruby classes, this idea of "reopening"
-the same zone in a new file will probably seem very familiar.
+declaring another item (e.g. another Zone) with the same name. But if
+so, they aren't two different Zones with the same name. Instead, the
+files declare a single Zone across multiple files. That's perfectly
+legal, just as you may declare a room in one World File while
+declaring creatures and items inside it in another World File. But
+it's all a single room, even if it's declared in multiple places for
+human convenience. If you're used to programming with Ruby classes,
+this idea of "reopening" the same zone in a new file will probably
+seem very familiar.
 
 Sometimes you want to declare an object and then have a lot of
 them. Something like a wooden spoon, a low-level slime monster or a
@@ -110,11 +115,10 @@ just have a "7" or a "12" after their name.
 There are a few kinds of special punctuation in names and name-like
 things that Demiurge may use for itself. For instance, a Position (see
 later in this file) is a location's item name followed by a pound sign
-and then some additional information, such as "my\_room#25,71". And
-instanced objects use a dollar sign and then a number as a suffix. So
-a dynamically-created maze room might be called "blorg-maze-room$25",
-while a specific Position inside that location might be
-"blorg-maze-room$25#3,17".
+and then some additional information, such as
+"my\_room#25,71". Certain special objects and other things in Demiurge
+can use other punctuation (e.g. colon or dollar-sign), but these
+shouldn't occur in human-named objects in World Files.
 
 == Events and State Changes
 
@@ -146,8 +150,8 @@ it, they may react to it.
 == The Cycle of a Tick
 
 Initially, the state is effectively frozen - nothing should change
-it. It may be literally kept immutable in the programming language in
-question, depending on required efficiency.
+it. It may be literally kept immutable in the program, depending on
+required efficiency.
 
 For each tick, code runs to generate Intentions on the part of any
 entities that can act. Anything that will change state or create a
@@ -160,7 +164,8 @@ First an Intention is "validated" - can it happen at all? If not, it
 is discarded as impossible, undesirable or otherwise "not going to
 happen" with no effects of any kind.
 
-At this point, the state must be unfrozen (or duplicated as mutable.)
+At this point, the state becomes changeable again. This may involve
+unfreezing or copying.
 
 Then an Intention is offered - other entities may attempt to block,
 modify or otherwise interfere with what occurs. This may result in the
@@ -246,34 +251,3 @@ in a form appropriate to their zone such as "7,25" or
 "29.45/81.6/Kappa" or "left\_of/gray\_greasy\_lamp". The coordinates
 should not contain a pound-sign, a dollar sign or other characters
 that aren't legal in a Demiurge item name.
-
-== Instantiable and Instanced Entities
-
-Non-Zone entities can be Instanced - that is, they may be a set of
-rules for an object, but more than one object can follow those
-rules. Instead of declaring every wooden spoon separately in your
-World Files, you can declare a global "ideal" wooden spoon and then
-make many instances of it that all act in roughly the same way.
-
-Each instance has its own state so if you have different appearances
-or slightly different rules, it's not hard to have the different
-instances all share a single declaration.
-
-Instances are denoted by an unusual name - a dollar sign and an
-instance number follow the name. The name before the dollar sign is
-the same as the name of the object it's an instance of.
-
-An Instantiable object has no location or position, though it exists
-in a Zone. Instances made from it must have a position, though.
-
-There is no specific limit to how many instances a given object may
-have, though there may be limits to how they are created. For
-instance, a Spawner will often create a limited number of total agents
-and then stop until or unless one or more agents are destroyed in some
-way.
-
-Instanced objects can be created in World Files as a way to share
-rules. For instance, a single "Platonic Ideal" object may be made for
-common items, then instances of them scattered through the world. This
-prevents having to create a separate set of rules and actions for each
-individual item, duplicated in full.

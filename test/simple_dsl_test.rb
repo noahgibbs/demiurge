@@ -37,27 +37,29 @@ class SimpleDslTest < Minitest::Test
 
   def test_trivial_dsl_actions
     engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
+    first_cave_item = engine.item_by_name("first moss cave")
+    refute_nil first_cave_item
     second_cave_item = engine.item_by_name("second moss cave")
     refute_nil second_cave_item
     agent = engine.item_by_name("wanderer")
     refute_nil agent
     assert_equal "second moss cave", agent.location_name
 
-    assert_equal 0, engine.state_for_property("first moss cave", "moss")
-    assert_equal 0, engine.state_for_property("second moss cave", "moss")
+    assert_equal 0, first_cave_item.state["moss"]
+    assert_equal 0, second_cave_item.state["moss"]
     intentions = engine.next_step_intentions
     assert_equal 4, intentions.size  # Two from the moss caves, two from the agent
 
     engine.apply_intentions(intentions)
-    assert_equal 0, engine.state_for_property("first moss cave", "moss")
-    assert_equal 0, engine.state_for_property("second moss cave", "moss")
+    assert_equal 0, first_cave_item.state["moss"]
+    assert_equal 0, second_cave_item.state["moss"]
 
     intentions = engine.next_step_intentions
     engine.apply_intentions(intentions)
     intentions = engine.next_step_intentions
     engine.apply_intentions(intentions)
-    assert_equal 1, engine.state_for_property("first moss cave", "moss")
-    assert_equal 1, engine.state_for_property("second moss cave", "moss")
+    assert_equal 1, first_cave_item.state["moss"]
+    assert_equal 1, second_cave_item.state["moss"]
   end
 
   def test_dsl_type_specs

@@ -4,8 +4,8 @@ module Demiurge
   class ActionItem < StateItem
     attr_reader :engine
 
-    def initialize(name, engine)
-      super # Set @name and @engine
+    def initialize(name, engine, state)
+      super # Set @name and @engine and @state
       @every_x_ticks_intention = EveryXTicksIntention.new(name)
     end
 
@@ -18,7 +18,7 @@ module Demiurge
     end
 
     def location_name
-      pos = @engine.state_for_property(@name, "position")
+      pos = @state["position"]
       pos ? pos.split("#",2)[0] : nil
     end
 
@@ -35,7 +35,7 @@ module Demiurge
     # by a pound sign ("#") and zone-specific additional coordinates
     # of some kind.
     def position
-      @engine.state_for_property(@name, "position")
+      @state["position"]
     end
 
     def zone
@@ -49,11 +49,11 @@ module Demiurge
     end
 
     def __state_internal
-      @engine.state_for_item(@name)
+      @state
     end
 
     def intentions_for_next_step(options = {})
-      everies = @engine.state_for_property(@name, "everies")
+      everies = @state["everies"]
       return [] if everies.nil? || everies.empty?
       [@every_x_ticks_intention]
     end
@@ -167,11 +167,11 @@ module Demiurge
     end
 
     def apply(engine, options)
-      everies = engine.state_for_property(@name, "everies")
+      item = engine.item_by_name(@name)
+      everies = item.state["everies"]
       everies.each do |every|
         every["counter"] += 1
         if every["counter"] >= every["every"]
-          item = engine.item_by_name(@name)
           item.run_action(every["action"])
           every["counter"] = 0
         end
