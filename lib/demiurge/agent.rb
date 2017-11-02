@@ -17,6 +17,10 @@ module Demiurge
       super
       @intention_queue = []
       @agent_maintenance = AgentMaintenanceIntention.new(@name)
+    end
+
+    def finished_init
+      super
       state["busy"] ||= 0 # By default, start out idle.
     end
 
