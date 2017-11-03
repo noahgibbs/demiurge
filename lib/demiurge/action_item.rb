@@ -61,23 +61,11 @@ module Demiurge
 
     ACTION_LEGAL_KEYS = [ "name", "block", "busy" ]
     def register_actions(action_hash)
-      action_hash.each do |action_name, opts|
-        if @actions[action_name]
-          ACTION_LEGAL_KEYS.each do |key|
-            existing_val = @actions[action["name"]][key]
-            if existing_val && action[key] && existing_val != action[key]
-              raise "Can't register a second action #{action["name"].inspect} with conflicting key #{key.inspect} in register_built_action!"
-            end
-          end
-          @actions[action["name"]].merge!(action)
-        else
-          @actions[action_name] = opts
-        end
-      end
+      @engine.register_actions_by_item_and_action_name(@name => action_hash)
     end
 
     def run_action(action_name)
-      action = @actions[action_name]
+      action = get_action(action_name)
       raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless action
       block = action["block"]
       raise "Action was never defined for #{action_name.inspect} of object #{@name.inspect}!" unless block
@@ -87,7 +75,12 @@ module Demiurge
     end
 
     def get_action(action_name)
-      @actions[action_name]
+      action = @engine.action_for_item(@name, action_name)
+      if !action && state["parent"]
+        # Do we have a parent and no action definition yet? If so, defer to the parent.
+        @engine.item_by_name(state["parent"]).get_action(action_name)
+      end
+      action
     end
   end
 
