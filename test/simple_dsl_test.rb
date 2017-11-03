@@ -27,9 +27,8 @@ class SimpleDslTest < Minitest::Test
           notification description: "The moss in the cracks seems to get thicker and softer moment by moment."
         end
 
-        agent "wanderer" do
+        agent "wanderer", "type" => "WanderingAgent" do
           # Don't declare a location - this should get one automatically.
-          type "WanderingAgent"
         end
       end
     end
@@ -64,8 +63,7 @@ class SimpleDslTest < Minitest::Test
 
   def test_dsl_type_specs
     engine = Demiurge.engine_from_dsl_text(["Goblin DSL", <<-DSL_TEXT])
-zone "first zone" do
-  type "ZoneSubtype"
+zone "first zone", "type" => "ZoneSubtype" do
 end
     DSL_TEXT
     zone = engine.item_by_name("first zone")

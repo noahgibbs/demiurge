@@ -35,28 +35,26 @@ module Demiurge
     # StateItems. This remains ugly until the plugin system catches up
     # with the intrusiveness of what TMX needs to plug in (which isn't
     # bad, but the plugin system barely exists.)
-    def tmx_location(name, &block)
-      builder = TmxLocationBuilder.new(name, @engine)
+    def tmx_location(name, options = {}, &block)
+      builder = TmxLocationBuilder.new(name, @engine, "type" => options["type"] || "TmxLocation")
       builder.instance_eval(&block)
       location = builder.built_location
       location.state["zone"] = @name
-      @locations << location
-      @agents += builder.built_agents
+      builder.built_agents.each { |agent| agent.state["zone"] = @name; @built_item.state["agent_names"] << agent.name }
+      @built_item.state["location_names"] << location.name
       nil
     end
   end
 
   class TmxLocationBuilder < LocationBuilder
-    def initialize(*args)
+    def initialize(name, engine, options = {})
+      options["type"] ||= "TmxLocation"
       super
-      @type = "TmxLocation"
     end
 
     def tile_layout(tmx_spec)
       # Make sure this loads correctly, but use the cache for efficiency.
       TmxLocation.tile_cache_entry(nil, tmx_spec)
-
-      Demiurge.sprites_from_tmx(tmx_spec)
 
       @state["tile_layout"] = tmx_spec
     end
@@ -81,6 +79,7 @@ module Demiurge
     # exits may be slightly wonky because the other zone hasn't
     # necessarily performed its own finished_init yet.
     def finished_init
+      super
       exits = []
       locations = state["location_names"].map { |ln| @engine.item_by_name(ln) }
       locations.each do |location|

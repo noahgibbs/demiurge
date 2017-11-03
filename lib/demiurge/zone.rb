@@ -12,6 +12,12 @@ module Demiurge
   # sub-locations.
 
   class Zone < ActionItem
+    def initialize(*args)
+      super
+      @state["location_names"] ||= []
+      @state["agent_names"] ||= []
+    end
+
     # A Zone isn't located "inside" somewhere else. It is located in/at itself.
     def location
       self

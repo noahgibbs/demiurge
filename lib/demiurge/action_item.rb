@@ -59,10 +59,20 @@ module Demiurge
       [@every_x_ticks_intention]
     end
 
+    ACTION_LEGAL_KEYS = [ "name", "block", "busy" ]
     def register_actions(action_hash)
       action_hash.each do |action_name, opts|
-        raise "Object #{@name.inspect} already has an action named #{action_name.inspect}!" if @actions[action_name]
-        @actions[action_name] = opts
+        if @actions[action_name]
+          ACTION_LEGAL_KEYS.each do |key|
+            existing_val = @actions[action["name"]][key]
+            if existing_val && action[key] && existing_val != action[key]
+              raise "Can't register a second action #{action["name"].inspect} with conflicting key #{key.inspect} in register_built_action!"
+            end
+          end
+          @actions[action["name"]].merge!(action)
+        else
+          @actions[action_name] = opts
+        end
       end
     end
 
