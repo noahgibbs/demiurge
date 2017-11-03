@@ -78,7 +78,7 @@ module Demiurge
       action = @engine.action_for_item(@name, action_name)
       if !action && state["parent"]
         # Do we have a parent and no action definition yet? If so, defer to the parent.
-        @engine.item_by_name(state["parent"]).get_action(action_name)
+        action = @engine.item_by_name(state["parent"]).get_action(action_name)
       end
       action
     end

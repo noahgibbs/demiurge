@@ -11,6 +11,9 @@ module Demiurge
       state["contents"].each do |item|
         move_item_inside(@engine.item_by_name(item))
       end
+
+      # And make sure we're in our zone.
+      zone.state["location_names"] |= [@name]
     end
 
     # A Location isn't located "inside" somewhere else. It is located in/at itself.

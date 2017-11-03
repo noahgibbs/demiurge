@@ -17,7 +17,7 @@ require "multi_json"
 
 module Demiurge
   class Engine
-    #include ::Demiurge::Util # For copyfreeze and deepcopy
+    include ::Demiurge::Util # For copyfreeze and deepcopy
 
     attr_reader :ticks
 
@@ -49,8 +49,12 @@ module Demiurge
       @finished_init = true
     end
 
-    def structured_state(options = {})
-      @state_items.values.map { |item| item.get_structure(options) }
+    def structured_state(options = { "copy" => false })
+      dump = @state_items.values.map { |item| item.get_structure(options) }
+      if options["copy"]
+        dump = deepcopy(dump)  # Make sure it doesn't share state...
+      end
+      dump
     end
 
     def next_step_intentions(options = {})
@@ -70,7 +74,7 @@ module Demiurge
     end
 
     def apply_intentions(intentions, options = { })
-      state_backup = structured_state()
+      state_backup = structured_state("copy" => true)
 
       begin
         intentions.each do |a|
@@ -134,10 +138,27 @@ module Demiurge
     end
 
     def action_for_item(item_name, action_name)
-      unless @item_actions && @item_actions[item_name]
-        raise "Can't get action #{item_name.inspect} / #{action_name.inspect} from #{@item_actions.inspect}!"
+      @item_actions[item_name] ? @item_actions[item_name][action_name] : nil
+    end
+
+    def instantiate_new_item(name, parent)
+      parent = item_by_name(parent) unless parent.is_a?(StateItem)
+      ss = parent.get_structure
+
+      # The new instantiated item is different from the parent because
+      # it has its own name, and because it can get named actions from
+      # the parent as well as itself. The latter is important because
+      # we can't easily make new action procs without an associated
+      # World File of some kind.
+      ss[1] = name
+      ss[2] = deepcopy(ss[2])
+      ss[2]["parent"] = parent.name
+
+      child = register_state_item(StateItem.from_name_type(self, *ss))
+      if @finished_init && child.respond_to?(:finished_init)
+        child.finished_init
       end
-      @item_actions[item_name][action_name]
+      child
     end
 
     def valid_item_name?(name)
@@ -153,6 +174,7 @@ module Demiurge
       if item.zone?
         @zones.push(item)
       end
+      item
     end
 
     # This sets the Engine's internal state from a structured array of
