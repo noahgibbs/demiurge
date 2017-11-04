@@ -15,8 +15,8 @@ module Demiurge
 
     def initialize(*args)
       super
-      @intention_queue = []
       @agent_maintenance = AgentMaintenanceIntention.new(@name)
+      state["queued_actions"] = []
     end
 
     def finished_init
@@ -50,22 +50,16 @@ module Demiurge
     end
 
     def intentions_for_next_step(options = {})
-      current = []
-      # TODO: just add an action to check if not busy? Then we could queue an action with an "every" and execute it on the same tick.
-      unless state["busy"] > 0 || @intention_queue.empty?
-        # Pull the first entry off the Intention queue
-        current = [@intention_queue.shift]
-      end
-      super + current + [@agent_maintenance]
+      super + [@agent_maintenance]
     end
 
-    def queue_intention(intention)
-      raise("Not an intention: #{intention.inspect}!") unless intention.is_a?(Intention)
-      @intention_queue.push(intention)
+    def queue_action(action_name)
+      raise("Not an action: #{action_name.inspect}!") unless get_action(action_name)
+      state["queued_actions"].push(action_name)
     end
 
     def clear_intention_queue
-      @intention_queue = []
+      state["queued_actions"]
     end
   end
 
@@ -81,6 +75,13 @@ module Demiurge
     def apply(engine, options)
       agent = engine.item_by_name(@name)
       agent.state["busy"] -= 1 if agent.state["busy"] > 0
+      unless agent.state["busy"] > 0 || agent.state["queued_actions"].empty?
+        # Pull the first entry off the action queue
+        action_name = agent.state["queued_actions"].shift
+        action_struct = agent.get_action(action_name)
+        agent.run_action(action_name)
+        agent.state["busy"] += action_struct["busy"]
+      end
     end
   end
 

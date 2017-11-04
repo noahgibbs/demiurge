@@ -124,7 +124,7 @@ module Demiurge
         STDERR.puts "Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it! Skipping."
         return
       end
-      @item.queue_intention QueuedActionIntention.new(@item, action_name)
+      @item.queue_action(action_name)
     end
   end
 
@@ -187,26 +187,6 @@ module Demiurge
           every["counter"] = 0
         end
       end
-    end
-  end
-
-  class QueuedActionIntention < Intention
-    def initialize(agent, action_name)
-      @agent = agent
-      @action = action_name
-    end
-
-    def allowed?(engine, options)
-      return true
-    end
-
-    def apply(engine, options)
-      @agent.run_action(@action)
-      @agent.state["busy"] += busy_turns
-    end
-
-    def busy_turns
-      action = @agent.get_action(@action)["busy"]
     end
   end
 end
