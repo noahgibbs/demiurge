@@ -111,9 +111,11 @@ module Demiurge
     # referred to by its name when serialized, but the actual code
     # changes any time the world files do - at least, if you reboot
     # now and then.
-    #
-    # Non-transient StateItems should render this obsolete, so we can
-    # change this after that.
+
+    # I've tried moving the actions back into StateItems, which makes
+    # more sense with non-transient StateItems. It can be hard to do a
+    # state restore from World Files in this way, though.
+
     def register_actions_by_item_and_action_name(item_actions)
       @item_actions ||= {}
       item_actions.each do |item_name, act_hash|
@@ -257,11 +259,11 @@ module Demiurge
 
   end
 
-  # A StateItem encapsulates a chunk of frozen, immutable state. It
-  # provides behavior to the bare data. Note that ActionItem, defined
-  # elsewhere, makes this easier to use by providing a simple block
-  # DSL instead of requiring raw calls with the engine API.
-  #
+  # A StateItem encapsulates a chunk of state. It provides behavior to
+  # the bare data. Note that ActionItem, defined elsewhere, makes this
+  # easier to use by providing a simple block DSL instead of requiring
+  # raw calls with the engine API.
+
   # Objects you'd normally think about (zones, locations, agents, etc)
   # inherit from StateItem, often indirectly. The StateItem by itself
   # is allowed to be highly abstract, and may have no convenient way
@@ -269,9 +271,10 @@ module Demiurge
   # weather pattern across many zones lacks most 'normal' behaviors,
   # but it makes a perfectly good StateItem as it changes and
   # potentially reacts over time.
-  #
+
   # For items with more convenient behavior to them see ActionItem,
   # and/or specific classes like Agent, Zone, Location and so on.
+
   class StateItem
     attr_reader :name
 
@@ -328,10 +331,14 @@ module Demiurge
   # then being resolved into changes in state and events -- or
   # not. It's also possible for an intention to resolve to nothing at
   # all. For instance, an intention to move in an impossible direction
-  # could simply become no movement, no state change and no event.
-  #
+  # could simply resolve with no movement, no state change and no event.
+
   # Intentions go through verification, resolution and eventually
   # notification.
+
+  # Intentions are not, in general, serializable. They normally
+  # persist for only a single tick. To persist an intention for most StateItems,
+  # consider persisting action names instead.
 
   # TODO: with non-transient StateItems, I think we can skip passing "engine" into all of these...
   # Basically, anything can take a StateItem to its constructor and get everything it needs.
