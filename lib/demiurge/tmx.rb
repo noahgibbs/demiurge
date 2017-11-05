@@ -12,13 +12,13 @@ require "tmx"
 
 # In general, Tiled and "raw" TMX try to be all things to all
 # games. If you can use a tile editor for it, Tiled would like to do
-# that for you.  ManaSource is a more specialized engine and
+# that for you. ManaSource is a more specialized engine and
 # introduces new concepts like named "Fringe" layers to make it clear
 # how a humanoid sprite walks through the map, named "Collision"
 # layers for walkability and swimmability, known-format "objects" for
 # things like doors, warps, NPCs, NPC waypoints and monster spawns.
 # Not all of that will be duplicated in Demiurge, but support for such
-# things belongs in the (opt-in) ManaSource TMX parsing code.
+# things belongs in the ManaSource-specific TMX parsing code.
 
 # In the long run, it's very likely that there will be other TMX
 # "dialects" like ManaSource's. Indeed, Demiurge might eventually
@@ -121,6 +121,21 @@ module Demiurge
   end
 
   class TmxLocation < Location
+    def self.position_to_coords(pos)
+      loc, x, y = position_to_loc_coords(pos)
+      return x, y
+    end
+
+    def self.position_to_loc_coords(pos)
+      loc, coords = pos.split("#",2)
+      if coords
+        x, y = coords.split(",")
+        return loc, x, y
+      else
+        return loc, nil, nil
+      end
+    end
+
     # This just determines if the position is valid at all.  It does
     # *not* check walkable/swimmable or even if it's big enough for a
     # humanoid to stand in.
@@ -207,6 +222,10 @@ module Demiurge
     def tiles
       raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless state["tile_layout"] || state["manasource_tile_layout"]
       TmxLocation.tile_cache_entry(state["manasource_tile_layout"], state["tile_layout"])
+    end
+
+    def tmx_object_by_name(name)
+      tiles[:objects].detect { |o| o[:name] == name }
     end
 
     # Technically a StateItem of any kind has to be okay with its
