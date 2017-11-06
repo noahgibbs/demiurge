@@ -208,7 +208,7 @@ module Demiurge
     def agent(name, options = {}, &block)
       builder = AgentBuilder.new(name, @engine, "type" => options["type"] || "Agent")
       builder.instance_eval(&block)
-      builder.built_agent.state["zone"] = @name
+      builder.built_agent.state["zone_name"] = @name
       @built_item.state["agent_names"] << builder.built_agent.name
       nil
     end

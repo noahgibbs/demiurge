@@ -130,7 +130,7 @@ module Demiurge
       loc, coords = pos.split("#",2)
       if coords
         x, y = coords.split(",")
-        return loc, x, y
+        return loc, x.to_i, y.to_i
       else
         return loc, nil, nil
       end

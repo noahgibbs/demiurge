@@ -40,13 +40,13 @@ module Demiurge
     end
 
     def zone
-      l = location
-      l ? l.zone : nil
+      zn = zone_name
+      zn ? @engine.item_by_name(zn) : nil
     end
 
     def zone_name
       l = location
-      l ? l.zone_name : nil
+      l ? l.zone_name : state["zone_name"]
     end
 
     def __state_internal

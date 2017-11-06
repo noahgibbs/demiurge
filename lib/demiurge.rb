@@ -143,7 +143,7 @@ module Demiurge
       @item_actions[item_name] ? @item_actions[item_name][action_name] : nil
     end
 
-    def instantiate_new_item(name, parent)
+    def instantiate_new_item(name, parent, extra_state = {})
       parent = item_by_name(parent) unless parent.is_a?(StateItem)
       ss = parent.get_structure
 
@@ -154,6 +154,7 @@ module Demiurge
       # World File of some kind.
       ss[1] = name
       ss[2] = deepcopy(ss[2])
+      ss[2].merge!(extra_state)
       ss[2]["parent"] = parent.name
 
       child = register_state_item(StateItem.from_name_type(self, *ss))
@@ -175,6 +176,9 @@ module Demiurge
       @state_items[name] = item
       if item.zone?
         @zones.push(item)
+      end
+      if @finished_init
+        send_notification(notification_type: "new item", zone: item.zone_name, location: item.location_name, item_acting: name)
       end
       item
     end
@@ -233,7 +237,7 @@ module Demiurge
 
     def send_notification(data = {}, notification_type:, zone:, location:, item_acting:)
       raise "Notification type must be a String, not #{notification_type.class}!" unless notification_type.is_a?(String)
-      raise "Location must be a String, not #{location.class}!" unless location.is_a?(String)
+      raise "Location must be a String, not #{location.class}!" unless location.is_a?(String) || location.nil?
       raise "Zone must be a String, not #{zone.class}!" unless zone.is_a?(String)
       raise "Acting item must be a String or nil, not #{item_acting.class}!" unless item_acting.is_a?(String) || item_acting.nil?
 
