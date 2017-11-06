@@ -335,16 +335,16 @@ module Demiurge
         firstgid: tileset.firstgid,
         tileset_name: tileset.name,
         image: "/tiles/" + tileset.image.split("/")[-1],
-        image_width: tileset.imagewidth,
-        image_height: tileset.imageheight,
-        tile_width: tileset.tilewidth,
-        tile_height: tileset.tileheight,
+        imagewidth: tileset.imagewidth,
+        imageheight: tileset.imageheight,
+        tilewidth: tileset.tilewidth,
+        tileheight: tileset.tileheight,
         oversize: tileset.tilewidth != tiles.tilewidth || tileset.tileheight != tiles.tileheight,
         spacing: tileset.spacing,
         margin: tileset.margin,
         imagetrans: tileset.imagetrans, # Currently unused, color to treat as transparent
         properties: tileset.properties,
-        frame_definitions: frames_from_tileset(tileset),  # TODO: make it possible to ask for explicit frame mapping (for control) or implicit (for bandwidth savings)
+        #frame_definitions: frames_from_tileset(tileset),  # TODO: make it possible to ask for explicit frame mapping (for control) or implicit (for bandwidth savings)
       }
     end
     spritesheet[:cyclic_animations] = animations_from_tilesets tiles.tilesets
