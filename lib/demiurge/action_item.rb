@@ -124,7 +124,7 @@ module Demiurge
         STDERR.puts "Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it! Skipping."
         return
       end
-      @item.queue_action(action_name)
+      @item.queue_action(action_name, args)
     end
   end
 

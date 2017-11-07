@@ -53,13 +53,13 @@ module Demiurge
       super + [@agent_maintenance]
     end
 
-    def queue_action(action_name)
+    def queue_action(action_name, args)
       raise("Not an action: #{action_name.inspect}!") unless get_action(action_name)
-      state["queued_actions"].push(action_name)
+      state["queued_actions"].push([action_name, args])
     end
 
     def clear_intention_queue
-      state["queued_actions"]
+      state.delete "queued_actions"
     end
   end
 
@@ -77,7 +77,7 @@ module Demiurge
       agent.state["busy"] -= 1 if agent.state["busy"] > 0
       unless agent.state["busy"] > 0 || agent.state["queued_actions"].empty?
         # Pull the first entry off the action queue
-        action_name = agent.state["queued_actions"].shift
+        action_name, args = *(agent.state["queued_actions"].shift)
         action_struct = agent.get_action(action_name)
         agent.run_action(action_name)
         agent.state["busy"] += action_struct["busy"]
