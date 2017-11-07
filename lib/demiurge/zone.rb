@@ -43,6 +43,22 @@ module Demiurge
       @name
     end
 
+    # Zones with locations contain instantiable agents and locations,
+    # but not agents that actively *do* things. These agents won't
+    # normally receive ticks or perform intentions.
+    def add_agent(agent)
+      old_zone = agent.zone
+      old_zone.remove_agent(agent) if old_zone
+
+      agent.state["zone"] = @name
+      @state["agent_names"].push agent.name
+    end
+
+    def remove_agent(agent)
+      @state["agent_names"] -= [ agent.name ]
+      agent.state.delete "zone"
+    end
+
     # Note that "location" or "location_name" gets where the Zone
     # *is*. But location_names attempts to get a list of locations
     # *inside* the Zone. This may or may not do anything useful,

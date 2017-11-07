@@ -115,7 +115,7 @@ module Demiurge
       loc = @engine.item_by_name(location)
       x, y = pos_spec.split(",").map(&:to_i)
 
-      shape = options[:shape] || :humanoid
+      shape = options[:shape] || "humanoid"
       [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].select { |xp, yp| loc.can_accomodate_shape?(xp, yp, shape) }
     end
   end
@@ -178,9 +178,9 @@ module Demiurge
     # logic.
     def can_accomodate_shape?(left_x, upper_y, shape)
       case shape
-      when :humanoid
+      when "humanoid"
         return can_accomodate_dimensions?(left_x, upper_y, 2, 1)
-      when :tiny
+      when "tiny"
         return can_accomodate_dimensions?(left_x, upper_y, 1, 1)
       else
         raise "Unknown shape #{shape.inspect} passed to can_accomodate_shape!"

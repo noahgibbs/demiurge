@@ -64,13 +64,13 @@ module Demiurge
       @engine.register_actions_by_item_and_action_name(@name => action_hash)
     end
 
-    def run_action(action_name)
+    def run_action(action_name, *args)
       action = get_action(action_name)
       raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless action
       block = action["block"]
       raise "Action was never defined for #{action_name.inspect} of object #{@name.inspect}!" unless block
       @block_runner ||= ActionItemBlockRunner.new(self)
-      @block_runner.instance_eval(&block)
+      @block_runner.instance_exec(*args, &block)
       nil
     end
 
@@ -112,6 +112,31 @@ module Demiurge
       location = to_demiurge_name(data.delete("location") || data.delete(:location) || @item.location)
       item_acting = to_demiurge_name(data.delete("item_acting") || data.delete(:item_acting) || @item)
       @item.engine.send_notification(data, notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
+    end
+
+    def move_instant(direction)
+      return unless @item.agent?  # Can't move a random item this way.
+      shape = @item.state["shape"] ? @item.state["shape"] : "humanoid"
+
+      # Later we'll want to query the zone to figure out how directions work. For now, hardcode.
+      loc_name, next_x, next_y = TmxLocation.position_to_loc_coords(@item.position)
+      location = @item.engine.item_by_name(loc_name)
+      case direction
+      when "up"
+        next_y -= 1
+      when "down"
+        next_y += 1
+      when "left"
+        next_x -= 1
+      when "right"
+        next_x += 1
+      else
+        raise "Unrecognized direction #{direction.inspect} in move_instant!"
+      end
+      if location.can_accomodate_shape?(next_x, next_y, shape)
+        next_position = "#{loc_name}##{next_x},#{next_y}"
+        @item.move_to_position(next_position)
+      end
     end
 
     def queue_action(action_name, *args)

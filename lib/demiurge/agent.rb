@@ -24,12 +24,10 @@ module Demiurge
       state["busy"] ||= 0 # By default, start out idle.
     end
 
-    # This will move the agent... And is going to be the wrong way to
-    # do this soon. There's a whole Intention/Offer/Resolve/Notify
-    # cycle that this skips, which is fine if and only if that's
-    # handled some other way and this is just the "resolve". But,
-    # like, how do we handle exits and special encounters/spaces and
-    # stuff?
+    # This will move the agent, instantly, without going through the
+    # usual cycle of movement. It just drops this agent in a new place
+    # without going through the usual action cycle. It *does* notify
+    # about the change, though.
     def move_to_position(pos)
       old_pos = self.position
       old_loc = self.location_name
@@ -42,18 +40,20 @@ module Demiurge
       self.state["position"] = pos
 
       if new_zone != old_zone
-        raise "Cross-zone travel is unimplemented!"
-      else
-        @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: pos, new_location: new_loc },
-                                  notification_type: "move", zone: self.zone_name, location: self.location_name, item_acting: @name)
+        old_zone_item = @engine.item_by_name(old_zone)
+        old_zone.remove_agent(self)
+        self.state["zone"] = new_zone
       end
+
+      @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: pos, new_location: new_loc },
+                                  notification_type: "move", zone: self.zone_name, location: self.location_name, item_acting: @name)
     end
 
     def intentions_for_next_step(options = {})
       super + [@agent_maintenance]
     end
 
-    def queue_action(action_name, args)
+    def queue_action(action_name, *args)
       raise("Not an action: #{action_name.inspect}!") unless get_action(action_name)
       state["queued_actions"].push([action_name, args])
     end
@@ -79,8 +79,8 @@ module Demiurge
         # Pull the first entry off the action queue
         action_name, args = *(agent.state["queued_actions"].shift)
         action_struct = agent.get_action(action_name)
-        agent.run_action(action_name)
-        agent.state["busy"] += action_struct["busy"]
+        agent.run_action(action_name, *args)
+        agent.state["busy"] += (action_struct["busy"] || 1)
       end
     end
   end
@@ -108,7 +108,7 @@ module Demiurge
     end
   end
 
-  # This is a simple Wandering agent for use with Tmx and similar grid-based maps.
+  # This is a simple Wandering agent for use with TmxLocations and similar grid-based maps.
   class WanderIntention < Intention
     def initialize(name)
       @name = name
@@ -134,5 +134,4 @@ module Demiurge
       agent.state["wander_counter"] = 0
     end
   end
-
 end
