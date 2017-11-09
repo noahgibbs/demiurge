@@ -304,7 +304,7 @@ module Demiurge
         framecount += 1
         frames.push({
                       gid: tileset.firstgid + framecount,
-                      image: "/tiles/" + tileset.image.split("/")[-1],
+                      image: tileset.image,
                       x: x,
                       y: y,
                       width: tileset.tilewidth,
@@ -334,7 +334,7 @@ module Demiurge
       {
         firstgid: tileset.firstgid,
         tileset_name: tileset.name,
-        image: "/tiles/" + tileset.image.split("/")[-1],
+        image: tileset.image,
         imagewidth: tileset.imagewidth,
         imageheight: tileset.imageheight,
         tilewidth: tileset.tilewidth,
