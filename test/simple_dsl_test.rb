@@ -59,6 +59,7 @@ class SimpleDslTest < Minitest::Test
     engine.apply_intentions(intentions)
     assert_equal 1, first_cave_item.state["moss"]
     assert_equal 1, second_cave_item.state["moss"]
+    engine.flush_notifications # For completeness and to notice exceptions, basically
   end
 
   def test_dsl_type_specs

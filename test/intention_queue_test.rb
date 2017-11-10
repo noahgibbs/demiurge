@@ -34,8 +34,7 @@ class IntentionQueueTest < Minitest::Test
     refute_nil agent
 
     20.times do
-      intentions = engine.next_step_intentions
-      engine.apply_intentions(intentions)
+      engine.advance_one_tick
     end
 
     # If the mobile stays busy for 3 ticks on each action, 18 ticks

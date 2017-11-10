@@ -40,8 +40,7 @@ class CopyItemTest < Minitest::Test
     assert_equal ["first moss cave", "second moss cave"], zone.location_names.sort
 
     6.times do
-      intentions = engine.next_step_intentions
-      engine.apply_intentions(intentions)
+      engine.advance_one_tick
     end
 
     assert_equal 2, second_cave_item.state["moss"]

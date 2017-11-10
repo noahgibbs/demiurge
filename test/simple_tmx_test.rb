@@ -18,7 +18,6 @@ class SimpleTmxTest < Minitest::Test
     loc = engine.item_by_name("east end")
     refute_nil loc
 
-    intentions = engine.next_step_intentions
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
   end
 end

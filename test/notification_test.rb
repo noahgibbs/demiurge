@@ -28,12 +28,14 @@ class NotificationTest < Minitest::Test
     assert_equal 0, my_notifications.size
 
     engine.send_notification(notification_type: "test1", zone: "topzone", location: "one", item_acting: "one")
+    engine.flush_notifications
     assert_equal 1, my_notifications.size
 
     engine.unsubscribe_from_notifications(:test_unsub)
     assert_equal 1, my_notifications.size
 
     engine.send_notification(notification_type: "test1", zone: "topzone", location: "one", item_acting: "one")
+    engine.flush_notifications
     assert_equal 1, my_notifications.size
   end
 
@@ -48,7 +50,8 @@ class NotificationTest < Minitest::Test
       my_notifications.push(notification)
     end
 
-    loc.run_action "my action name" # Send a notification
+    loc.run_action "my action name" # Queue a notification
+    engine.flush_notifications # Send it out
 
     assert_equal [{"item acting" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}], my_notifications
   end

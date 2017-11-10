@@ -68,10 +68,9 @@ class StateRestoreTest < Minitest::Test
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
 
-    intentions = engine.next_step_intentions
-    engine.apply_intentions(intentions)
-    intentions = engine.next_step_intentions
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
+    engine.advance_one_tick
+
     assert_equal 1, first_cave_item.state["moss"]
     assert_nil first_cave_item.state["softer_moss"]
     assert_equal 1, second_cave_item.state["moss"]
@@ -101,10 +100,8 @@ class StateRestoreTest < Minitest::Test
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
 
-    intentions = engine.next_step_intentions
-    engine.apply_intentions(intentions)
-    intentions = engine.next_step_intentions
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
+    engine.advance_one_tick
     assert_equal 1, first_cave_item.state["moss"]
     assert_nil first_cave_item.state["softer_moss"]
     assert_equal 1, second_cave_item.state["moss"]

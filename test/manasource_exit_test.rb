@@ -27,7 +27,6 @@ class ManaSourceExitTmxTest < Minitest::Test
     assert_equal [{ "from" => "room 1#10,11", "to" => "room 2#12,13", "properties" => {} }], loc1.exits
     assert_equal [{ "from" => "room 2#12,13", "to" => "room 1#8,9", "properties" => {} }], loc2.exits
 
-    intentions = engine.next_step_intentions
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
   end
 end

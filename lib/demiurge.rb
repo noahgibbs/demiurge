@@ -36,6 +36,7 @@ module Demiurge
       state_from_structured_array(state || [])
       @subscriptions_by_tracker = {}
       @ticks = 0
+      @queued_notifications = []
       nil
     end
 
@@ -57,10 +58,6 @@ module Demiurge
       dump
     end
 
-    def next_step_intentions(options = {})
-      @zones.flat_map { |item| item.intentions_for_next_step(options) || [] }
-    end
-
     def item_by_name(name)
       @state_items[name]
     end
@@ -73,6 +70,10 @@ module Demiurge
       @state_items.keys
     end
 
+    def next_step_intentions(options = {})
+      @zones.flat_map { |item| item.intentions_for_next_step(options) || [] }
+    end
+
     def apply_intentions(intentions, options = { })
       state_backup = structured_state("copy" => true)
 
@@ -82,12 +83,21 @@ module Demiurge
         end
       rescue
         STDERR.puts "Exception when updating! Throwing away speculative state!"
-        state_from_structured_array(state_backup)
+        load_state_from_dump(state_backup)
         raise
       end
 
       send_notification({}, notification_type: "tick finished", location: "", zone: "", item_acting: nil)
       @ticks += 1
+    end
+
+    def advance_one_tick(options = {})
+      intentions = next_step_intentions(options)
+
+      # This includes the "offer" and "apply" steps
+      apply_intentions(intentions, options)
+
+      flush_notifications
     end
 
     def get_type(t)
@@ -254,19 +264,24 @@ module Demiurge
       end
       cleaned_data.merge!("type" => notification_type, "zone" => zone, "location" => location, "item acting" => item_acting)
 
-      @subscriptions_by_tracker.each do |tracker, sub_structures|
-        sub_structures.each do |sub_structure|
-          next unless sub_structure[:types] == :all || sub_structure[:types].include?(notification_type)
-          next unless sub_structure[:zones] == :all || sub_structure[:zones].include?(zone)
-          next unless sub_structure[:locations] == :all || sub_structure[:locations].include?(zone)
-          next unless sub_structure[:items] == :all || sub_structure[:items].include?(item_acting)
-          next unless sub_structure[:predicate] == nil || sub_structure[:predicate].call(notification_type: notification_type, zone: zone, location: location, item_acting: item_acting)
+      @queued_notifications.push(cleaned_data)
+    end
 
-          sub_structure[:block].call(cleaned_data)
+    def flush_notifications
+      @queued_notifications.each do |cleaned_data|
+        @subscriptions_by_tracker.each do |tracker, sub_structures|
+          sub_structures.each do |sub_structure|
+            next unless sub_structure[:types] == :all || sub_structure[:types].include?(notification_type)
+            next unless sub_structure[:zones] == :all || sub_structure[:zones].include?(zone)
+            next unless sub_structure[:locations] == :all || sub_structure[:locations].include?(zone)
+            next unless sub_structure[:items] == :all || sub_structure[:items].include?(item_acting)
+            next unless sub_structure[:predicate] == nil || sub_structure[:predicate].call(cleaned_data)
+
+            sub_structure[:block].call(cleaned_data)
+          end
         end
       end
     end
-
   end
 
   # A StateItem encapsulates a chunk of state. It provides behavior to

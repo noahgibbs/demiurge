@@ -66,5 +66,6 @@ class GoblinTownTest < Minitest::Test
     assert intentions[0].is_a?(GoblinTown::GrowMoss)
     assert intentions[1].is_a?(GoblinTown::GrowMoss)
     goblin_town.apply_intentions(intentions)
+    goblin_town.flush_notifications
   end
 end
