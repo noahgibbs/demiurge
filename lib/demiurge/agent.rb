@@ -15,12 +15,13 @@ module Demiurge
 
     def initialize(*args)
       super
-      @agent_maintenance = AgentMaintenanceIntention.new(@name)
       state["queued_actions"] = []
     end
 
     def finished_init
       super
+      @agent_maintenance = AgentMaintenanceIntention.new(@name)
+      @agent_action = AgentActionIntention.new(@name, engine)
       state["busy"] ||= 0 # By default, start out idle.
     end
 
@@ -50,7 +51,7 @@ module Demiurge
     end
 
     def intentions_for_next_step(options = {})
-      super + [@agent_maintenance]
+      super + [@agent_maintenance, @agent_action]
     end
 
     def queue_action(action_name, *args)
@@ -68,6 +69,11 @@ module Demiurge
       @name = name
     end
 
+    # Normally, the agent's maintenance intention can't be blocked or
+    # modified.
+    def offer(engine, options)
+    end
+
     def allowed?(engine, options)
       true
     end
@@ -75,12 +81,48 @@ module Demiurge
     def apply(engine, options)
       agent = engine.item_by_name(@name)
       agent.state["busy"] -= 1 if agent.state["busy"] > 0
+    end
+  end
+
+  class AgentActionIntention < Intention
+    attr_reader :agent
+    attr_reader :action_name
+
+    def initialize(name, engine)
+      @name = name
+      @engine = engine
+      @agent = @engine.item_by_name(@name)
+      raise "No such agent as #{name.inspect} found!" unless @agent
+    end
+
+    def finished_init
+    end
+
+    # An action being pulled from the action queue is offered normally.
+    def offer(engine, options)
+      unless @agent.state["busy"] > 0 || @agent.state["queued_actions"].empty?
+        action = @agent.state["queued_actions"][0]
+        @action_name = action[0]
+        @action_args = action[1]
+        @action_struct = @agent.get_action(@action_name)
+      end
+      # TODO: offer the action to the agent's location and potentially other appropriate places.
+    end
+
+    def allowed?(engine, options)
+      # If the agent's busy state will clear this turn, this action could happen.
+      @agent.state["busy"] <= 1
+    end
+
+    def apply(engine, options)
       unless agent.state["busy"] > 0 || agent.state["queued_actions"].empty?
         # Pull the first entry off the action queue
-        action_name, args = *(agent.state["queued_actions"].shift)
-        action_struct = agent.get_action(action_name)
-        agent.run_action(action_name, *args)
-        agent.state["busy"] += (action_struct["busy"] || 1)
+        queue = @agent.state["queued_actions"]
+        if queue && queue.size > 0 && queue[0] == @action_name && queue[1] == @action_args
+          queue.shift # Remove the queue entry
+        end
+        agent.run_action(@action_name, *@args)
+        agent.state["busy"] += (@action_struct["busy"] || 1)
       end
     end
   end
@@ -90,11 +132,11 @@ module Demiurge
     def initialize(name, engine, state)
       super
       @wander_intention = WanderIntention.new(name)
+      state["wander_counter"] ||= 0
     end
 
     def finished_init
       super
-      state["wander_counter"] ||= 0
       unless state["position"] && state["position"]["#"]
         # Move to legal position. If this is a TMX location or similar, it will assign a specific position.
         if self.location.respond_to?(:any_legal_position)
@@ -116,6 +158,11 @@ module Demiurge
 
     def allowed?(engine, options)
       true
+    end
+
+    # Later, wander should be cancellable and it should be possible
+    # for a room to move the agent through an exit. For now, nope.
+    def offer(engine, options)
     end
 
     def apply(engine, options)

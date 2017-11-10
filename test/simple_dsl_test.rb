@@ -47,7 +47,7 @@ class SimpleDslTest < Minitest::Test
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
     intentions = engine.next_step_intentions
-    assert_equal 4, intentions.size  # Two from the moss caves, two from the agent
+    assert_equal 5, intentions.size  # Two from the moss caves, three from the agent
 
     engine.apply_intentions(intentions)
     assert_equal 0, first_cave_item.state["moss"]

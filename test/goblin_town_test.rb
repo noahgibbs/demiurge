@@ -25,6 +25,10 @@ module GoblinTown
       true
     end
 
+    def offer(engine, options)
+      # Do nothing
+    end
+
     def apply(engine, options)
       item = engine.item_by_name(@name)
       item.state["moss"] += 1

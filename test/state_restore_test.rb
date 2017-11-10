@@ -5,7 +5,7 @@ require "demiurge/dsl"
 class ZoneSubtype < Demiurge::Zone; end
 Demiurge::TopLevelBuilder.register_type "ZoneSubtype", ZoneSubtype
 
-class SimpleDslTest < Minitest::Test
+class StateRestoreTest < Minitest::Test
   DSL_TEXT = <<-GOBLIN_DSL
     zone "moss caves" do
       location "first moss cave" do
@@ -36,7 +36,49 @@ class SimpleDslTest < Minitest::Test
     end
   GOBLIN_DSL
 
-  def test_trivial_dsl_actions
+  def test_dsl_actions_after_state_restore
+    engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
+    first_cave_item = engine.item_by_name("first moss cave")
+    refute_nil first_cave_item
+    second_cave_item = engine.item_by_name("second moss cave")
+    refute_nil second_cave_item
+    agent = engine.item_by_name("wanderer")
+    refute_nil agent
+    assert_equal "second moss cave", agent.location_name
+
+    # Dump and restore before anything interesting happens...
+    ss = engine.structured_state
+    engine.load_state_from_dump(ss)
+
+    # Re-query items, which may have been recreated
+    first_cave_item = engine.item_by_name("first moss cave")
+    refute_nil first_cave_item
+    second_cave_item = engine.item_by_name("second moss cave")
+    refute_nil second_cave_item
+    agent = engine.item_by_name("wanderer")
+    refute_nil agent
+    assert_equal "second moss cave", agent.location_name
+
+    assert_equal 0, first_cave_item.state["moss"]
+    assert_equal 0, second_cave_item.state["moss"]
+    intentions = engine.next_step_intentions
+    assert_equal 5, intentions.size  # Two from the moss caves, three from the agent
+
+    engine.apply_intentions(intentions)
+    assert_equal 0, first_cave_item.state["moss"]
+    assert_equal 0, second_cave_item.state["moss"]
+
+    intentions = engine.next_step_intentions
+    engine.apply_intentions(intentions)
+    intentions = engine.next_step_intentions
+    engine.apply_intentions(intentions)
+    assert_equal 1, first_cave_item.state["moss"]
+    assert_nil first_cave_item.state["softer_moss"]
+    assert_equal 1, second_cave_item.state["moss"]
+    assert_equal 7, second_cave_item.state["softer_moss"]
+  end
+
+  def test_dsl_actions_with_middle_state_restore
     engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
     first_cave_item = engine.item_by_name("first moss cave")
     refute_nil first_cave_item
@@ -49,11 +91,11 @@ class SimpleDslTest < Minitest::Test
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
     intentions = engine.next_step_intentions
-    assert_equal 4, intentions.size  # Two from the moss caves, two from the agent
+    assert_equal 5, intentions.size  # Two from the moss caves, three from the agent
 
     # Dump and restore in the middle of all this...
     ss = engine.structured_state
-    engine.state_from_structured_array(ss)
+    engine.load_state_from_dump(ss)
 
     engine.apply_intentions(intentions)
     assert_equal 0, first_cave_item.state["moss"]

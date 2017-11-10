@@ -189,6 +189,7 @@ module Demiurge
     def state_from_structured_array(arr, options = {})
       options = options.dup.freeze unless options.frozen?
 
+      @finished_init = false
       @state_items = {}
       @state = {}
       @zones = []
@@ -197,6 +198,11 @@ module Demiurge
         register_state_item(StateItem.from_name_type(self, type.freeze, name.to_s.freeze, state, options))
       end
       nil
+    end
+
+    def load_state_from_dump(arr, options = {})
+      state_from_structured_array(arr, options)
+      finished_init
     end
 
     # Internal method used by subscribe_to_notifications for notification matching.
@@ -347,30 +353,54 @@ module Demiurge
   # TODO: with non-transient StateItems, I think we can skip passing "engine" into all of these...
   # Basically, anything can take a StateItem to its constructor and get everything it needs.
   class Intention
+    # Subclasses of intention can require all sorts of things to
+    # specify what the intention is.  But the base class doesn't have
+    # any required arguments to its constructor.
+    def initialize()
+      @cancelled = false
+    end
+
+    def cancel(cancelled_by, reason)
+      @cancelled = true
+      @cancelled_by = cancelled_by
+      @cancelled_reason = reason
+    end
+
+    def cancelled?
+      @cancelled
+    end
+
     def allowed?(engine, options = {})
-      raise "Unimplemented intention!"
+      raise "Unimplemented 'allowed?' for intention: #{self.inspect}!"
     end
 
     def apply(engine, options = {})
-      raise "Unimplemented intention!"
+      raise "Unimplemented 'apply' for intention: #{self.inspect}!"
+    end
+
+    # When an intention is "offered", that means appropriate other
+    # entities have a chance to modify or cancel the intention. For
+    # instance, a movement action in a room should be offered to that
+    # room, which may trigger a special action (e.g. trap) or change
+    # the destination of the action (e.g. exits, slippery ice,
+    # spinning spaces.)
+    def offer(engine, options = {})
+      raise "Unimplemented 'offer' for intention: #{self.inspect}!"
     end
 
     def try_apply(engine, options = {})
-      apply(engine, options) if allowed?(engine, options)
-    end
-
-    # An Intention can keep an Agent (or potentially other entity)
-    # busy for some amount of time when it occurs. How long? That's a
-    # collaboration between this method and the entity. This method
-    # should return a number. By default, Agents will perform one unit
-    # of intentions per round, but that's advisory - nothing stops
-    # Bob-the-Octopus from performing more actions per round if that's
-    # what Bob's Agent object thinks is appropriate. For that matter,
-    # "Mercury's Avatar on Earth" could just allow queueing of
-    # unlimited actions of any kind on every tick, though it's not
-    # clear that'd make for a fun game entity.
-    def busy_turns
-      1
+      unless allowed?(engine, options)
+        # Certain intentions can send an "intention failed" notification.
+        # Such a notification would be sent from here.
+        return
+      end
+      offer(engine, options)
+      if cancelled?
+        # Similarly, intentions can send an "intention cancelled" notification.
+        # The relevant variables are @cancelled_by and @cancelled_reason
+        return
+      end
+      apply(engine, options)
     end
   end
 end

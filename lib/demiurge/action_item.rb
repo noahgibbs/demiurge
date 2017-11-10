@@ -202,6 +202,10 @@ module Demiurge
       true
     end
 
+    # For now, empty.
+    def offer(engine, options)
+    end
+
     def apply(engine, options)
       item = engine.item_by_name(@name)
       everies = item.state["everies"]
