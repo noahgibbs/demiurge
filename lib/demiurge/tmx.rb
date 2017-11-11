@@ -205,7 +205,7 @@ module Demiurge
         # Is there a start location? If so, return it. Guaranteed good, right?
         start_loc = tiles[:objects].detect { |obj| obj[:name] == "start location" }
         if start_loc
-          x = start_loc[:x] / tiles[:spritestack][:tileheight]
+          x = start_loc[:x] / tiles[:spritestack][:tilewidth]
           y = start_loc[:y] / tiles[:spritestack][:tileheight]
           return "#{@name}##{x},#{y}"
         end
@@ -226,6 +226,15 @@ module Demiurge
 
     def tmx_object_by_name(name)
       tiles[:objects].detect { |o| o[:name] == name }
+    end
+
+    def tmx_object_coords_by_name(name)
+      obj = tiles[:objects].detect { |o| o[:name] == name }
+      if obj
+        [ obj[:x] / tiles[:spritesheet][:tilewidth], obj[:y] / tiles[:spritesheet][:tileheight] ]
+      else
+        nil
+      end
     end
 
     # Technically a StateItem of any kind has to be okay with its

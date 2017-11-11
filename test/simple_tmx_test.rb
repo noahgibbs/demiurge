@@ -17,6 +17,8 @@ class SimpleTmxTest < Minitest::Test
     engine = Demiurge.engine_from_dsl_text(["Mage City DSL", DSL_TEXT])
     loc = engine.item_by_name("east end")
     refute_nil loc
+    x, y = loc.tmx_object_coords_by_name("waypoint 1")
+    assert_equal [9, 11], [x, y]
 
     engine.advance_one_tick
   end
