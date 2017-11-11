@@ -7,6 +7,7 @@ Demiurge::TopLevelBuilder.register_type "ZoneSubtype", ZoneSubtype
 
 class SimpleDslTest < Minitest::Test
   DSL_TEXT = <<-GOBLIN_DSL
+    inert "config_settings"
     zone "moss caves" do
       location "first moss cave" do
         description "This cave is dim, with smooth sides. You can see delicious moss growing inside, out of the hot sunlight."
@@ -43,6 +44,9 @@ class SimpleDslTest < Minitest::Test
     agent = engine.item_by_name("wanderer")
     refute_nil agent
     assert_equal "second moss cave", agent.location_name
+
+    settings_item = engine.item_by_name("config_settings")
+    refute_nil settings_item
 
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]

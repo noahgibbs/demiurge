@@ -31,7 +31,7 @@ module Demiurge
   class ActionItemBuilder
     def check_options(hash, legal_options)
       illegal_options = hash.keys - legal_options
-      raise "Illegal options #{illegal_options.inspect} passed to #{caller(1).inspect}!" unless illegal_options.empty?
+      raise "Illegal options #{illegal_options.inspect} passed to #{caller(1, 3).inspect}!" unless illegal_options.empty?
     end
 
     LEGAL_OPTIONS = [ "state", "type", "no_build" ]
@@ -109,7 +109,6 @@ module Demiurge
       @zones = []
       @locations = []
       @agents = []
-      @extras = []
       @item_names = {}
       @engine = ::Demiurge::Engine.new(types: @@types, state: [])
     end
@@ -122,8 +121,9 @@ module Demiurge
     # Later, this may be a way to describe how important or transitory
     # state is - is it reset like a zone? Completely transient?
     # Cleared per reboot?
-    def inert(item_name)
-      @extras.push(["InertStateItem", item_name, {}])
+    def inert(item_name, options = {})
+      inert_item = ::Demiurge::StateItem.from_name_type(@engine, options["type"] || "InertStateItem", item_name, options["state"] || {})
+      @engine.register_state_item(inert_item)
     end
 
     def zone(name, options = {}, &block)
