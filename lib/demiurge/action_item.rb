@@ -77,8 +77,9 @@ module Demiurge
       else
         block_runner_type = ActionItemBlockRunner
       end
-      @block_runner ||= block_runner_type.new(self)
-      @block_runner.instance_exec(*args, &block)
+      # TODO: can we save block runners between actions?
+      block_runner = block_runner_type.new(self)
+      block_runner.instance_exec(*args, &block)
       nil
     end
 
