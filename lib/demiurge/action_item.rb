@@ -59,7 +59,7 @@ module Demiurge
       [@every_x_ticks_intention]
     end
 
-    ACTION_LEGAL_KEYS = [ "name", "block", "busy" ]
+    ACTION_LEGAL_KEYS = [ "name", "block", "busy", "engine_code", "tags" ]
     def register_actions(action_hash)
       @engine.register_actions_by_item_and_action_name(@name => action_hash)
     end
@@ -69,7 +69,15 @@ module Demiurge
       raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless action
       block = action["block"]
       raise "Action was never defined for #{action_name.inspect} of object #{@name.inspect}!" unless block
-      @block_runner ||= ActionItemBlockRunner.new(self)
+
+      if action["engine_code"]
+        block_runner_type = EngineBlockRunner
+      elsif self.agent?
+        block_runner_type = AgentBlockRunner
+      else
+        block_runner_type = ActionItemBlockRunner
+      end
+      @block_runner ||= block_runner_type.new(self)
       @block_runner.instance_exec(*args, &block)
       nil
     end
@@ -81,6 +89,18 @@ module Demiurge
         action = @engine.item_by_name(state["parent"]).get_action(action_name)
       end
       action
+    end
+  end
+
+  class EngineBlockRunner
+    attr_reader :item
+
+    def initialize(item)
+      @item = item
+    end
+
+    def engine
+      @item.engine
     end
   end
 
@@ -114,6 +134,9 @@ module Demiurge
       @item.engine.send_notification(data, notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
     end
 
+  end
+
+  class AgentBlockRunner < ActionItemBlockRunner
     def move_instant(direction)
       return unless @item.agent?  # Can't move a random item this way.
       shape = @item.state["shape"] ? @item.state["shape"] : "humanoid"
@@ -139,6 +162,17 @@ module Demiurge
       end
     end
 
+    def teleport_instant(position)
+      return unless @item.agent?  # Can't move a random item this way.
+
+      # TODO: if we cancel out of this, set a cancellation notice and reason.
+      loc_name, next_x, next_y = TmxLocation.position_to_loc_coords(position)
+      location = @item.engine.item_by_name(loc_name)
+      if location.can_accomodate_agent?(@item, position)
+        @item.move_to_position(position)
+      end
+    end
+
     def queue_action(action_name, *args)
       unless @item.is_a?(::Demiurge::Agent)
         STDERR.puts "Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that isn't an agent! Skipping."
@@ -150,6 +184,15 @@ module Demiurge
         return
       end
       @item.queue_action(action_name, args)
+    end
+
+    def dump_state(filename = "statedump.json")
+      return unless @item.state["admin"] # Admin-only command
+
+      ss = @item.engine.structured_state
+      File.open(filename) do |f|
+        f.print MultiJson.dump(ss, :pretty => true)
+      end
     end
   end
 

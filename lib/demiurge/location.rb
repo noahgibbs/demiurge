@@ -53,6 +53,14 @@ module Demiurge
       @state["contents"] += [ item.name ]
     end
 
+    # By default, the location can accomodate any agent number, size
+    # or shape, as long as it's in this room itself.  Subclasses of
+    # location may have different abilities to accomodate different
+    # sizes or shapes of agent.
+    def can_accomodate_agent?(agent, position)
+      position == @name
+    end
+
     # Return a legal position of some kind within this Location.  By
     # default there is only one position, which is just the Location's
     # name. More complicated locations (e.g. tilemaps or procedural

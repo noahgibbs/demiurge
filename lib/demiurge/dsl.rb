@@ -95,7 +95,7 @@ module Demiurge
     end
 
     def define_action(action_name, options = {}, &block)
-      legal_options = [ "busy" ]
+      legal_options = [ "busy", "engine_code", "tags" ]
       illegal_keys = options.keys - legal_options
       raise("Illegal keys #{illegal_keys.inspect} passed to define_action of #{action_name.inspect}!") unless illegal_keys.empty?;
       register_built_action({ "name" => action_name, "block" => block }.merge(options))

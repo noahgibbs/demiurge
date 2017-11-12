@@ -155,6 +155,13 @@ module Demiurge
       return tiles[:collision][y][x] == 0
     end
 
+    def can_accomodate_agent?(agent, position)
+      x, y, loc = TmxLocation.loc_coords_for_position(position)
+      raise "Location #{@name.inspect} asked about different location #{loc.inspect} in can_accomodate_agent!" if loc != @name
+      shape = agent.state["shape"] || "humanoid"
+      can_accomodate_shape?(x, y, shape)
+    end
+
     def can_accomodate_dimensions?(left_x, upper_y, width, height)
       return false if left_x < 0 || upper_y < 0
       right_x = left_x + width - 1
