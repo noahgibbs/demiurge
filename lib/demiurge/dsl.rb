@@ -107,9 +107,6 @@ module Demiurge
 
     def initialize
       @zones = []
-      @locations = []
-      @agents = []
-      @item_names = {}
       @engine = ::Demiurge::Engine.new(types: @@types, state: [])
     end
 
@@ -138,8 +135,6 @@ module Demiurge
       new_zone = builder.built_zone
 
       @zones |= [ new_zone ] if new_zone  # Add if not already present
-      @locations += builder.built_locations
-      @agents += builder.built_agents
       nil
     end
 
@@ -215,15 +210,6 @@ module Demiurge
 
     def built_zone
       @built_item
-    end
-
-    # Can/should we get rid of built_locations and built_agents?
-    def built_locations
-      @locations
-    end
-
-    def built_agents
-      @agents
     end
   end
 
