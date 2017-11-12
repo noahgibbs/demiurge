@@ -106,9 +106,13 @@ module Demiurge
   end
 
   class ActionItemBlockRunner
+    attr_reader :item
+    attr_reader :engine
+
     # This is the item receiving the block. It is usually the item taking the action.
     def initialize(item)
       @item = item
+      @engine = item.engine
     end
 
     def state

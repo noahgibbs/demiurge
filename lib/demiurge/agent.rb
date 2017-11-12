@@ -42,7 +42,7 @@ module Demiurge
 
       if new_zone != old_zone
         old_zone_item = @engine.item_by_name(old_zone)
-        old_zone.remove_agent(self)
+        old_zone_item.remove_agent(self)
         self.state["zone"] = new_zone
       end
 

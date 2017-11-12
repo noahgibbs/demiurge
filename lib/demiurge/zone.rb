@@ -59,6 +59,13 @@ module Demiurge
       agent.state.delete "zone"
     end
 
+    # By default, a Zone can accomodate any agent - especially because
+    # this will be called when the agent is being added in "stasis",
+    # normally for later instantiation.
+    def can_accomodate_agent?(agent, position)
+      true
+    end
+
     # Note that "location" or "location_name" gets where the Zone
     # *is*. But location_names attempts to get a list of locations
     # *inside* the Zone. This may or may not do anything useful,
