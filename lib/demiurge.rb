@@ -220,9 +220,15 @@ module Demiurge
     def notification_spec(s)
       return s if s == :all
       if s.respond_to?(:each)
-        return s.map { |item| notification_spec(item) }
+        return s.map { |s| notification_entity(s) }
       end
-      return s.name if s.respond_to?(:name)  # Demiurge Entities should be replaced by their names
+      return [notification_entity(s)]
+    end
+
+    def notification_entity(s)
+      s = s.to_s if s.is_a?(Symbol)
+      s = s.name if s.respond_to?(:name) # Demiurge Entities should be replaced by their names
+      raise "Unrecognized notification entity: #{s.inspect}!" unless s.is_a?(String)
       s
     end
     public
@@ -230,12 +236,12 @@ module Demiurge
     # This method 'subscribes' a block to various types of
     # notifications. The block will be called with the notifications
     # when they occur.
-    def subscribe_to_notifications(notification_types: :all, zones: :all, locations: :all, predicate: nil, items: :all, tracker: nil, &block)
+    def subscribe_to_notifications(notification_type: :all, zone: :all, location: :all, predicate: nil, item_acting: :all, tracker: nil, &block)
       sub_structure = {
-        types: notification_spec(notification_types),
-        zones: notification_spec(zones),
-        locations: notification_spec(locations),
-        items: notification_spec(items),
+        type: notification_spec(notification_type),
+        zone: notification_spec(zone),
+        location: notification_spec(location),
+        item_acting: notification_spec(item_acting),
         predicate: predicate,
         tracker: tracker,
         block: block,
@@ -271,11 +277,11 @@ module Demiurge
       @queued_notifications.each do |cleaned_data|
         @subscriptions_by_tracker.each do |tracker, sub_structures|
           sub_structures.each do |sub_structure|
-            next unless sub_structure[:types] == :all || sub_structure[:types].include?(notification_type)
-            next unless sub_structure[:zones] == :all || sub_structure[:zones].include?(zone)
-            next unless sub_structure[:locations] == :all || sub_structure[:locations].include?(zone)
-            next unless sub_structure[:items] == :all || sub_structure[:items].include?(item_acting)
-            next unless sub_structure[:predicate] == nil || sub_structure[:predicate].call(cleaned_data)
+            next unless sub_structure[:type] == :all || sub_structure[:type].include?(cleaned_data["type"])
+            next unless sub_structure[:zone] == :all || sub_structure[:zone].include?(cleaned_data["zone"])
+            next unless sub_structure[:location] == :all || sub_structure[:location].include?(cleaned_data["location"])
+            next unless sub_structure[:item_acting] == :all || sub_structure[:item_acting].include?(cleaned_data["item acting"])
+            next unless sub_structure[:predicate] == nil || sub_structure[:predicate] == :all || sub_structure[:predicate].call(cleaned_data)
 
             sub_structure[:block].call(cleaned_data)
           end
