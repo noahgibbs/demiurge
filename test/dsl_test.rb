@@ -15,6 +15,10 @@ class DslTest < Minitest::Test
           ::DslTest::STATEDUMP_LOCATION["ss"] = ss
         end
 
+        define_action "room_thought" do |thought|
+          notification type: "room_thought", thought: thought
+        end
+
         agent "guy on fire" do
           define_action "disappear" do
             teleport_instant("closeted cave")
@@ -22,6 +26,10 @@ class DslTest < Minitest::Test
 
           define_action "file_statedump" do
             dump_state("somedir/myfile.json")
+          end
+
+          define_action "say" do |speech|
+            notification type: "speech", words: speech
           end
         end
       end
@@ -53,6 +61,20 @@ class DslTest < Minitest::Test
     File.stub :open, true do
       guy_item.run_action("file_statedump")
     end
+
+    engine.flush_notifications # Don't send out notification about the 'disappear' action
+    results = []
+    engine.subscribe_to_notifications(item_acting: ["guy on fire", "flaming cave"]) do |notification|
+      results.push notification
+    end
+
+    loc_item.run_action("room_thought", "do fish breathe?")
+    engine.flush_notifications
+    assert_equal([{ "thought" => "do fish breathe?", "type" => "room_thought", "zone" => "fire caves", "location" => "flaming cave", "item acting" => "flaming cave" }], results)
+    results.pop
+    guy_item.queue_action("say", "hello, there!")
+    engine.advance_one_tick
+    assert_equal [{ "words" => "hello, there!", "type" => "speech", "zone" => "fire caves", "location" => "closeted cave", "item acting" => "guy on fire" }], results
   end
 
 end

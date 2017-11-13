@@ -121,7 +121,7 @@ module Demiurge
         if queue && queue.size > 0 && queue[0] == @action_name && queue[1] == @action_args
           queue.shift # Remove the queue entry
         end
-        agent.run_action(@action_name, *@args)
+        agent.run_action(@action_name, *@action_args)
         agent.state["busy"] += (@action_struct["busy"] || 1)
       end
     end

@@ -287,6 +287,7 @@ module Demiurge
           end
         end
       end
+      @queued_notifications = []
     end
   end
 
