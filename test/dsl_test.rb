@@ -8,7 +8,7 @@ class DslTest < Minitest::Test
     inert "config_settings"
     zone "fire caves" do
       location "flaming cave" do
-        define_action("mem_statedump", "engine_code" => true, "tags" => ["admin"]) do
+        define_action("mem_statedump", "engine_code" => true, "tags" => ["admin", "player_action"]) do
           config = engine.item_by_name("config_settings")
           config.state["bobo"] = "yup"
           ss = engine.structured_state
@@ -17,6 +17,12 @@ class DslTest < Minitest::Test
 
         define_action "room_thought" do |thought|
           notification type: "room_thought", thought: thought
+        end
+
+        define_action("fake_action1", "tags" => ["player_action"]) do
+        end
+
+        define_action("fake_action2", "tags" => ["admin"]) do
         end
 
         agent "guy on fire" do
@@ -38,6 +44,14 @@ class DslTest < Minitest::Test
       end
     end
   FIRE_DSL
+
+  def test_action_tags
+    engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
+    loc_item = engine.item_by_name("flaming cave")
+    assert_equal [ "fake_action2", "mem_statedump" ], loc_item.get_actions_with_tags("admin").map { |a| a["name"] }.sort
+    assert_equal [ "fake_action1", "mem_statedump" ], loc_item.get_actions_with_tags(["player_action"]).map { |a| a["name"] }.sort
+    assert_equal [ "mem_statedump" ], loc_item.get_actions_with_tags(["admin", "player_action"]).map { |a| a["name"] }
+  end
 
   def test_more_dsl_actions
     engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])

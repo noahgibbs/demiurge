@@ -153,6 +153,10 @@ module Demiurge
       @item_actions[item_name] ? @item_actions[item_name][action_name] : nil
     end
 
+    def actions_for_item(item_name)
+      @item_actions[item_name]
+    end
+
     def instantiate_new_item(name, parent, extra_state = {})
       parent = item_by_name(parent) unless parent.is_a?(StateItem)
       ss = parent.get_structure

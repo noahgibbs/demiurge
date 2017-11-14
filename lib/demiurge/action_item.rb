@@ -91,6 +91,18 @@ module Demiurge
       end
       action
     end
+
+    def get_actions_with_tags(tags)
+      tags = [tags].flatten # Allow calling with a single tag string
+      @actions = []
+      @engine.actions_for_item(@name).each do |action_name, action_struct|
+        # I'm sure there's some more clever way to check if the action contains all these tags...
+        if (tags - (action_struct["tags"] || [])).empty?
+          @actions.push action_struct
+        end
+      end
+      @actions
+    end
   end
 
   class EngineBlockRunner
@@ -250,7 +262,8 @@ module Demiurge
       true
     end
 
-    # For now, empty.
+    # For now, empty. Later we'll want it to honor
+    # the offer setting of the underlying action.
     def offer(engine, options)
     end
 
