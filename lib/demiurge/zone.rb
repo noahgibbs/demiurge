@@ -59,6 +59,14 @@ module Demiurge
       agent.state.delete "zone"
     end
 
+    # Zones contain agents and locations, which can sometimes mean
+    # removing them if a location or agent gets moved around.
+    def ensure_does_not_contain(item)
+      name = item.name
+      @state["location_names"] -= [name]
+      @state["agent_names"] -= [name]
+    end
+
     # By default, a Zone can accomodate any agent - especially because
     # this will be called when the agent is being added in "stasis",
     # normally for later instantiation.

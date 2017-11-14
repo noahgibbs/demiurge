@@ -44,10 +44,10 @@ module Demiurge
 
     def move_item_inside(item)
       old_pos = item.position
-      if old_pos && old_pos != ""
+      if old_pos
         old_loc_name = old_pos.split("#")[0]
         old_loc = @engine.item_by_name(old_loc_name)
-        old_loc.ensure_does_not_contain(item.name)
+        old_loc.ensure_does_not_contain(item)
       end
 
       @state["contents"] += [ item.name ]

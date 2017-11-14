@@ -15,7 +15,8 @@ module Demiurge
 
     def initialize(*args)
       super
-      state["queued_actions"] = []
+      state["queued_actions"] ||= []
+      state["queue_number"] ||= 0
     end
 
     def finished_init
@@ -56,7 +57,8 @@ module Demiurge
 
     def queue_action(action_name, *args)
       raise("Not an action: #{action_name.inspect}!") unless get_action(action_name)
-      state["queued_actions"].push([action_name, args])
+      state["queued_actions"].push([action_name, args, state["queue_number"]])
+      state["queue_number"] += 1
     end
 
     def clear_intention_queue
@@ -102,8 +104,7 @@ module Demiurge
     def offer(engine, options)
       unless @agent.state["busy"] > 0 || @agent.state["queued_actions"].empty?
         action = @agent.state["queued_actions"][0]
-        @action_name = action[0]
-        @action_args = action[1]
+        @action_name, @action_args, @action_queue_number = *action
         @action_struct = @agent.get_action(@action_name)
       end
       # TODO: offer the action to the agent's location and potentially other appropriate places.
@@ -118,8 +119,12 @@ module Demiurge
       unless agent.state["busy"] > 0 || agent.state["queued_actions"].empty?
         # Pull the first entry off the action queue
         queue = @agent.state["queued_actions"]
-        if queue && queue.size > 0 && queue[0] == @action_name && queue[1] == @action_args
-          queue.shift # Remove the queue entry
+        if queue && queue.size > 0
+          if @action_queue_number != queue[0][2]
+            STDERR.puts "Somehow the action queue has gotten screwed up mid-offer!"
+          else
+            queue.shift # Remove the queue entry
+          end
         end
         agent.run_action(@action_name, *@action_args)
         agent.state["busy"] += (@action_struct["busy"] || 1)
