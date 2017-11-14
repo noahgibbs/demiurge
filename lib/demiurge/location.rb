@@ -50,7 +50,7 @@ module Demiurge
         old_loc.ensure_does_not_contain(item)
       end
 
-      @state["contents"] += [ item.name ]
+      @state["contents"] |= [ item.name ]
     end
 
     # By default, the location can accomodate any agent number, size
