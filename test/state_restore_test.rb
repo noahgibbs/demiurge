@@ -61,10 +61,11 @@ class StateRestoreTest < Minitest::Test
 
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
+    # We won't apply these intentions, they get calculated again when advancing a tick.
     intentions = engine.next_step_intentions
     assert_equal 5, intentions.size  # Two from the moss caves, three from the agent
 
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
 
@@ -96,7 +97,7 @@ class StateRestoreTest < Minitest::Test
     ss = engine.structured_state
     engine.load_state_from_dump(ss)
 
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
 

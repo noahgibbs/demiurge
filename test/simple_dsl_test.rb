@@ -50,17 +50,19 @@ class SimpleDslTest < Minitest::Test
 
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
+    # We don't apply these intentions - they get recalculated when the engine advances.
     intentions = engine.next_step_intentions
     assert_equal 5, intentions.size  # Two from the moss caves, three from the agent
 
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
     assert_equal 0, first_cave_item.state["moss"]
     assert_equal 0, second_cave_item.state["moss"]
 
+    # We don't apply these intentions - they get recalculated when the engine advances.
     intentions = engine.next_step_intentions
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
     intentions = engine.next_step_intentions
-    engine.apply_intentions(intentions)
+    engine.advance_one_tick
     assert_equal 1, first_cave_item.state["moss"]
     assert_equal 1, second_cave_item.state["moss"]
     engine.flush_notifications # For completeness and to notice exceptions, basically
