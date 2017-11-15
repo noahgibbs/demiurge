@@ -56,7 +56,8 @@ class NotificationTest < Minitest::Test
     loc.run_action "my action name" # Queue a notification
     engine.flush_notifications # Send it out
 
-    assert_equal [{"item acting" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}], my_notifications
+    assert_equal 1, my_notifications.length
+    assert_hash_contains_fields({"item acting" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}, my_notifications[0])
   end
 
   def test_modified_subscribe
@@ -75,7 +76,8 @@ class NotificationTest < Minitest::Test
     loc_one.run_action "my action name" # Queue a notification
     engine.flush_notifications # Send it out
 
-    assert_equal [{"item acting" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}], my_notifications
+    assert_hash_contains_fields({"item acting" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}, my_notifications[0])
+    assert_equal 1, my_notifications.size
     engine.unsubscribe_from_notifications(:to_unsub_1)
 
     my_notifications = []

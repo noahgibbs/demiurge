@@ -267,31 +267,46 @@ module Demiurge
       raise "Zone must be a String, not #{zone.class}!" unless zone.is_a?(String)
       raise "Acting item must be a String or nil, not #{item_acting.class}!" unless item_acting.is_a?(String) || item_acting.nil?
 
+      @notification_id ||= 0
+      @notification_id += 1
+
       cleaned_data = {}
       data.each do |key, val|
         # TODO: verify somehow that this is JSON-serializable?
         cleaned_data[key.to_s] = val
       end
-      cleaned_data.merge!("type" => notification_type, "zone" => zone, "location" => location, "item acting" => item_acting)
+      cleaned_data.merge!("type" => notification_type, "zone" => zone, "location" => location, "actor" => item_acting, "item acting" => item_acting, "id" => @notification_id)
 
       @queued_notifications.push(cleaned_data)
     end
 
     def flush_notifications
-      @queued_notifications.each do |cleaned_data|
-        @subscriptions_by_tracker.each do |tracker, sub_structures|
-          sub_structures.each do |sub_structure|
-            next unless sub_structure[:type] == :all || sub_structure[:type].include?(cleaned_data["type"])
-            next unless sub_structure[:zone] == :all || sub_structure[:zone].include?(cleaned_data["zone"])
-            next unless sub_structure[:location] == :all || sub_structure[:location].include?(cleaned_data["location"])
-            next unless sub_structure[:item_acting] == :all || sub_structure[:item_acting].include?(cleaned_data["item acting"])
-            next unless sub_structure[:predicate] == nil || sub_structure[:predicate] == :all || sub_structure[:predicate].call(cleaned_data)
+      infinite_loop_detector = 0
+      # Dispatch the queued notifications. Then, dispatch any
+      # notifications that resulted from them.  Then, keep doing that
+      # until the queue is empty.
+      until @queued_notifications.empty?
+        infinite_loop_detector += 1
+        if infinite_loop_detector > 20
+          raise "Over 20 batches of notifications were dispatched in the same call! Error and die!"
+        end
 
-            sub_structure[:block].call(cleaned_data)
+        current_notifications = @queued_notifications
+        @queued_notifications = []
+        current_notifications.each do |cleaned_data|
+          @subscriptions_by_tracker.each do |tracker, sub_structures|
+            sub_structures.each do |sub_structure|
+              next unless sub_structure[:type] == :all || sub_structure[:type].include?(cleaned_data["type"])
+              next unless sub_structure[:zone] == :all || sub_structure[:zone].include?(cleaned_data["zone"])
+              next unless sub_structure[:location] == :all || sub_structure[:location].include?(cleaned_data["location"])
+              next unless sub_structure[:item_acting] == :all || sub_structure[:item_acting].include?(cleaned_data["item acting"])
+              next unless sub_structure[:predicate] == nil || sub_structure[:predicate] == :all || sub_structure[:predicate].call(cleaned_data)
+
+              sub_structure[:block].call(cleaned_data)
+            end
           end
         end
       end
-      @queued_notifications = []
     end
   end
 

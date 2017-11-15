@@ -84,11 +84,13 @@ class DslTest < Minitest::Test
 
     loc_item.run_action("room_thought", "do fish breathe?")
     engine.flush_notifications
-    assert_equal([{ "thought" => "do fish breathe?", "type" => "room_thought", "zone" => "fire caves", "location" => "flaming cave", "item acting" => "flaming cave" }], results)
+    assert_hash_contains_fields({ "thought" => "do fish breathe?", "type" => "room_thought", "zone" => "fire caves", "location" => "flaming cave", "item acting" => "flaming cave" }, results[0])
+    assert_equal 1, results.size
     results.pop
     guy_item.queue_action("say", "hello, there!")
     engine.advance_one_tick
-    assert_equal [{ "words" => "hello, there!", "type" => "speech", "zone" => "fire caves", "location" => "closeted cave", "item acting" => "guy on fire" }], results
+    assert_equal 1, results.size
+    assert_hash_contains_fields({ "words" => "hello, there!", "type" => "speech", "zone" => "fire caves", "location" => "closeted cave", "item acting" => "guy on fire" }, results[0])
   end
 
 end
