@@ -33,6 +33,7 @@ module GoblinTown
       item = engine.item_by_name(@name)
       item.state["moss"] += 1
       if item.state["moss"] >= item.state["growmoss_every"]
+        item.state["grown_moss"] += 1
         item.state["moss"] = 0
       end
     end
@@ -47,8 +48,8 @@ class GoblinTownTest < Minitest::Test
 
   def test_trivial_non_dsl_actions
     state = [
-      ["MossCave", "mosscave1", { "moss" => 0, "growmoss_every" => 3 }],
-      ["MossCave", "mosscave2", { "moss" => 0, "growmoss_every" => 3 }],
+      ["MossCave", "mosscave1", { "moss" => 0, "growmoss_every" => 3, "grown_moss" => 0 }],
+      ["MossCave", "mosscave2", { "moss" => 0, "growmoss_every" => 3, "grown_moss" => 0 }],
     ]
     types = {
       "GrowMoss" => GoblinTown::GrowMoss,
@@ -61,11 +62,13 @@ class GoblinTownTest < Minitest::Test
     goblin_town.finished_init
     cave = goblin_town.item_by_name("mosscave1")
     assert_equal 0, cave.state["moss"]
-    intentions = goblin_town.next_step_intentions
-    assert_equal 2, intentions.size
-    assert intentions[0].is_a?(GoblinTown::GrowMoss)
-    assert intentions[1].is_a?(GoblinTown::GrowMoss)
-    goblin_town.apply_intentions(intentions)
-    goblin_town.flush_notifications
+
+    goblin_town.advance_one_tick
+
+    assert_equal 1, cave.state["moss"]
+
+    2.times { goblin_town.advance_one_tick }
+    assert_equal 0, cave.state["moss"]
+    assert_equal 1, cave.state["grown_moss"]
   end
 end
