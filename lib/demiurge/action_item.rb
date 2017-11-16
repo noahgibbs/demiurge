@@ -151,6 +151,13 @@ module Demiurge
       @item.engine.send_notification(data, notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
     end
 
+    # Create an action to be executed immediately. This doesn't go
+    # through an agent's action queue or make anybody busy. It just
+    # happens, with the normal allow/offer/execute/notify cycle.
+    def action(name, *args)
+      intention = ActionIntention.new(engine, @item.name, name, *args)
+      @item.engine.queue_intention(intention)
+    end
   end
 
   class AgentBlockRunner < ActionItemBlockRunner
@@ -213,6 +220,34 @@ module Demiurge
     end
   end
 
+  class ActionIntention < Intention
+    attr :action_name
+    attr :action_args
+
+    def initialize(engine, name, action_name, *args)
+      @engine = engine
+      @name = name
+      @item = engine.item_by_name(name)
+      @action_name = action_name
+      @action_args = args
+    end
+
+    # For now, actions don't have an option for "allowed" blocks.
+    def allowed?(engine, options = {})
+      true
+    end
+
+    # By default, offers are coordinated through the item's location.
+    def offer(engine, intention_id, options = {})
+      loc = @item.location || @item.zone
+      # DO I ALLOW MODIFYING AN INTENTION, OR DOES IT JUST GET STRAIGHT-UP REPLACED?
+    end
+
+    def apply(engine, options = {})
+      @item.run_action(@action_name, *@action_args)
+    end
+  end
+
   class ActionItemStateWrapper
     def initialize(item)
       @item = item
@@ -264,7 +299,7 @@ module Demiurge
 
     # For now, empty. Later we'll want it to honor
     # the offer setting of the underlying action.
-    def offer(engine, options)
+    def offer(engine, intention_id, options)
     end
 
     def apply(engine, options)

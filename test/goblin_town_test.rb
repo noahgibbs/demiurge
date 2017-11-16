@@ -25,7 +25,7 @@ module GoblinTown
       true
     end
 
-    def offer(engine, options)
+    def offer(engine, intention_id, options)
       # Do nothing
     end
 

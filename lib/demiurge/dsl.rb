@@ -88,10 +88,20 @@ module Demiurge
       @built_item.register_actions("$display" => { "name" => "$display", "block" => block })
     end
 
-    def on(event, action_name, &block)
+    def on(event, action_name, options = {}, &block)
       @built_item.state["on_handlers"] ||= {}
       @built_item.state["on_handlers"][event] = action_name
       register_built_action("name" => action_name, "block" => block)
+
+      location = options[:location] || options["location"] || @built_item.location
+      zone = options[:zone] || options["zone"] || location.zone_name || @built_item.state["zone"]
+      item = options[:item_acting] || options["item_acting"] || options[:actor] || options["actor"] || :all
+
+      @engine.subscribe_to_notifications notification_type: event, zone: zone, location: location, item_acting: item do |notification|
+        # To keep this statedump-safe, need to look up the item again
+        # every time. @built_item isn't guaranteed to last.
+        @engine.item_by_name(@name).run_action(action_name, notification)
+      end
     end
 
     def define_action(action_name, options = {}, &block)
@@ -191,19 +201,19 @@ module Demiurge
     end
 
     def location(name, options = {}, &block)
-      builder = LocationBuilder.new(name, @engine, "type" => options["type"] || "Location")
+      state = { "zone" => @name }.merge(options)
+      builder = LocationBuilder.new(name, @engine, "type" => options["type"] || "Location", "state" => state)
       builder.instance_eval(&block)
       location = builder.built_location
-      location.state["zone"] = @name
       builder.built_agents.each { |agent| agent.state["zone"] = @name; @built_item.state["agent_names"] << agent.name }
       @built_item.state["location_names"] << location.name
       nil
     end
 
     def agent(name, options = {}, &block)
-      builder = AgentBuilder.new(name, @engine, "type" => options["type"] || "Agent")
+      state = { "zone" => @name }.merge(options)
+      builder = AgentBuilder.new(name, @engine, "type" => options["type"] || "Agent", "state" => state)
       builder.instance_eval(&block)
-      builder.built_agent.state["zone_name"] = @name
       @built_item.state["agent_names"] << builder.built_agent.name
       nil
     end
@@ -225,7 +235,8 @@ module Demiurge
     end
 
     def agent(name, options = {}, &block)
-      builder = AgentBuilder.new(name, @engine, options.merge("state" => { "position" => @name }) )
+      state = { "position" => @name, "zone" => @state["zone"] }
+      builder = AgentBuilder.new(name, @engine, options.merge("state" => state) )
       builder.instance_eval(&block)
       agent = builder.built_agent
       @agents << agent

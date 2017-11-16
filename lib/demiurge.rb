@@ -36,6 +36,8 @@ module Demiurge
       state_from_structured_array(state || [])
       @subscriptions_by_tracker = {}
       @ticks = 0
+      @notification_id = 0
+      @intention_id = 0
       @queued_notifications = []
       @queued_intentions = []
       nil
@@ -72,11 +74,12 @@ module Demiurge
     end
 
     def queue_intention(intention)
-      @queued_intentions.push intention
+      @intention_id += 1
+      @queued_intentions.push [@intention_id, intention]
     end
 
     def queue_item_intentions(options = {})
-      @queued_intentions += next_step_intentions
+      next_step_intentions.each { |i| queue_intention(i) }
     end
 
     def next_step_intentions(options = {})
@@ -96,8 +99,8 @@ module Demiurge
         intentions = @queued_intentions
         @queued_intentions = []
         begin
-          intentions.each do |a|
-            a.try_apply(self, options)
+          intentions.each do |id, a|
+            a.try_apply(self, id, options)
           end
         rescue
           STDERR.puts "Exception when updating! Throwing away speculative state!"
@@ -283,7 +286,6 @@ module Demiurge
       raise "Zone must be a String, not #{zone.class}!" unless zone.is_a?(String)
       raise "Acting item must be a String or nil, not #{item_acting.class}!" unless item_acting.is_a?(String) || item_acting.nil?
 
-      @notification_id ||= 0
       @notification_id += 1
 
       cleaned_data = {}
@@ -441,17 +443,17 @@ module Demiurge
     # room, which may trigger a special action (e.g. trap) or change
     # the destination of the action (e.g. exits, slippery ice,
     # spinning spaces.)
-    def offer(engine, options = {})
+    def offer(engine, intention_id, options = {})
       raise "Unimplemented 'offer' for intention: #{self.inspect}!"
     end
 
-    def try_apply(engine, options = {})
+    def try_apply(engine, intention_id, options = {})
       unless allowed?(engine, options)
         # Certain intentions can send an "intention failed" notification.
         # Such a notification would be sent from here.
         return
       end
-      offer(engine, options)
+      offer(engine, intention_id, options)
       if cancelled?
         # Similarly, intentions can send an "intention cancelled" notification.
         # The relevant variables are @cancelled_by and @cancelled_reason

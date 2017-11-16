@@ -73,7 +73,7 @@ module Demiurge
 
     # Normally, the agent's maintenance intention can't be blocked or
     # modified.
-    def offer(engine, options)
+    def offer(engine, intention_id, options)
     end
 
     def allowed?(engine, options)
@@ -101,7 +101,7 @@ module Demiurge
     end
 
     # An action being pulled from the action queue is offered normally.
-    def offer(engine, options)
+    def offer(engine, intention_id, options)
       unless @agent.state["busy"] > 0 || @agent.state["queued_actions"].empty?
         action = @agent.state["queued_actions"][0]
         @action_name, @action_args, @action_queue_number = *action
@@ -167,7 +167,7 @@ module Demiurge
 
     # Later, wander should be cancellable and it should be possible
     # for a room to move the agent through an exit. For now, nope.
-    def offer(engine, options)
+    def offer(engine, intention_id, options)
     end
 
     def apply(engine, options)
