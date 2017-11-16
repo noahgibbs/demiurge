@@ -419,9 +419,9 @@ module Demiurge
       @cancelled = false
     end
 
-    def cancel(cancelled_by, reason)
+    def cancel(reason)
       @cancelled = true
-      @cancelled_by = cancelled_by
+      @cancelled_by = caller(1, 1)
       @cancelled_reason = reason
     end
 

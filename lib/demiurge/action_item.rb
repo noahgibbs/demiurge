@@ -240,7 +240,10 @@ module Demiurge
     # By default, offers are coordinated through the item's location.
     def offer(engine, intention_id, options = {})
       loc = @item.location || @item.zone
-      # DO I ALLOW MODIFYING AN INTENTION, OR DOES IT JUST GET STRAIGHT-UP REPLACED?
+      on_actions = loc.state["on_action_handlers"]
+      if on_actions && on_actions[@action_name]
+        loc.run_action(on_actions[@action_name], self)
+      end
     end
 
     def apply(engine, options = {})

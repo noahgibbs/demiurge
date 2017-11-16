@@ -9,12 +9,17 @@ class QueueingTest < Minitest::Test
         define_action("fake_action2", "tags" => ["admin"]) do
         end
 
+        # Catch "quiet whisper" notifications, re-notify with a series of echoes.
         on("quiet whisper", "re-whisper", zone: "echoing cliffs") do |notif|
           text = notif["text"]
           if text.length > 5
             half_text = text[0...(text.size/2)]
             notification notif.merge(text: half_text)
           end
+        end
+
+        on_action("kick colored stones", "block black stones") do |intention|
+          intention.cancel("Black stones don't fall down this cliff") if intention.action_args[1] == "black"
         end
 
         agent "guy on fire" do
@@ -28,6 +33,15 @@ class QueueingTest < Minitest::Test
             if how_many > 0
               action "kick stones", how_many
               action "kick stones", how_many
+            end
+          end
+
+          define_action "kick colored stones", "tags" => ["player_action"] do |how_many, color|
+            notification type: "echoing noise", "stone size": how_many, color: color, location: item.location_name
+            how_many -= 1
+            if how_many > 0
+              action "kick colored stones", how_many, "red"
+              action "kick colored stones", how_many, "black"
             end
           end
         end
@@ -75,5 +89,23 @@ class QueueingTest < Minitest::Test
     engine.advance_one_tick
 
     assert_equal([ 3, 2, 2, 1, 1, 1, 1 ], results)
+  end
+
+  def test_intention_queue_and_offers
+    engine = Demiurge.engine_from_dsl_text(["Queueing DSL", DSL_TEXT])
+
+    loc_item = engine.item_by_name("clifftop")
+    guy_item = engine.item_by_name("guy on fire")
+    assert_equal "clifftop", guy_item.position
+
+    results = []
+    engine.subscribe_to_notifications(notification_type: "echoing noise", location: "clifftop") do |notification|
+      results.push notification["stone size"]
+    end
+
+    guy_item.queue_action("kick colored stones", 4)
+    engine.advance_one_tick
+
+    assert_equal([ 4, 3, 2, 1 ], results)
   end
 end

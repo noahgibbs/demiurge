@@ -88,6 +88,7 @@ module Demiurge
       @built_item.register_actions("$display" => { "name" => "$display", "block" => block })
     end
 
+    # This catches notifications of the appropriate type and runs the corresponding action.
     def on(event, action_name, options = {}, &block)
       @built_item.state["on_handlers"] ||= {}
       @built_item.state["on_handlers"][event] = action_name
@@ -102,6 +103,13 @@ module Demiurge
         # every time. @built_item isn't guaranteed to last.
         @engine.item_by_name(@name).run_action(action_name, notification)
       end
+    end
+
+    def on_action(caught_action, action_to_run, options = {}, &block)
+      @built_item.state["on_action_handlers"] ||= {}
+      raise "Already have an on_action (offer) handler for action #{caught_action}! Failing!" if @built_item.state["on_action_handlers"][caught_action]
+      @built_item.state["on_action_handlers"][caught_action] = action_to_run
+      register_built_action("name" => action_to_run, "block" => block)
     end
 
     def define_action(action_name, options = {}, &block)
