@@ -37,6 +37,7 @@ module Demiurge
       @subscriptions_by_tracker = {}
       @ticks = 0
       @queued_notifications = []
+      @queued_intentions = []
       nil
     end
 
@@ -70,21 +71,39 @@ module Demiurge
       @state_items.keys
     end
 
+    def queue_intention(intention)
+      @queued_intentions.push intention
+    end
+
+    def queue_item_intentions(options = {})
+      @queued_intentions += next_step_intentions
+    end
+
     def next_step_intentions(options = {})
       @zones.flat_map { |item| item.intentions_for_next_step(options) || [] }
     end
 
-    def apply_intentions(intentions, options = { })
+    def flush_intentions(options = { })
       state_backup = structured_state("copy" => true)
 
-      begin
-        intentions.each do |a|
-          a.try_apply(self, options)
+      infinite_loop_detector = 0
+      until @queued_intentions.empty?
+        infinite_loop_detector += 1
+        if infinite_loop_detector > 20
+          raise "Over 20 batches of intentions were dispatched in the same call! Error and die!"
         end
-      rescue
-        STDERR.puts "Exception when updating! Throwing away speculative state!"
-        load_state_from_dump(state_backup)
-        raise
+
+        intentions = @queued_intentions
+        @queued_intentions = []
+        begin
+          intentions.each do |a|
+            a.try_apply(self, options)
+          end
+        rescue
+          STDERR.puts "Exception when updating! Throwing away speculative state!"
+          load_state_from_dump(state_backup)
+          raise
+        end
       end
 
       send_notification({}, notification_type: "tick finished", location: "", zone: "", item_acting: nil)
@@ -92,11 +111,8 @@ module Demiurge
     end
 
     def advance_one_tick(options = {})
-      intentions = next_step_intentions(options)
-
-      # This includes the "offer" and "apply" steps
-      apply_intentions(intentions, options)
-
+      queue_item_intentions(options)
+      flush_intentions
       flush_notifications
     end
 
