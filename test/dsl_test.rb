@@ -27,7 +27,7 @@ class DslTest < Minitest::Test
 
         agent "guy on fire" do
           define_action "disappear" do
-            teleport_instant("closeted cave")
+            move_to_instant("closeted cave")
           end
 
           define_action "file_statedump" do

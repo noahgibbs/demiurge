@@ -158,36 +158,16 @@ module Demiurge
       intention = ActionIntention.new(engine, @item.name, name, *args)
       @item.engine.queue_intention(intention)
     end
+
+    def position_to_location_and_tile_coords(position)
+      ::Demiurge::TmxLocation.position_to_loc_coords(position)
+    end
   end
 
   class AgentBlockRunner < ActionItemBlockRunner
-    def move_instant(direction)
-      return unless @item.agent?  # Can't move a random item this way.
-      shape = @item.state["shape"] ? @item.state["shape"] : "humanoid"
-
-      # Later we'll want to query the zone to figure out how directions work. For now, hardcode.
-      loc_name, next_x, next_y = TmxLocation.position_to_loc_coords(@item.position)
-      location = @item.engine.item_by_name(loc_name)
-      case direction
-      when "up"
-        next_y -= 1
-      when "down"
-        next_y += 1
-      when "left"
-        next_x -= 1
-      when "right"
-        next_x += 1
-      else
-        raise "Unrecognized direction #{direction.inspect} in move_instant!"
-      end
-      if location.can_accomodate_shape?(next_x, next_y, shape)
-        next_position = "#{loc_name}##{next_x},#{next_y}"
-        @item.move_to_position(next_position)
-      end
-    end
-
-    def teleport_instant(position)
-      return unless @item.agent?  # Can't move a random item this way.
+    def move_to_instant(position)
+      # TODO: We don't have a great way to do this for non-agent entities. How does "accomodate" work for non-agents?
+      # This may be app-specific.
 
       # TODO: if we cancel out of this, set a cancellation notice and reason.
       loc_name, next_x, next_y = TmxLocation.position_to_loc_coords(position)
