@@ -156,7 +156,7 @@ module Demiurge
     end
 
     def can_accomodate_agent?(agent, position)
-      x, y, loc = TmxLocation.loc_coords_for_position(position)
+      loc, x, y = TmxLocation.position_to_loc_coords(position)
       raise "Location #{@name.inspect} asked about different location #{loc.inspect} in can_accomodate_agent!" if loc != @name
       shape = agent.state["shape"] || "humanoid"
       can_accomodate_shape?(x, y, shape)
