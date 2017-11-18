@@ -34,22 +34,22 @@ module Demiurge
     def move_to_position(pos)
       old_pos = self.position
       old_loc = self.location_name
-      old_loc_item = self.location
-      old_zone = self.zone_name
-      new_loc, new_coords = pos.split("#", 2)
-      new_loc_item = @engine.item_by_name(new_loc)
-      new_zone = new_loc_item.zone_name
+      expected_new_loc = pos.split("#")[0]
 
-      if new_loc == old_loc
-        old_loc_item.item_change_position(self, old_pos, pos)
+      if expected_new_loc == old_loc
+        self.location.item_change_position(self, old_pos, pos)
       else
         # This also handles zone changes.
-        old_loc_item.item_change_location(self, old_pos, pos)
+        self.location.item_change_location(self, old_pos, pos)
       end
+      # We're not guaranteed to wind up where we expected, so get the
+      # new location *after* item_change_location or
+      # item_change_position.
+      new_loc = self.location_name
 
-      @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: pos, new_location: new_loc },
+      @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
                                   notification_type: "move_from", zone: self.zone_name, location: old_loc, item_acting: @name)
-      @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: pos, new_location: new_loc },
+      @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
                                   notification_type: "move_to", zone: self.zone_name, location: self.location_name, item_acting: @name)
     end
 
