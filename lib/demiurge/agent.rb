@@ -115,7 +115,7 @@ module Demiurge
       action = @agent.state["queued_actions"][0]
       @action_name, @action_args, @action_queue_number = *action
       @action_struct = @agent.get_action(@action_name)
-      super
+      super(engine, intention_id)
     end
 
     def allowed?(engine, options)

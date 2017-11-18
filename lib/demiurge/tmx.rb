@@ -136,6 +136,14 @@ module Demiurge
       end
     end
 
+    def receive_offer(action_name, intention_id, options = {})
+      on_actions = @state["on_action_handlers"]
+      if on_actions && (on_actions[action_name] || on_actions["all"])
+        loc.run_action(on_actions["all"], self) if on_actions["all"]
+        loc.run_action(on_actions[action_name], self) if on_actions[action_name]
+      end
+    end
+
     # This just determines if the position is valid at all.  It does
     # *not* check walkable/swimmable or even if it's big enough for a
     # humanoid to stand in.

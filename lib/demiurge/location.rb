@@ -53,10 +53,19 @@ module Demiurge
       @state["contents"] |= [ item.name ]
     end
 
+    def receive_offer(action_name, intention, intention_id)
+      # Run handlers, if any
+      on_actions = @state["on_action_handlers"]
+      if on_actions && (on_actions[action_name] || on_actions["all"])
+        run_action(on_actions["all"], intention) if on_actions["all"]
+        run_action(on_actions[action_name], intention) if on_actions[action_name]
+      end
+    end
+
     # By default, the location can accomodate any agent number, size
-    # or shape, as long as it's in this room itself.  Subclasses of
-    # location may have different abilities to accomodate different
-    # sizes or shapes of agent.
+    # or shape, as long as it's in this location itself.  Subclasses
+    # of location may have different abilities to accomodate different
+    # sizes or shapes of agent, and at different positions.
     def can_accomodate_agent?(agent, position)
       position == @name
     end
