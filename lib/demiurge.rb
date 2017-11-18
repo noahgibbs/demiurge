@@ -100,7 +100,11 @@ module Demiurge
         @queued_intentions = []
         begin
           intentions.each do |id, a|
-            a.try_apply(self, id, options)
+            if a.cancelled?
+              STDERR.puts "Trying to apply a cancelled intention #{a}!"
+            else
+              a.try_apply(self, id, options)
+            end
           end
         rescue
           STDERR.puts "Exception when updating! Throwing away speculative state!"
