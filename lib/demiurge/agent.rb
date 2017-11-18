@@ -22,7 +22,6 @@ module Demiurge
     def finished_init
       super
       @agent_maintenance = AgentMaintenanceIntention.new(@name)
-      @agent_action = AgentActionIntention.new(@name, engine)
       state["busy"] ||= 0 # By default, start out idle.
     end
 
@@ -52,7 +51,8 @@ module Demiurge
     end
 
     def intentions_for_next_step(options = {})
-      super + [@agent_maintenance, @agent_action]
+      agent_action = AgentActionIntention.new(@name, engine)
+      super + [@agent_maintenance, agent_action]
     end
 
     def queue_action(action_name, *args)
@@ -86,7 +86,7 @@ module Demiurge
     end
   end
 
-  class AgentActionIntention < Intention
+  class AgentActionIntention < ActionIntention
     attr_reader :agent
     attr_reader :action_name
 
@@ -95,6 +95,7 @@ module Demiurge
       @engine = engine
       @agent = @engine.item_by_name(@name)
       raise "No such agent as #{name.inspect} found!" unless @agent
+      super(engine, name, "")
     end
 
     def finished_init
@@ -102,12 +103,19 @@ module Demiurge
 
     # An action being pulled from the action queue is offered normally.
     def offer(engine, intention_id, options)
-      unless @agent.state["busy"] > 0 || @agent.state["queued_actions"].empty?
-        action = @agent.state["queued_actions"][0]
-        @action_name, @action_args, @action_queue_number = *action
-        @action_struct = @agent.get_action(@action_name)
+      # Don't offer the action if it's going to be a no-op.
+      if @agent.state["busy"] > 0
+        self.cancel "Agent #{@name.inspect} was too busy to act (#{@agent.state["busy"]})."
+        return
+      elsif @agent.state["queued_actions"].empty?
+        self.cancel "Agent #{@name.inspect} somehow had no actions during the 'offer' phase."
+        return
       end
-      # TODO: offer the action to the agent's location and potentially other appropriate places.
+      # Now offer the agent's action via the usual channels
+      action = @agent.state["queued_actions"][0]
+      @action_name, @action_args, @action_queue_number = *action
+      @action_struct = @agent.get_action(@action_name)
+      super
     end
 
     def allowed?(engine, options)
@@ -136,7 +144,7 @@ module Demiurge
   class WanderingAgent < Agent
     def initialize(name, engine, state)
       super
-      @wander_intention = WanderIntention.new(name)
+      @wander_intention = WanderIntention.new(engine, name)
       state["wander_counter"] ||= 0
     end
 
@@ -156,18 +164,20 @@ module Demiurge
   end
 
   # This is a simple Wandering agent for use with TmxLocations and similar grid-based maps.
-  class WanderIntention < Intention
-    def initialize(name)
+  class WanderIntention < ActionIntention
+    def initialize(engine, name, *args)
       @name = name
+      super(engine, name, "", *args)
     end
 
     def allowed?(engine, options)
       true
     end
 
-    # Later, wander should be cancellable and it should be possible
-    # for a room to move the agent through an exit. For now, nope.
-    def offer(engine, intention_id, options)
+    # For now, WanderIntention is unblockable. That's not perfect, but
+    # otherwise we have to figure out how to offer an action without
+    # an action name.
+    def offer(engine, intention_id, options = {})
     end
 
     def apply(engine, options)
