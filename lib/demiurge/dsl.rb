@@ -212,9 +212,7 @@ module Demiurge
       state = { "zone" => @name }.merge(options)
       builder = LocationBuilder.new(name, @engine, "type" => options["type"] || "Location", "state" => state)
       builder.instance_eval(&block)
-      location = builder.built_location
-      builder.built_agents.each { |agent| agent.state["zone"] = @name; @built_item.state["agent_names"] << agent.name }
-      @built_item.state["location_names"] << location.name
+      @built_item.state["contents"] << name
       nil
     end
 
@@ -222,7 +220,7 @@ module Demiurge
       state = { "zone" => @name }.merge(options)
       builder = AgentBuilder.new(name, @engine, "type" => options["type"] || "Agent", "state" => state)
       builder.instance_eval(&block)
-      @built_item.state["agent_names"] << builder.built_agent.name
+      @built_item.state["contents"] << name
       nil
     end
 
@@ -246,18 +244,11 @@ module Demiurge
       state = { "position" => @name, "zone" => @state["zone"] }
       builder = AgentBuilder.new(name, @engine, options.merge("state" => state) )
       builder.instance_eval(&block)
-      agent = builder.built_agent
-      @agents << agent
       nil
     end
 
     def built_location
       @built_item
-    end
-
-    # Need an agent list so the containing zone can register them.
-    def built_agents
-      @agents
     end
   end
 

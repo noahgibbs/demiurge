@@ -9,6 +9,7 @@ end
 
 require "demiurge/action_item"
 require "demiurge/inert_state_item"
+require "demiurge/container"
 require "demiurge/zone"
 require "demiurge/location"
 require "demiurge/agent"

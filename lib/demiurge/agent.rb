@@ -25,10 +25,12 @@ module Demiurge
       state["busy"] ||= 0 # By default, start out idle.
     end
 
-    # This will move the agent, instantly, without going through the
-    # usual cycle of movement. It just drops this agent in a new place
-    # without going through the usual action cycle. It *does* notify
-    # about the change, though.
+    # This will move the agent and notify about that change.  It
+    # doesn't use an intention or an agent's action queue, and it
+    # doesn't wait for a tick to happen. It just does it. The method
+    # *does* handle exits and generally allows the location to
+    # respond.  But it's assumed that the offer cycle, if it needs to
+    # happen, has happened already.
     def move_to_position(pos)
       old_pos = self.position
       old_loc = self.location_name
@@ -38,16 +40,17 @@ module Demiurge
       new_loc_item = @engine.item_by_name(new_loc)
       new_zone = new_loc_item.zone_name
 
-      self.state["position"] = pos
-
-      if new_zone != old_zone
-        old_zone_item = @engine.item_by_name(old_zone)
-        old_zone_item.remove_agent(self)
-        self.state["zone"] = new_zone
+      if new_loc == old_loc
+        old_loc_item.item_change_position(self, old_pos, pos)
+      else
+        # This also handles zone changes.
+        old_loc_item.item_change_location(self, old_pos, pos)
       end
 
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: pos, new_location: new_loc },
-                                  notification_type: "move", zone: self.zone_name, location: self.location_name, item_acting: @name)
+                                  notification_type: "move_from", zone: self.zone_name, location: old_loc, item_acting: @name)
+      @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: pos, new_location: new_loc },
+                                  notification_type: "move_to", zone: self.zone_name, location: self.location_name, item_acting: @name)
     end
 
     def intentions_for_next_step(options = {})

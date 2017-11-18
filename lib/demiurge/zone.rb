@@ -11,13 +11,7 @@ module Demiurge
   # number of areas, but each does extensive managing of its
   # sub-locations.
 
-  class Zone < ActionItem
-    def initialize(*args)
-      super
-      @state["location_names"] ||= []
-      @state["agent_names"] ||= []
-    end
-
+  class Zone < Container
     # A Zone isn't located "inside" somewhere else. It is located in/at itself.
     def location
       self
@@ -43,50 +37,14 @@ module Demiurge
       @name
     end
 
-    # Zones with locations contain instantiable agents and locations,
-    # but not agents that actively *do* things. These agents won't
-    # normally receive ticks or perform intentions.
-    def add_agent(agent)
-      old_zone = agent.zone
-      old_zone.remove_agent(agent) if old_zone
-
-      agent.state["zone"] = @name
-      @state["agent_names"].push agent.name
-    end
-
-    def remove_agent(agent)
-      @state["agent_names"] -= [ agent.name ]
-      agent.state.delete "zone"
-    end
-
-    # Zones contain agents and locations, which can sometimes mean
-    # removing them if a location or agent gets moved around.
-    def ensure_does_not_contain(item)
-      name = item.name
-      @state["location_names"] -= [name]
-      @state["agent_names"] -= [name]
-    end
-
-    # By default, a Zone can accomodate any agent - especially because
-    # this will be called when the agent is being added in "stasis",
-    # normally for later instantiation.
-    def can_accomodate_agent?(agent, position)
-      true
-    end
-
-    # Note that "location" or "location_name" gets where the Zone
-    # *is*. But location_names attempts to get a list of locations
-    # *inside* the Zone. This may or may not do anything useful,
-    # depending on the type of the Zone.
-    def location_names
-      @state["location_names"]
-    end
-
-    # By default, a zone just passes control to all its locations,
-    # gathering up their intentions into a list.
+    # By default, a zone just passes control to all its non-agent
+    # items, gathering up their intentions into a list. It doesn't ask
+    # agents since agents located directly in zones are usually only
+    # for instantiation.
     def intentions_for_next_step(options = {})
-      intentions = @state["location_names"].flat_map do |loc_name|
-        @engine.item_by_name(loc_name).intentions_for_next_step
+      intentions = @state["contents"].flat_map do |item_name|
+        item = @engine.item_by_name(item_name)
+        item.agent? ? [] : item.intentions_for_next_step
       end
       intentions
     end

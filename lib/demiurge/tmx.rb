@@ -36,12 +36,10 @@ module Demiurge
     # with the intrusiveness of what TMX needs to plug in (which isn't
     # bad, but the plugin system barely exists.)
     def tmx_location(name, options = {}, &block)
-      builder = TmxLocationBuilder.new(name, @engine, "type" => options["type"] || "TmxLocation")
+      state = { "zone" => @name }.merge(options)
+      builder = TmxLocationBuilder.new(name, @engine, "type" => options["type"] || "TmxLocation", "state" => state)
       builder.instance_eval(&block)
-      location = builder.built_location
-      location.state["zone"] = @name
-      builder.built_agents.each { |agent| agent.state["zone"] = @name; @built_item.state["agent_names"] << agent.name }
-      @built_item.state["location_names"] << location.name
+      @built_item.state["contents"] << name
       nil
     end
   end
@@ -81,8 +79,9 @@ module Demiurge
     def finished_init
       super
       exits = []
-      locations = state["location_names"].map { |ln| @engine.item_by_name(ln) }
-      locations.each do |location|
+      # Go through the contents looking for locations
+      contents = state["contents"].map { |ln| @engine.item_by_name(ln) }
+      contents.each do |location|
         # ManaSource locations often store exits as objects in an
         # object layer.  They don't cope with multiple locations that
         # use the same TMX file since they identify the destination by
@@ -91,7 +90,7 @@ module Demiurge
         # zones.
         if location.is_a?(TmxLocation) && location.state["manasource_tile_layout"]
           location.tiles[:objects].select { |obj| obj[:type] == "warp" }.each do |obj|
-            dest_location = locations.detect { |loc| obj[:properties] && loc.tiles[:tmx_name] == obj[:properties]["dest_map"] }
+            dest_location = contents.detect { |loc| obj[:properties] && loc.is_a?(TmxLocation) && loc.tiles[:tmx_name] == obj[:properties]["dest_map"] }
             if dest_location
               dest_position = "#{dest_location.name}##{obj[:properties]["dest_x"]},#{obj[:properties]["dest_y"]}"
               src_x_coord = obj[:x] / location.tiles[:spritesheet][:tilewidth]
@@ -133,14 +132,6 @@ module Demiurge
         return loc, x.to_i, y.to_i
       else
         return loc, nil, nil
-      end
-    end
-
-    def receive_offer(action_name, intention_id, options = {})
-      on_actions = @state["on_action_handlers"]
-      if on_actions && (on_actions[action_name] || on_actions["all"])
-        loc.run_action(on_actions["all"], self) if on_actions["all"]
-        loc.run_action(on_actions[action_name], self) if on_actions[action_name]
       end
     end
 

@@ -37,7 +37,7 @@ class CopyItemTest < Minitest::Test
     refute_nil zone
     second_cave_item = engine.instantiate_new_item("second moss cave", first_cave_item)
     refute_nil engine.item_by_name("second moss cave")
-    assert_equal ["first moss cave", "second moss cave"], zone.location_names.sort
+    assert_equal ["first moss cave", "second moss cave"], zone.contents_names.sort
 
     6.times do
       engine.advance_one_tick
