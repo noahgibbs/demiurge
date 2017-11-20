@@ -135,6 +135,21 @@ module Demiurge
       end
     end
 
+    def item_change_position(item, old_pos, new_pos)
+      exit = @state["exits"].detect { |e| e["from"] == new_pos }
+      return super unless exit  # No exit? Do what you were going to.
+
+      # Going to hit an exit? Cancel this motion and enqueue an
+      # intention to do so? Or just send them through? If the former,
+      # it's very hard to unblockably pass through an exit, even if
+      # that's what's wanted. If the latter, it's very hard to make
+      # going through an exit blockable.
+
+      # Eh, just send them through for now. We'll figure out how to
+      # make detecting and blocking exit intentions easy later.
+      item.state["position"] = exit["to"]
+    end
+
     # This just determines if the position is valid at all.  It does
     # *not* check walkable/swimmable or even if it's big enough for a
     # humanoid to stand in.
