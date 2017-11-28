@@ -34,6 +34,7 @@ module Demiurge
     def move_to_position(pos)
       old_pos = self.position
       old_loc = self.location_name
+      old_zone_name = self.zone_name
       expected_new_loc = pos.split("#")[0]
 
       if expected_new_loc == old_loc
@@ -48,7 +49,7 @@ module Demiurge
       new_loc = self.location_name
 
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
-                                  notification_type: "move_from", zone: self.zone_name, location: old_loc, item_acting: @name)
+                                  notification_type: "move_from", zone: old_zone_name, location: old_loc, item_acting: @name)
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
                                   notification_type: "move_to", zone: self.zone_name, location: self.location_name, item_acting: @name)
     end
