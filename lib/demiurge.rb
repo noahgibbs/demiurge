@@ -248,6 +248,7 @@ module Demiurge
       state_from_structured_array(arr, options)
       finished_init
       send_notification(type: "load_state_end", actor: nil, location: nil, zone: "admin")
+      flush_notifications
     end
 
     # Internal method used by subscribe_to_notifications for notification matching.
