@@ -47,10 +47,10 @@ class StateRestoreTest < Minitest::Test
     assert_equal "second moss cave", agent.location_name
 
     notification_queue = []
-    engine.subscribe_to_notifications(notification_type: "load_state_start") do |notification|
+    engine.subscribe_to_notifications(type: "load_state_start") do |notification|
       notification_queue.push notification["type"]
     end
-    engine.subscribe_to_notifications(notification_type: "load_state_end") do |notification|
+    engine.subscribe_to_notifications(type: "load_state_end") do |notification|
       notification_queue.push notification["type"]
     end
 

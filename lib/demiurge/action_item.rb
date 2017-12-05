@@ -144,11 +144,11 @@ module Demiurge
     # by allowing specific actions for specific ActionItems and so on.
 
     def notification(data)
-      notification_type = data.delete("notification_type") || data.delete(:notification_type) || data.delete("type") || data.delete(:type)
+      type = data.delete("type") || data.delete(:type) || data.delete("type") || data.delete(:type)
       zone = to_demiurge_name(data.delete("zone") || data.delete(:zone) || @item.zone)
       location = to_demiurge_name(data.delete("location") || data.delete(:location) || @item.location)
       item_acting = to_demiurge_name(data.delete("item_acting") || data.delete(:item_acting) || @item)
-      @item.engine.send_notification(data, notification_type: notification_type.to_s, zone: zone, location: location, item_acting: item_acting)
+      @item.engine.send_notification(data, type: type.to_s, zone: zone, location: location, item_acting: item_acting)
     end
 
     # Create an action to be executed immediately. This doesn't go

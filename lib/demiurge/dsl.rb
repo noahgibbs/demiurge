@@ -98,7 +98,7 @@ module Demiurge
       zone = options[:zone] || options["zone"] || location.zone_name || @built_item.state["zone"]
       item = options[:item_acting] || options["item_acting"] || options[:actor] || options["actor"] || :all
 
-      @engine.subscribe_to_notifications notification_type: event, zone: zone, location: location, item_acting: item do |notification|
+      @engine.subscribe_to_notifications type: event, zone: zone, location: location, item_acting: item do |notification|
         # To keep this statedump-safe, need to look up the item again
         # every time. @built_item isn't guaranteed to last.
         @engine.item_by_name(@name).run_action(action_name, notification)

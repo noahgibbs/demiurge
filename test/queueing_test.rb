@@ -58,7 +58,7 @@ class QueueingTest < Minitest::Test
     assert_equal "clifftop", guy_item.position
 
     results = []
-    engine.subscribe_to_notifications(notification_type: "quiet whisper", location: "clifftop") do |notification|
+    engine.subscribe_to_notifications(type: "quiet whisper", location: "clifftop") do |notification|
       results.push notification
     end
 
@@ -81,7 +81,7 @@ class QueueingTest < Minitest::Test
     assert_equal "clifftop", guy_item.position
 
     results = []
-    engine.subscribe_to_notifications(notification_type: "echoing noise", location: "clifftop") do |notification|
+    engine.subscribe_to_notifications(type: "echoing noise", location: "clifftop") do |notification|
       results.push notification["stone size"]
     end
 
@@ -99,7 +99,7 @@ class QueueingTest < Minitest::Test
     assert_equal "clifftop", guy_item.position
 
     results = []
-    engine.subscribe_to_notifications(notification_type: "echoing noise", location: "clifftop") do |notification|
+    engine.subscribe_to_notifications(type: "echoing noise", location: "clifftop") do |notification|
       results.push notification["stone size"]
     end
 

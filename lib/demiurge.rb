@@ -114,7 +114,7 @@ module Demiurge
         end
       end
 
-      send_notification({}, notification_type: "tick finished", location: "", zone: "", item_acting: nil)
+      send_notification({}, type: "tick finished", location: "", zone: "", item_acting: nil)
       @ticks += 1
     end
 
@@ -216,7 +216,7 @@ module Demiurge
         @zones.push(item)
       end
       if @finished_init
-        send_notification(notification_type: "new item", zone: item.zone_name, location: item.location_name, item_acting: name)
+        send_notification(type: "new item", zone: item.zone_name, location: item.location_name, item_acting: name)
       end
       item
     end
@@ -244,10 +244,10 @@ module Demiurge
     # to restore state from a JSON dump or a hypothetical scenario
     # that didn't work out.
     def load_state_from_dump(arr, options = {})
-      send_notification(notification_type: "load_state_start", item_acting: nil, location: nil, zone: "admin")
+      send_notification(type: "load_state_start", item_acting: nil, location: nil, zone: "admin")
       state_from_structured_array(arr, options)
       finished_init
-      send_notification(notification_type: "load_state_end", item_acting: nil, location: nil, zone: "admin")
+      send_notification(type: "load_state_end", item_acting: nil, location: nil, zone: "admin")
     end
 
     # Internal method used by subscribe_to_notifications for notification matching.
@@ -271,9 +271,9 @@ module Demiurge
     # This method 'subscribes' a block to various types of
     # notifications. The block will be called with the notifications
     # when they occur.
-    def subscribe_to_notifications(notification_type: :all, zone: :all, location: :all, predicate: nil, item_acting: :all, tracker: nil, &block)
+    def subscribe_to_notifications(type: :all, zone: :all, location: :all, predicate: nil, item_acting: :all, tracker: nil, &block)
       sub_structure = {
-        type: notification_spec(notification_type),
+        type: notification_spec(type),
         zone: notification_spec(zone),
         location: notification_spec(location),
         item_acting: notification_spec(item_acting),
@@ -292,8 +292,8 @@ module Demiurge
       @subscriptions_by_tracker.delete(tracker)
     end
 
-    def send_notification(data = {}, notification_type:, zone:, location:, item_acting:)
-      raise "Notification type must be a String, not #{notification_type.class}!" unless notification_type.is_a?(String)
+    def send_notification(data = {}, type:, zone:, location:, item_acting:)
+      raise "Notification type must be a String, not #{type.class}!" unless type.is_a?(String)
       raise "Location must be a String, not #{location.class}!" unless location.is_a?(String) || location.nil?
       raise "Zone must be a String, not #{zone.class}!" unless zone.is_a?(String)
       raise "Acting item must be a String or nil, not #{item_acting.class}!" unless item_acting.is_a?(String) || item_acting.nil?
@@ -305,7 +305,7 @@ module Demiurge
         # TODO: verify somehow that this is JSON-serializable?
         cleaned_data[key.to_s] = val
       end
-      cleaned_data.merge!("type" => notification_type, "zone" => zone, "location" => location, "actor" => item_acting, "item acting" => item_acting, "id" => @notification_id)
+      cleaned_data.merge!("type" => type, "zone" => zone, "location" => location, "actor" => item_acting, "item acting" => item_acting, "id" => @notification_id)
 
       @queued_notifications.push(cleaned_data)
     end
