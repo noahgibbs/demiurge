@@ -49,9 +49,9 @@ module Demiurge
       new_loc = self.location_name
 
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
-                                  type: "move_from", zone: old_zone_name, location: old_loc, item_acting: @name)
+                                  type: "move_from", zone: old_zone_name, location: old_loc, actor: @name)
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
-                                  type: "move_to", zone: self.zone_name, location: self.location_name, item_acting: @name)
+                                  type: "move_to", zone: self.zone_name, location: self.location_name, actor: @name)
     end
 
     def intentions_for_next_step(options = {})
@@ -191,7 +191,7 @@ module Demiurge
       return if agent.state["wander_counter"] < wander_every
       next_coords = agent.zone.adjacent_positions(agent.position)
       if next_coords.empty?
-        engine.send_notification({ description: "Oh no! Wandering agent #{@name.inspect} is stuck and can't get out!" }, type: "admin warning", zone: agent.zone_name, location: agent.location_name, item_acting: @name)
+        engine.send_notification({ description: "Oh no! Wandering agent #{@name.inspect} is stuck and can't get out!" }, type: "admin warning", zone: agent.zone_name, location: agent.location_name, actor: @name)
         return
       end
       chosen = next_coords.sample

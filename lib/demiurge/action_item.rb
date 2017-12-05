@@ -147,8 +147,8 @@ module Demiurge
       type = data.delete("type") || data.delete(:type) || data.delete("type") || data.delete(:type)
       zone = to_demiurge_name(data.delete("zone") || data.delete(:zone) || @item.zone)
       location = to_demiurge_name(data.delete("location") || data.delete(:location) || @item.location)
-      item_acting = to_demiurge_name(data.delete("item_acting") || data.delete(:item_acting) || @item)
-      @item.engine.send_notification(data, type: type.to_s, zone: zone, location: location, item_acting: item_acting)
+      actor = to_demiurge_name(data.delete("actor") || data.delete(:actor) || @item)
+      @item.engine.send_notification(data, type: type.to_s, zone: zone, location: location, actor: actor)
     end
 
     # Create an action to be executed immediately. This doesn't go

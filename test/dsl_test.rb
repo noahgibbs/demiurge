@@ -93,13 +93,13 @@ class DslTest < Minitest::Test
 
     engine.flush_notifications # Don't send out notification about the 'disappear' action
     results = []
-    engine.subscribe_to_notifications(item_acting: ["guy on fire", "flaming cave"]) do |notification|
+    engine.subscribe_to_notifications(actor: ["guy on fire", "flaming cave"]) do |notification|
       results.push notification
     end
 
     loc_item.run_action("room_thought", "do fish breathe?")
     engine.flush_notifications
-    assert_hash_contains_fields({ "thought" => "do fish breathe?", "type" => "room_thought", "zone" => "fire caves", "location" => "flaming cave", "item acting" => "flaming cave" }, results[0])
+    assert_hash_contains_fields({ "thought" => "do fish breathe?", "type" => "room_thought", "zone" => "fire caves", "location" => "flaming cave", "actor" => "flaming cave" }, results[0])
     assert_equal 1, results.size
     results.pop
     assert_equal 0, loc_item.state["action_counter"]  # Still no actions yet
@@ -107,7 +107,7 @@ class DslTest < Minitest::Test
     engine.advance_one_tick
     assert_equal 1, loc_item.state["action_counter"]  # But the queued action *does* trigger on("all") in the parent.
     assert_equal 1, results.size
-    assert_hash_contains_fields({ "words" => "hello, there!", "type" => "speech", "zone" => "fire caves", "location" => "flaming cave", "item acting" => "guy on fire" }, results[0])
+    assert_hash_contains_fields({ "words" => "hello, there!", "type" => "speech", "zone" => "fire caves", "location" => "flaming cave", "actor" => "guy on fire" }, results[0])
   end
 
 end

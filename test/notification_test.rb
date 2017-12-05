@@ -30,14 +30,14 @@ class NotificationTest < Minitest::Test
     end
     assert_equal 0, my_notifications.size
 
-    engine.send_notification(type: "test1", zone: "topzone", location: "one", item_acting: "one")
+    engine.send_notification(type: "test1", zone: "topzone", location: "one", actor: "one")
     engine.flush_notifications
     assert_equal 1, my_notifications.size
 
     engine.unsubscribe_from_notifications(:test_unsub)
     assert_equal 1, my_notifications.size
 
-    engine.send_notification(type: "test1", zone: "topzone", location: "one", item_acting: "one")
+    engine.send_notification(type: "test1", zone: "topzone", location: "one", actor: "one")
     engine.flush_notifications
     assert_equal 1, my_notifications.size
   end
@@ -57,7 +57,7 @@ class NotificationTest < Minitest::Test
     engine.flush_notifications # Send it out
 
     assert_equal 1, my_notifications.length
-    assert_hash_contains_fields({"item acting" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}, my_notifications[0])
+    assert_hash_contains_fields({"actor" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}, my_notifications[0])
   end
 
   def test_modified_subscribe
@@ -69,19 +69,19 @@ class NotificationTest < Minitest::Test
 
     my_notifications = []
 
-    engine.subscribe_to_notifications(item_acting: "one", tracker: :to_unsub_1) do |notification|
+    engine.subscribe_to_notifications(actor: "one", tracker: :to_unsub_1) do |notification|
       my_notifications.push(notification)
     end
 
     loc_one.run_action "my action name" # Queue a notification
     engine.flush_notifications # Send it out
 
-    assert_hash_contains_fields({"item acting" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}, my_notifications[0])
+    assert_hash_contains_fields({"actor" => "one", "zone" => "otherzone", "type" => "dweomer", "description" => "whoah, something happened!", "location" => "one"}, my_notifications[0])
     assert_equal 1, my_notifications.size
     engine.unsubscribe_from_notifications(:to_unsub_1)
 
     my_notifications = []
-    engine.subscribe_to_notifications(item_acting: "other one", tracker: :to_unsub_1) do |notification|
+    engine.subscribe_to_notifications(actor: "other one", tracker: :to_unsub_1) do |notification|
       my_notifications.push(notification)
     end
 
