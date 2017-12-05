@@ -222,8 +222,8 @@ module Demiurge
     end
 
     # This sets the Engine's internal state from a structured array of
-    # items.  This is a good way, for instance, to restore state from
-    # a JSON dump or a hypothetical that didn't work out.
+    # items. It is normally used via load_state_from_dump.
+    private
     def state_from_structured_array(arr, options = {})
       options = options.dup.freeze unless options.frozen?
 
@@ -237,10 +237,17 @@ module Demiurge
       end
       nil
     end
+    public
 
+    # This loads state from state that has been dumped/serialized.  It
+    # handles reinitializing, signaling and whatnot. This can be used
+    # to restore state from a JSON dump or a hypothetical scenario
+    # that didn't work out.
     def load_state_from_dump(arr, options = {})
+      send_notification(notification_type: "load_state_start", item_acting: nil, location: nil, zone: "admin")
       state_from_structured_array(arr, options)
       finished_init
+      send_notification(notification_type: "load_state_end", item_acting: nil, location: nil, zone: "admin")
     end
 
     # Internal method used by subscribe_to_notifications for notification matching.

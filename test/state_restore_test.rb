@@ -46,9 +46,19 @@ class StateRestoreTest < Minitest::Test
     refute_nil agent
     assert_equal "second moss cave", agent.location_name
 
+    notification_queue = []
+    engine.subscribe_to_notifications(notification_type: "load_state_start") do |notification|
+      notification_queue.push notification["type"]
+    end
+    engine.subscribe_to_notifications(notification_type: "load_state_end") do |notification|
+      notification_queue.push notification["type"]
+    end
+
     # Dump and restore before anything interesting happens...
     ss = engine.structured_state
     engine.load_state_from_dump(ss)
+    engine.flush_notifications
+    assert_equal [ "load_state_start", "load_state_end" ], notification_queue
 
     # Re-query items, which may have been recreated
     first_cave_item = engine.item_by_name("first moss cave")
