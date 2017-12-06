@@ -43,7 +43,7 @@ module Demiurge
 
     def zone_name
       l = location
-      l ? l.zone_name : state["zone_name"]
+      l ? l.zone_name : state["zone"]
     end
 
     def __state_internal
