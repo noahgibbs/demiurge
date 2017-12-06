@@ -29,6 +29,8 @@ module Demiurge
   end
 
   class ActionItemBuilder
+    attr_reader :built_item
+
     def check_options(hash, legal_options)
       illegal_options = hash.keys - legal_options
       raise "Illegal options #{illegal_options.inspect} passed to #{caller(1, 3).inspect}!" unless illegal_options.empty?
@@ -123,9 +125,9 @@ module Demiurge
   class TopLevelBuilder
     @@types = {}
 
-    def initialize
+    def initialize(options = {})
       @zones = []
-      @engine = ::Demiurge::Engine.new(types: @@types, state: [])
+      @engine = options["engine"] || ::Demiurge::Engine.new(types: @@types, state: [])
     end
 
     # For now, this just declares an InertStateItem for a given name.
@@ -137,7 +139,9 @@ module Demiurge
     # state is - is it reset like a zone? Completely transient?
     # Cleared per reboot?
     def inert(item_name, options = {})
-      inert_item = ::Demiurge::StateItem.from_name_type(@engine, options["type"] || "InertStateItem", item_name, options["state"] || {})
+      zone_name = options["zone"] || "admin"
+      state = options["state"] || {}
+      inert_item = ::Demiurge::StateItem.from_name_type(@engine, options["type"] || "InertStateItem", item_name, state.merge("zone" => zone_name))
       @engine.register_state_item(inert_item)
     end
 
@@ -150,7 +154,7 @@ module Demiurge
       end
 
       builder.instance_eval(&block)
-      new_zone = builder.built_zone
+      new_zone = builder.built_item
 
       @zones |= [ new_zone ] if new_zone  # Add if not already present
       nil
@@ -184,10 +188,6 @@ module Demiurge
     def initialize(name, engine, options = {})
       options = { "type" => "Agent" }.merge(options)
       super(name, engine, options)
-    end
-
-    def built_agent
-      @built_item
     end
   end
 
@@ -223,10 +223,6 @@ module Demiurge
       @built_item.state["contents"] << name
       nil
     end
-
-    def built_zone
-      @built_item
-    end
   end
 
   class LocationBuilder < ActionItemBuilder
@@ -244,11 +240,8 @@ module Demiurge
       state = { "position" => @name, "zone" => @state["zone"] }
       builder = AgentBuilder.new(name, @engine, options.merge("state" => state) )
       builder.instance_eval(&block)
+      @built_item.state["contents"] << name
       nil
-    end
-
-    def built_location
-      @built_item
     end
   end
 
