@@ -110,10 +110,11 @@ module Demiurge
     def offer(engine, intention_id, options)
       # Don't offer the action if it's going to be a no-op.
       if @agent.state["busy"] > 0
-        self.cancel "Agent #{@name.inspect} was too busy to act (#{@agent.state["busy"]})."
+        # See comment on "silent" in allowed?() below.
+        self.cancel "Agent #{@name.inspect} was too busy to act (#{@agent.state["busy"]}).", "silent" => "true"
         return
       elsif @agent.state["queued_actions"].empty?
-        self.cancel "Agent #{@name.inspect} somehow had no actions during the 'offer' phase."
+        self.cancel "Agent #{@name.inspect} had no actions during the 'offer' phase.", "silent" => "true"
         return
       end
       # Now offer the agent's action via the usual channels
@@ -125,7 +126,18 @@ module Demiurge
 
     def allowed?(engine, options)
       # If the agent's busy state will clear this turn, this action could happen.
-      @agent.state["busy"] <= 1
+      return false if @agent.state["busy"] > 1
+
+      # A dilemma: if we cancel now when no actions are queued, then
+      # any action queued this turn (e.g. from an
+      # EveryXActionsIntention) won't be executed -- we said this
+      # intention wasn't happening. If we *don't* return false in the
+      # "allowed?" phase then we'll wind up sending out a cancel
+      # notice every turn when there are no actions. So we add a
+      # "silent" info option to the normal-every-turn cancellations,
+      # but we *do* allow-then-cancel even in perfectly normal
+      # circumstances.
+      true
     end
 
     def apply(engine, options)

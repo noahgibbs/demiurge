@@ -171,6 +171,8 @@ module Demiurge
       location = @item.engine.item_by_name(loc_name)
       if location.can_accomodate_agent?(@item, position)
         @item.move_to_position(position)
+      else
+        cancel_action "That position is blocked.", "position" => position, "message" => "position blocked", "mover" => @item.name
       end
     end
 
@@ -225,6 +227,11 @@ module Demiurge
     end
 
     def cancel_notification
+      # "Silent" notifications are things like an agent's action queue
+      # being empty so it cancels its intention.  These are normal
+      # operation and nobody is likely to need notification every
+      # tick that they didn't ask to do anything so they didn't.
+      return if @cancelled_info && @cancelled_info["silent"]
       @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class },
         type: "intention_cancelled", zone: @item.zone_name, location: @item.location_name, actor: @item.name)
     end
@@ -287,6 +294,11 @@ module Demiurge
 
     # Shouldn't normally happen, but just in case...
     def cancel_notification
+      # "Silent" notifications are things like an agent's action queue
+      # being empty so it cancels its intention.  These are normal
+      # operation and nobody is likely to need notification every
+      # tick that they didn't ask to do anything so they didn't.
+      return if @cancelled_info && @cancelled_info["silent"]
       item = @engine.item_by_name(@name)
       @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class },
                                 type: "intention_cancelled", zone: item.zone_name, location: item.location_name, actor: item.name)

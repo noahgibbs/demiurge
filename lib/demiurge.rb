@@ -430,16 +430,28 @@ module Demiurge
       @engine = engine
     end
 
-    def cancel(reason)
+    def cancel(reason, info = {})
       @cancelled = true
       @cancelled_by = caller(1, 1)
       @cancelled_reason = reason
+      @cancelled_info = info
       cancel_notification
     end
 
     # This can be overridden for more specific notifications
     def cancel_notification
-      @engine.send_notification({ :reason => @cancelled_reason, :by => @cancelled_by, :id => @intention_id, :intention_type => self.class },
+      # "Silent" notifications are things like an agent's action queue
+      # being empty so it cancels its intention.  These are normal
+      # operation and nobody is likely to need notification every
+      # tick that they didn't ask to do anything so they didn't.
+      return if @cancelled_info && @cancelled_info["silent"]
+      @engine.send_notification({
+                                  :reason => @cancelled_reason,
+                                  :by => @cancelled_by,
+                                  :id => @intention_id,
+                                  :intention_type => self.class,
+                                  :info => @cancelled_info
+                                },
                                 type: "intention_cancelled", zone: "admin", location: nil, actor: nil)
     end
 
