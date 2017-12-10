@@ -422,20 +422,25 @@ module Demiurge
   # persist for only a single tick. To persist an intention for most StateItems,
   # consider persisting action names instead.
 
-  # TODO: with non-transient StateItems, I think we can skip passing "engine" into all of these...
-  # Basically, anything can take a StateItem to its constructor and get everything it needs.
   class Intention
     # Subclasses of intention can require all sorts of things to
-    # specify what the intention is.  But the base class doesn't have
-    # any required arguments to its constructor.
-    def initialize()
+    # specify what the intention is.
+    def initialize(engine)
       @cancelled = false
+      @engine = engine
     end
 
     def cancel(reason)
       @cancelled = true
       @cancelled_by = caller(1, 1)
       @cancelled_reason = reason
+      cancel_notification
+    end
+
+    # This can be overridden for more specific notifications
+    def cancel_notification
+      @engine.send_notification({ :reason => @cancelled_reason, :by => @cancelled_by, :id => @intention_id, :intention_type => self.class },
+                                type: "intention_cancelled", zone: "admin", location: nil, actor: nil)
     end
 
     def cancelled?
@@ -461,17 +466,14 @@ module Demiurge
     end
 
     def try_apply(engine, intention_id, options = {})
+      @intention_id = intention_id
       unless allowed?(engine, options)
         # Certain intentions can send an "intention failed" notification.
         # Such a notification would be sent from here.
         return
       end
       offer(engine, intention_id, options)
-      if cancelled?
-        # Similarly, intentions can send an "intention cancelled" notification.
-        # The relevant variables are @cancelled_by and @cancelled_reason
-        return
-      end
+      return if cancelled? # Notification should already have been sent out
       apply(engine, options)
     end
   end

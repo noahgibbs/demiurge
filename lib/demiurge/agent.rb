@@ -21,7 +21,7 @@ module Demiurge
 
     def finished_init
       super
-      @agent_maintenance = AgentMaintenanceIntention.new(@name)
+      @agent_maintenance = AgentMaintenanceIntention.new(engine, @name)
       state["busy"] ||= 0 # By default, start out idle.
     end
 
@@ -71,12 +71,13 @@ module Demiurge
   end
 
   class AgentMaintenanceIntention < Intention
-    def initialize(name)
+    def initialize(engine, name)
       @name = name
+      super(engine)
     end
 
-    # Normally, the agent's maintenance intention can't be blocked or
-    # modified.
+    # Normally, the agent's maintenance intention can't be blocked,
+    # cancelled or modified.
     def offer(engine, intention_id, options)
     end
 

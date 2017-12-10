@@ -6,7 +6,7 @@ module Demiurge
 
     def initialize(name, engine, state)
       super # Set @name and @engine and @state
-      @every_x_ticks_intention = EveryXTicksIntention.new(name)
+      @every_x_ticks_intention = EveryXTicksIntention.new(engine, name)
       @actions = {}
     end
 
@@ -202,11 +202,11 @@ module Demiurge
     attr :action_args
 
     def initialize(engine, name, action_name, *args)
-      @engine = engine
       @name = name
       @item = engine.item_by_name(name)
       @action_name = action_name
       @action_args = args
+      super(engine)
     end
 
     # For now, actions don't have an option for "allowed" blocks.
@@ -222,6 +222,11 @@ module Demiurge
 
     def apply(engine, options = {})
       @item.run_action(@action_name, *@action_args)
+    end
+
+    def cancel_notification
+      @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class },
+        type: "intention_cancelled", zone: @item.zone_name, location: @item.location_name, actor: @item.name)
     end
   end
 
@@ -266,8 +271,9 @@ module Demiurge
   end
 
   class EveryXTicksIntention < Intention
-    def initialize(name)
+    def initialize(engine, name)
       @name = name
+      super(engine)
     end
 
     def allowed?(engine, options)
@@ -277,6 +283,13 @@ module Demiurge
     # For now, empty. Later we'll want it to honor
     # the offer setting of the underlying action.
     def offer(engine, intention_id, options)
+    end
+
+    # Shouldn't normally happen, but just in case...
+    def cancel_notification
+      item = @engine.item_by_name(@name)
+      @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class },
+                                type: "intention_cancelled", zone: item.zone_name, location: item.location_name, actor: item.name)
     end
 
     def apply(engine, options)
