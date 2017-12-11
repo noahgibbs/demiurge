@@ -449,7 +449,7 @@ module Demiurge
                                   :reason => @cancelled_reason,
                                   :by => @cancelled_by,
                                   :id => @intention_id,
-                                  :intention_type => self.class,
+                                  :intention_type => self.class.to_s,
                                   :info => @cancelled_info
                                 },
                                 type: "intention_cancelled", zone: "admin", location: nil, actor: nil)

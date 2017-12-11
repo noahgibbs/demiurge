@@ -65,8 +65,8 @@ module Demiurge
       # Run handlers, if any
       on_actions = @state["on_action_handlers"]
       if on_actions && (on_actions[action_name] || on_actions["all"])
-        run_action(on_actions["all"], intention) if on_actions["all"]
-        run_action(on_actions[action_name], intention) if on_actions[action_name]
+        run_action(on_actions["all"], intention, current_intention: intention) if on_actions["all"]
+        run_action(on_actions[action_name], intention, current_intention: intention) if on_actions[action_name]
       end
     end
 

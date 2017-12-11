@@ -61,21 +61,24 @@ module Demiurge
       @engine.register_actions_by_item_and_action_name(@name => action_hash)
     end
 
-    def run_action(action_name, *args)
+    def run_action(action_name, *args, current_intention: nil)
       action = get_action(action_name)
       raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless action
       block = action["block"]
       raise "Action was never defined for #{action_name.inspect} of object #{@name.inspect}!" unless block
 
+      runner_constructor_args = {}
       if action["engine_code"]
         block_runner_type = EngineBlockRunner
       elsif self.agent?
         block_runner_type = AgentBlockRunner
+        runner_constructor_args[:current_intention] = current_intention
       else
         block_runner_type = ActionItemBlockRunner
+        runner_constructor_args[:current_intention] = current_intention
       end
       # TODO: can we save block runners between actions?
-      block_runner = block_runner_type.new(self)
+      block_runner = block_runner_type.new(self, **runner_constructor_args)
       block_runner.instance_exec(*args, &block)
       nil
     end
@@ -105,7 +108,8 @@ module Demiurge
   class EngineBlockRunner
     attr_reader :item
 
-    def initialize(item)
+    # Ruby bug: with no unused kw args, passing this an empty hash of kw args will give "ArgumentError: wrong number of arguments"
+    def initialize(item, unused_kw_arg:nil)
       @item = item
     end
 
@@ -117,11 +121,13 @@ module Demiurge
   class ActionItemBlockRunner
     attr_reader :item
     attr_reader :engine
+    attr_reader :current_intention
 
     # This is the item receiving the block. It is usually the item taking the action.
-    def initialize(item)
+    def initialize(item, current_intention:)
       @item = item
       @engine = item.engine
+      @current_intention = current_intention
     end
 
     def state
@@ -158,6 +164,11 @@ module Demiurge
 
     def position_to_location_and_tile_coords(position)
       ::Demiurge::TmxLocation.position_to_loc_coords(position)
+    end
+
+    def cancel_intention(reason)
+      raise("No current intention!") unless @current_intention
+      @current_intention.cancel(reason)
     end
   end
 
@@ -223,7 +234,7 @@ module Demiurge
     end
 
     def apply(engine, options = {})
-      @item.run_action(@action_name, *@action_args)
+      @item.run_action(@action_name, *@action_args, current_intention: self)
     end
 
     def cancel_notification
@@ -232,7 +243,7 @@ module Demiurge
       # operation and nobody is likely to need notification every
       # tick that they didn't ask to do anything so they didn't.
       return if @cancelled_info && @cancelled_info["silent"]
-      @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class },
+      @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class.to_s },
         type: "intention_cancelled", zone: @item.zone_name, location: @item.location_name, actor: @item.name)
     end
   end
@@ -300,7 +311,7 @@ module Demiurge
       # tick that they didn't ask to do anything so they didn't.
       return if @cancelled_info && @cancelled_info["silent"]
       item = @engine.item_by_name(@name)
-      @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class },
+      @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class.to_s },
                                 type: "intention_cancelled", zone: item.zone_name, location: item.location_name, actor: item.name)
     end
 

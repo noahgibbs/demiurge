@@ -151,7 +151,7 @@ module Demiurge
             queue.shift # Remove the queue entry
           end
         end
-        agent.run_action(@action_name, *@action_args)
+        agent.run_action(@action_name, *@action_args, current_intention: self)
         agent.state["busy"] += (@action_struct["busy"] || 1)
       end
     end

@@ -23,6 +23,23 @@ class IntentionQueueTest < Minitest::Test
           state.fast_actions += 1
         end
       end
+
+      location("one") do
+        agent("standing still") do
+          state.feeling_it = false
+          define_action("maybe move") do
+            cancel_intention("Nope, don't feel like it.") unless state.feeling_it
+            move_to_instant("two")
+            state.feeling_it = false
+          end
+          define_action("get inspired") do
+            state.feeling_it = true
+          end
+        end
+      end
+
+      location("two") do
+      end
     end
   DSL
 
@@ -44,5 +61,24 @@ class IntentionQueueTest < Minitest::Test
     # Fast actions happen every tick after the very first one. The
     # very first one hasn't yet queued up the intention.
     assert_equal 20, agent.state["fast_actions"]
+  end
+
+  def test_cancel_intention
+    engine = Demiurge.engine_from_dsl_text(["Cancel Intention DSL", DSL_TEXT])
+    agent = engine.item_by_name("standing still")
+    cancels = []
+    engine.subscribe_to_notifications(type: "intention_cancelled") do |notification|
+      cancels.push([ notification["reason"], notification["intention_type"] ])
+    end
+
+    engine.flush_notifications
+    assert_equal [], cancels
+    agent.queue_action("maybe move")
+    engine.advance_one_tick
+    assert_equal [ ["Nope, don't feel like it.", "Demiurge::AgentActionIntention" ] ], cancels
+    agent.run_action("get inspired")
+    assert_equal [ ["Nope, don't feel like it.", "Demiurge::AgentActionIntention" ] ], cancels
+    agent.run_action("maybe move")
+    assert_equal [ ["Nope, don't feel like it.", "Demiurge::AgentActionIntention" ] ], cancels
   end
 end
