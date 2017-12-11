@@ -166,9 +166,9 @@ module Demiurge
       ::Demiurge::TmxLocation.position_to_loc_coords(position)
     end
 
-    def cancel_intention(reason)
+    def cancel_intention(reason, extra_info = {})
       raise("No current intention!") unless @current_intention
-      @current_intention.cancel(reason)
+      @current_intention.cancel(reason, extra_info)
     end
   end
 
@@ -183,7 +183,7 @@ module Demiurge
       if location.can_accomodate_agent?(@item, position)
         @item.move_to_position(position)
       else
-        cancel_action "That position is blocked.", "position" => position, "message" => "position blocked", "mover" => @item.name
+        cancel_intention "That position is blocked.", "position" => position, "message" => "position blocked", "mover" => @item.name
       end
     end
 
