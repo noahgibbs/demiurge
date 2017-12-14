@@ -15,7 +15,7 @@ DSL_TEXT_1 = <<GOBLIN_DSL_1
     end
 
     on("event1", "handler1") do
-      STDERR.puts "Sample action 1"
+      puts "Sample action 1"
     end
 
     every_X_ticks("first_every", 1) do
@@ -38,7 +38,7 @@ DSL_TEXT_2 = <<GOBLIN_DSL_2
 
     # Comment line to differentiate line numbers in error messages.
     on("event2", "handler2") do
-      STDERR.puts "Sample action 2"
+      puts "Sample action 2"
     end
 
     every_X_ticks("second_every", 3) do
