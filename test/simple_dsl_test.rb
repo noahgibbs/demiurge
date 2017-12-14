@@ -85,5 +85,7 @@ end
     engine.unregister_state_item(agent)
     agent = engine.item_by_name("wanderer")
     assert_nil agent
+
+    engine.advance_one_tick  # Check for exception
   end
 end
