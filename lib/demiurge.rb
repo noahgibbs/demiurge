@@ -30,18 +30,31 @@ module Demiurge
     # name first, followed by the item name (unique) and the current
     # state of that item as a hash.
     def initialize(types: {}, state: [])
+      @klasses = {}
       if types
         types.each do |tname, tval|
           register_type(tname, tval)
         end
       end
+
+      @finished_init = false
+      @state_items = {}
+      @state = {}
+      @zones = []
       state_from_structured_array(state || [])
+
+      @item_actions = {}
+
       @subscriptions_by_tracker = {}
+
       @ticks = 0
+
       @notification_id = 0
       @intention_id = 0
+
       @queued_notifications = []
       @queued_intentions = []
+
       nil
     end
 
@@ -129,12 +142,11 @@ module Demiurge
     end
 
     def get_type(t)
-      raise("Not a valid type: #{t.inspect}!") unless @klasses && @klasses[t]
+      raise("Not a valid type: #{t.inspect}!") unless @klasses[t]
       @klasses[t]
     end
 
     def register_type(name, klass)
-      @klasses ||= {}
       if @klasses[name] && @klasses[name] != klass
         raise "Re-registering name with different type! Name: #{name.inspect} Class: #{klass.inspect} OldClass: #{@klasses[name].inspect}!"
       end
@@ -155,7 +167,6 @@ module Demiurge
     # state restore from World Files if you do that, though.
 
     def register_actions_by_item_and_action_name(item_actions)
-      @item_actions ||= {}
       item_actions.each do |item_name, act_hash|
         if @item_actions[item_name]
           act_hash.each do |action_name, opts|
