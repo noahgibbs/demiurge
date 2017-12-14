@@ -5,6 +5,8 @@ class ExceptionsTest < Minitest::Test
     zone "Cliffs of Error" do
       location "Error Crevasse" do
         agent "guy on fire" do
+          state.some_key = 1
+
           define_action "disappear" do
             move_to_instant("closeted cave")
           end
@@ -19,6 +21,10 @@ class ExceptionsTest < Minitest::Test
 
           define_action("check no such action") do
             queue_action("no such action")
+          end
+
+          define_action("no such key test") do
+            state["no such key"]
           end
 
           on("bad_notification", "re-notify") do |notification|
@@ -70,6 +76,27 @@ class ExceptionsTest < Minitest::Test
       engine.advance_one_tick
     rescue Demiurge::BadScriptError
       assert_equal "no such action", $!.cause.info["action"]  # Make sure we got the right no-such-action
+    end
+  end
+
+  def test_no_such_agent
+    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+
+    assert_raises(Demiurge::NoSuchAgentError) do
+      Demiurge::AgentActionIntention.new "no such agent", engine
+    end
+  end
+
+  def test_no_such_state_key
+    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+
+    agent_item = engine.item_by_name("guy on fire")
+
+    begin
+      agent_item.queue_action("no such key test")
+      engine.advance_one_tick
+    rescue ::Demiurge::BadScriptError
+      assert_equal ::Demiurge::NoSuchStateKeyError, $!.cause.class
     end
   end
 end
