@@ -99,7 +99,8 @@ module Demiurge
               raise("Exit destination position #{dest_position.inspect} loaded from TMX location #{location.name.inspect} (TMX: #{location.tiles[:filename]}) is not valid!") unless dest_location.valid_position?(dest_position)
               exits.push({ src_loc: location, src_pos: src_position, dest_pos: dest_position })
             else
-              STDERR.puts "Unresolved TMX exit in #{location.name.inspect}: #{obj[:properties].inspect}!"
+              @engine.admin_warning "Unresolved TMX exit in #{location.name.inspect}: #{obj[:properties].inspect}!",
+                                    "location" => location.name, "properties" => obj[:properties]
             end
           end
         end
