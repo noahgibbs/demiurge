@@ -64,7 +64,7 @@ module Demiurge
       @state["manasource_tile_layout"] = tmx_spec
     end
 
-    def built_location
+    def built_item
       raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout"] || @state["manasource_tile_layout"]
       super
     end

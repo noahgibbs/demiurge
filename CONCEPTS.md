@@ -251,3 +251,19 @@ in a form appropriate to their zone such as "7,25" or
 "29.45/81.6/Kappa" or "left\_of/gray\_greasy\_lamp". The coordinates
 should not contain a pound-sign, a dollar sign or other characters
 that aren't legal in a Demiurge item name.
+
+== The Admin Zone and Positionless Actions
+
+Sometimes, a thing happens that doesn't belong in any specific game
+zone. A player might fail to create a new account - what zone would
+that belong in? An admin might reload the whole world, which isn't
+specific to any one zone. An error might occur that can't be traced to
+any specific zone.
+
+When that happens, a special zone name, "admin", is used. There may or
+may not be an "admin" zone defined in a particular game's World Files,
+but positionless things will be referred to as "admin" occurrences
+either way. For that reason, it may be a better idea not to put much
+in the admin zone so that you can easily tell the difference between
+positionless occurrences and things that happen in your real, declared
+admin zone.

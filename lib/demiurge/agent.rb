@@ -99,7 +99,7 @@ module Demiurge
       @name = name
       @engine = engine
       @agent = @engine.item_by_name(@name)
-      raise "No such agent as #{name.inspect} found!" unless @agent
+      raise NoSuchAgentError.new("No such agent as #{name.inspect} found in AgentActionIntention!", "agent" => @name) unless @agent
       super(engine, name, "")
     end
 
@@ -146,7 +146,7 @@ module Demiurge
         queue = @agent.state["queued_actions"]
         if queue && queue.size > 0
           if @action_queue_number != queue[0][2]
-            STDERR.puts "Somehow the action queue has gotten screwed up mid-offer!"
+            @engine.admin_warning("Somehow the agent's action queue has gotten screwed up mid-offer!", "agent" => @name)
           else
             queue.shift # Remove the queue entry
           end
@@ -204,7 +204,8 @@ module Demiurge
       return if agent.state["wander_counter"] < wander_every
       next_coords = agent.zone.adjacent_positions(agent.position)
       if next_coords.empty?
-        engine.send_notification({ description: "Oh no! Wandering agent #{@name.inspect} is stuck and can't get out!" }, type: "admin warning", zone: agent.zone_name, location: agent.location_name, actor: @name)
+        @engine.admin_warning("Oh no! Wandering agent #{@name.inspect} is stuck and can't get out!",
+                             "zone" => agent.zone_name, "location" => agent.location_name, "agent" => @name)
         return
       end
       chosen = next_coords.sample

@@ -79,7 +79,12 @@ module Demiurge
       end
       # TODO: can we save block runners between actions?
       block_runner = block_runner_type.new(self, **runner_constructor_args)
-      block_runner.instance_exec(*args, &block)
+      begin
+        block_runner.instance_exec(*args, &block)
+      rescue
+        raise BadScriptError.new("Script error of type #{$!.class} with message: #{$!.message}",
+                                 "runner type": block_runner_type.to_s, "action" => action_name);
+      end
       nil
     end
 
@@ -167,7 +172,7 @@ module Demiurge
     end
 
     def cancel_intention(reason, extra_info = {})
-      raise("No current intention!") unless @current_intention
+      raise BadScriptError.new("No current intention in action of item #{@item.name}!", "script_item": @item.name) unless @current_intention
       @current_intention.cancel(reason, extra_info)
     end
   end
@@ -177,7 +182,6 @@ module Demiurge
       # TODO: We don't have a great way to do this for non-agent entities. How does "accomodate" work for non-agents?
       # This may be app-specific.
 
-      # TODO: if we cancel out of this, set a cancellation notice and reason.
       loc_name, next_x, next_y = TmxLocation.position_to_loc_coords(position)
       location = @item.engine.item_by_name(loc_name)
       if location.can_accomodate_agent?(@item, position)
@@ -189,12 +193,13 @@ module Demiurge
 
     def queue_action(action_name, *args)
       unless @item.is_a?(::Demiurge::Agent)
-        STDERR.puts "Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that isn't an agent! Skipping."
+        @engine.admin_warning("Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that isn't an agent! Skipping.")
         return
       end
       act = @item.get_action(action_name)
       unless act
-        STDERR.puts "Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it! Skipping."
+        raise NoSuchActionError.new("Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it!",
+                                    "item" => @item.name, "action" => action_name)
         return
       end
       @item.queue_action(action_name, args)
@@ -279,7 +284,7 @@ module Demiurge
       end
 
       # Nope, no matching state.
-      STDERR.puts "No such state key as #{method_name.inspect} in ActionItemStateWrapper#method_missing!"
+      raise NoSuchStateKeyError.new("No such state key as #{method_name.inspect}", "method" => method_name, "item" => @item.name)
       super
     end
 

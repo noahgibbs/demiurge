@@ -7,6 +7,7 @@ module Demiurge
   class Intention < StateItem; end
 end
 
+require "demiurge/exception"
 require "demiurge/action_item"
 require "demiurge/inert_state_item"
 require "demiurge/container"
@@ -87,6 +88,10 @@ module Demiurge
       @zones.flat_map { |item| item.intentions_for_next_step(options) || [] }
     end
 
+    def admin_warning(message, info = {})
+      send_notification(info.merge({"message" => message}), type: "admin_warning", zone: "admin", location: nil, actor: nil)
+    end
+
     def flush_intentions(options = { })
       state_backup = structured_state("copy" => true)
 
@@ -94,7 +99,7 @@ module Demiurge
       until @queued_intentions.empty?
         infinite_loop_detector += 1
         if infinite_loop_detector > 20
-          raise "Over 20 batches of intentions were dispatched in the same call! Error and die!"
+          raise ::Demiurge::TooManyIntentionLoopsError.new("Over 20 batches of intentions were dispatched in the same call! Error and die!", "final_batch" => @queued_intentions.map { |i| i.class.to_s })
         end
 
         intentions = @queued_intentions
@@ -102,15 +107,14 @@ module Demiurge
         begin
           intentions.each do |id, a|
             if a.cancelled?
-              STDERR.puts "Trying to apply a cancelled intention #{a}!"
+              admin_warning("Trying to apply a cancelled intention of type #{a.class}!", "inspect" => a.inspect)
             else
               a.try_apply(self, id, options)
             end
           end
-        rescue
-          STDERR.puts "Exception when updating! Throwing away speculative state!"
+        rescue RetryableError
+          admin_warning("Exception when updating! Throwing away speculative state!", "exception" => $_.jsonable)
           load_state_from_dump(state_backup)
-          raise
         end
       end
 
@@ -138,17 +142,17 @@ module Demiurge
     end
 
     # StateItems are transient, but need to be hooked up to the
-    # various (code) actions for doing various things.  Those actions
-    # aren't serialized (ew), but instead are referred to by name, and
-    # the engine loads up all the item-name/action-name combinations
-    # when it reads the Ruby source files. This means an action can be
+    # various (code) actions for doing various things.  The code isn't
+    # serialized (ew), but instead are referred to by name, and the
+    # engine loads up all the item-name/action-name combinations when
+    # it reads the Ruby source files. This means an action can be
     # referred to by its name when serialized, but the actual code
-    # changes any time the world files do - at least, if you reboot
+    # changes any time the world files do - at least, if you reload
     # now and then.
 
     # I've tried moving the actions back into StateItems, which makes
     # more sense with non-transient StateItems. It can be hard to do a
-    # state restore from World Files in this way, though.
+    # state restore from World Files if you do that, though.
 
     def register_actions_by_item_and_action_name(item_actions)
       @item_actions ||= {}
@@ -319,7 +323,7 @@ module Demiurge
       until @queued_notifications.empty?
         infinite_loop_detector += 1
         if infinite_loop_detector > 20
-          raise "Over 20 batches of notifications were dispatched in the same call! Error and die!"
+          raise TooManyNotificationLoopsError.new("Over 20 batches of notifications were dispatched in the same call! Error and die!", "last batch" => @queued_notifications.map { |n| n.class.to_s })
         end
 
         current_notifications = @queued_notifications
