@@ -76,4 +76,14 @@ end
     zone = engine.item_by_name("first zone")
     assert_equal "ZoneSubtype", zone.class.to_s
   end
+
+  def test_item_unregister
+    engine = Demiurge.engine_from_dsl_text(["Simple DSL Test", DSL_TEXT])
+    agent = engine.item_by_name("wanderer")
+    refute_nil agent
+
+    engine.unregister_state_item(agent)
+    agent = engine.item_by_name("wanderer")
+    assert_nil agent
+  end
 end

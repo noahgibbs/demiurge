@@ -236,6 +236,18 @@ module Demiurge
       item
     end
 
+    # This assumes other items don't refer to this item. It'll try to
+    # do some basic removal, but this *can* leave dangling references.
+    def unregister_state_item(item)
+      loc = item.location
+      loc.ensure_does_not_contain(item.name)
+      zone = item.zone
+      zone.ensure_does_not_contain(item.name)
+      @state_items.delete(item.name)
+      @zones -= [item]
+      nil
+    end
+
     # This sets the Engine's internal state from a structured array of
     # items. It is normally used via load_state_from_dump.
     private
