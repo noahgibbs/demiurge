@@ -39,7 +39,6 @@ module Demiurge
 
       @finished_init = false
       @state_items = {}
-      @state = {}
       @zones = []
       state_from_structured_array(state || [])
 
@@ -47,10 +46,9 @@ module Demiurge
 
       @subscriptions_by_tracker = {}
 
-      @ticks = 0
-
-      @notification_id = 0
-      @intention_id = 0
+      @state_items["admin"].state["ticks"] ||= 0
+      @state_items["admin"].state["notification_id"] ||= 0
+      @state_items["admin"].state["intention_id"] ||= 0
 
       @queued_notifications = []
       @queued_intentions = []
@@ -89,8 +87,8 @@ module Demiurge
     end
 
     def queue_intention(intention)
-      @intention_id += 1
-      @queued_intentions.push [@intention_id, intention]
+      @state_items["admin"].state["intention_id"] += 1
+      @queued_intentions.push [@state_items["admin"].state["intention_id"], intention]
     end
 
     def queue_item_intentions(options = {})
@@ -132,7 +130,7 @@ module Demiurge
       end
 
       send_notification({}, type: "tick finished", location: "", zone: "", actor: nil)
-      @ticks += 1
+      @state_items["admin"].state["ticks"] += 1
     end
 
     def advance_one_tick(options = {})
@@ -256,12 +254,16 @@ module Demiurge
 
       @finished_init = false
       @state_items = {}
-      @state = {}
       @zones = []
 
       arr.each do |type, name, state|
         register_state_item(StateItem.from_name_type(self, type.freeze, name.to_s.freeze, state, options))
       end
+
+      unless @state_items["admin"]
+        register_state_item(StateItem.from_name_type(self, "InertStateItem", "admin", {}, options))
+      end
+
       nil
     end
     public
@@ -326,14 +328,14 @@ module Demiurge
       raise "Zone must be a String, not #{zone.class}!" unless zone.is_a?(String)
       raise "Acting item must be a String or nil, not #{actor.class}!" unless actor.is_a?(String) || actor.nil?
 
-      @notification_id += 1
+      @state_items["admin"].state["notification_id"] += 1
 
       cleaned_data = {}
       data.each do |key, val|
         # TODO: verify somehow that this is JSON-serializable?
         cleaned_data[key.to_s] = val
       end
-      cleaned_data.merge!("type" => type, "zone" => zone, "location" => location, "actor" => actor, "id" => @notification_id)
+      cleaned_data.merge!("type" => type, "zone" => zone, "location" => location, "actor" => actor, "id" => @state_items["admin"].state["notification_id"])
 
       @queued_notifications.push(cleaned_data)
     end

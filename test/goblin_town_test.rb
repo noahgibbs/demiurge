@@ -54,6 +54,7 @@ class GoblinTownTest < Minitest::Test
     types = {
       "GrowMoss" => GoblinTown::GrowMoss,
       "MossCave" => GoblinTown::MossCave,
+      "InertStateItem" => Demiurge::InertStateItem,
     }
     goblin_town = Demiurge::Engine.new types: types, state: state
     # Normally getting an engine from DSL will automatically call
