@@ -60,7 +60,7 @@ module Demiurge
     end
 
     def queue_action(action_name, *args)
-      raise("Not an action: #{action_name.inspect}!") unless get_action(action_name)
+      raise ::Demiurge::NoSuchActionError.new("Not an action: #{action_name.inspect}!", "action_name" => action_name) unless get_action(action_name)
       state["queued_actions"].push([action_name, args, state["queue_number"]])
       state["queue_number"] += 1
     end

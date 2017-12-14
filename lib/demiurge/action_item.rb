@@ -198,8 +198,8 @@ module Demiurge
       end
       act = @item.get_action(action_name)
       unless act
-        raise NoSuchActionError.new("Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it!",
-                                    "item" => @item.name, "action" => action_name)
+        raise Demiurge::NoSuchActionError.new("Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it!",
+                                              "item" => @item.name, "action" => action_name)
         return
       end
       @item.queue_action(action_name, args)
