@@ -44,6 +44,9 @@ module Demiurge
   # This is for object state, when accessed from a script.
   class NoSuchStateKeyError < BadScriptError; end
 
+  # Trying to modify or cancel an intention when there isn't one.
+  class NoCurrentIntentionError < BadScriptError; end
+
   # This happens if intentions queue other, new intentions too many
   # times (around 20) in the same tick.  It exists to prevent infinite
   # loops of queued intentions. If your script wants to queue lots of

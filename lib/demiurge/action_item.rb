@@ -174,7 +174,7 @@ module Demiurge
     end
 
     def cancel_intention(reason, extra_info = {})
-      raise BadScriptError.new("No current intention in action of item #{@item.name}!", "script_item": @item.name) unless @current_intention
+      raise NoCurrentIntentionError.new("No current intention in action of item #{@item.name}!", "script_item": @item.name) unless @current_intention
       @current_intention.cancel(reason, extra_info)
     end
   end

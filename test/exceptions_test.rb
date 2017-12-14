@@ -32,6 +32,10 @@ class ExceptionsTest < Minitest::Test
           on("bad_notification", "re-notify") do |notification|
             notification type: "bad_notification", description: "yet another iteration"
           end
+
+          define_action("cancel intention") do
+            cancel_intention "For no real reason"
+          end
         end
       end
       location "closeted cave" do
@@ -109,6 +113,18 @@ class ExceptionsTest < Minitest::Test
       engine.advance_one_tick
     rescue ::Demiurge::BadScriptError
       assert_equal ::Demiurge::NoSuchStateKeyError, $!.cause.class
+    end
+  end
+
+  def test_no_current_intention
+    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+
+    agent_item = engine.item_by_name("guy on fire")
+
+    begin
+      agent_item.run_action("cancel intention")
+    rescue Demiurge::BadScriptError
+      assert_equal ::Demiurge::NoCurrentIntentionError, $!.cause.class
     end
   end
 end
