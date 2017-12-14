@@ -63,7 +63,8 @@ module Demiurge
 
     def run_action(action_name, *args, current_intention: nil)
       action = get_action(action_name)
-      raise "No such action as #{action_name.inspect} for #{@name.inspect}!" unless action
+      raise NoSuchActionError.new("No such action as #{action_name.inspect} for #{@name.inspect}!",
+                                  "item" => self.name, "action" => action_name) unless action
       block = action["block"]
       raise "Action was never defined for #{action_name.inspect} of object #{@name.inspect}!" unless block
 

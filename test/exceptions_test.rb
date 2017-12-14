@@ -71,6 +71,10 @@ class ExceptionsTest < Minitest::Test
       agent_item.queue_action("no such action")
     end
 
+    assert_raises(Demiurge::NoSuchActionError) do
+      agent_item.run_action("no such action")
+    end
+
     begin
       agent_item.queue_action("check no such action")
       engine.advance_one_tick
