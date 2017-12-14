@@ -177,6 +177,10 @@ module Demiurge
       raise NoCurrentIntentionError.new("No current intention in action of item #{@item.name}!", "script_item": @item.name) unless @current_intention
       @current_intention.cancel(reason, extra_info)
     end
+
+    def cancel_intention_if_present(reason, extra_info = {})
+      @current_intention.cancel(reason, extra_info) if @current_intention
+    end
   end
 
   class AgentBlockRunner < ActionItemBlockRunner
@@ -186,10 +190,12 @@ module Demiurge
 
       loc_name, next_x, next_y = TmxLocation.position_to_loc_coords(position)
       location = @item.engine.item_by_name(loc_name)
-      if location.can_accomodate_agent?(@item, position)
+      if !location
+        cancel_intention_if_present "That location doesn't exist.", "position" => position, "mover" => @item.name
+      elsif location.can_accomodate_agent?(@item, position)
         @item.move_to_position(position)
       else
-        cancel_intention "That position is blocked.", "position" => position, "message" => "position blocked", "mover" => @item.name
+        cancel_intention_if_present "That position is blocked.", "position" => position, "message" => "position blocked", "mover" => @item.name
       end
     end
 

@@ -46,10 +46,6 @@ module Demiurge
 
       @subscriptions_by_tracker = {}
 
-      @state_items["admin"].state["ticks"] ||= 0
-      @state_items["admin"].state["notification_id"] ||= 0
-      @state_items["admin"].state["intention_id"] ||= 0
-
       @queued_notifications = []
       @queued_intentions = []
 
@@ -263,6 +259,10 @@ module Demiurge
       unless @state_items["admin"]
         register_state_item(StateItem.from_name_type(self, "InertStateItem", "admin", {}, options))
       end
+
+      @state_items["admin"].state["ticks"] ||= 0
+      @state_items["admin"].state["notification_id"] ||= 0
+      @state_items["admin"].state["intention_id"] ||= 0
 
       nil
     end

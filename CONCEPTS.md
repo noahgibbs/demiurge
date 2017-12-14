@@ -260,10 +260,12 @@ that belong in? An admin might reload the whole world, which isn't
 specific to any one zone. An error might occur that can't be traced to
 any specific zone.
 
-When that happens, a special zone name, "admin", is used. There may or
-may not be an "admin" zone defined in a particular game's World Files,
-but positionless things will be referred to as "admin" occurrences
-either way. For that reason, it may be a better idea not to put much
-in the admin zone so that you can easily tell the difference between
-positionless occurrences and things that happen in your real, declared
-admin zone.
+When that happens, a special zone name, "admin", is used. There cannot
+be an "admin" zone in a world file. Instead, "admin" is the name of an
+automatic InertStateItem which holds system information like how many
+total ticks have passed in the world, and the current notification_id
+and intention_id for queueing.
+
+Positionless occurrences like the examples above (e.g. account
+creation failures) will appear to occur in this nonexistent "admin"
+zone.
