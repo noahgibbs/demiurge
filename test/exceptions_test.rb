@@ -15,6 +15,8 @@ class ExceptionsTest < Minitest::Test
             action("bad_intention") # To be done immediately
           end
 
+          define_action("undefined body action", "tags" => ["admin"])
+
           define_action("bad_notification", "tags" => ["admin"]) do
             notification type: "bad_notification", description: "whoah, something happened!"
           end
@@ -80,6 +82,12 @@ class ExceptionsTest < Minitest::Test
       engine.advance_one_tick
     rescue Demiurge::BadScriptError
       assert_equal "no such action", $!.cause.info["action"]  # Make sure we got the right no-such-action
+    end
+
+    begin
+      agent_item.run_action("undefined body action")
+    rescue Demiurge::NoSuchActionError
+      assert $!.message["was never defined"], "NoSuchActionError message should contain 'was never defined' for a never-defined action!"
     end
   end
 

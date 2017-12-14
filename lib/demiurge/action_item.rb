@@ -66,7 +66,8 @@ module Demiurge
       raise NoSuchActionError.new("No such action as #{action_name.inspect} for #{@name.inspect}!",
                                   "item" => self.name, "action" => action_name) unless action
       block = action["block"]
-      raise "Action was never defined for #{action_name.inspect} of object #{@name.inspect}!" unless block
+      raise NoSuchActionError.new("Action was never defined for #{action_name.inspect} of object #{@name.inspect}!",
+                                  "item" => self.name, "action" => action_name) unless block
 
       runner_constructor_args = {}
       if action["engine_code"]
