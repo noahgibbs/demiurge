@@ -1,4 +1,4 @@
-= Security and User-Supplied Code
+# Security and User-Supplied Code
 
 Demiurge is designed for an environment with very high-privilege code
 (e.g. Demiurge itself, framework code, setup code) and somewhat
@@ -15,15 +15,15 @@ a few languages are easy to "sandbox", with JavaScript being by far
 the most advanced in that specific respect -- it's designed to run in
 the browser environment in a very specifically sandboxed way.
 
-There are a few Ruby sandbox implementations (currently leader seems
-to be "https://github.com/jwo/jruby-sandbox"), but in general they're
-hard to get right. Proving that a particular Ruby snippet can't access
-a particular class (say ObjectSpace, which gives full access to 100%
-of everything, or any flavor of "eval," or "binding," or...) is very,
-very hard.
+There are a few Ruby sandbox implementations (the current leader seems
+to be [JRuby Sandbox]("https://github.com/jwo/jruby-sandbox")), but
+in general they're hard to get right. Proving that a particular Ruby
+snippet can't access a particular class (say ObjectSpace, which gives
+full access to 100% of everything, or any flavor of "eval," or
+"binding," or...) is very, very hard.
 
 So: the current Demiurge codebase makes a much simpler assumption:
-there are two overall flavors of code and neither is really safe.
+there are two overall flavors of code and neither is safe.
 
 The first flavor is administrative code. Anything that runs with full
 privilege (actions marked as full-privilege, anything in a framework
@@ -45,12 +45,12 @@ can potentially get at just about anything they want to. But the basic
 operations it provides are less dangerous, and a very simple chunk of
 world code will normally not be able to do anything *too* awful.
 
-However, the Halting Problem
-(https://en.wikipedia.org/wiki/Halting_problem) guarantees that we
-can't make many guarantees about what code does, and we certainly
-can't be sure it returns in a crisp, predictable manner in
-general. So: assume that even world code, even very simple world code,
-can cause you significant problems.
+However, the
+[Halting Problem](https://en.wikipedia.org/wiki/Halting_problem)
+guarantees that we can't make many guarantees about what code does,
+and we certainly can't be sure it returns in a crisp, predictable
+manner in general. So: assume that even world code, even very simple
+world code, can cause you significant problems.
 
 ## Special Cases
 
@@ -66,8 +66,7 @@ a few operations, limited conditionals and no loops, which are
 essentially safe. At most a bad world-builder might be able to slow
 down people's browsers, which isn't a huge deal.
 
-But in general, if a language is Turing Complete
-(https://en.wikipedia.org/wiki/Turing_completeness) then there's a way
+But in general, if a language is [Turing Complete](https://en.wikipedia.org/wiki/Turing_completeness) then there's a way
 to make it misbehave in a way you can't automatically detect. Which
 means any language interesting enough to build a world in is also
 interesting enough to cause you lots of problems with securing it

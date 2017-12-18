@@ -1,4 +1,4 @@
-= Demiurge Simulated Worlds
+# Demiurge Simulated Worlds
 
 Demiurge is a great way to prototype and develop an interesting
 simulated world. It's intended to be flexible, powerful and easy to
@@ -6,7 +6,7 @@ tie into other systems.
 
 Let's talk about the components of a Demiurge world and what they do.
 
-== Engines, State, Ticks
+## Engines, State, Ticks
 
 A single Demiurge simulation is called an Engine. It can be loaded
 from World Files and state.
@@ -30,7 +30,7 @@ generally can act and be acted on, can pick things up and be picked
 up, can take place in a location or be that location. In general, a
 single individual entity will only do a few of those things, though.
 
-== Intentions, Actions and Events
+## Intentions, Actions and Events
 
 A world may contain unchanging things, usually represented as
 rules. It may contain changeable and movable items. And it may contain
@@ -52,7 +52,7 @@ and rules that care about a real-world clock, but Demiurge doesn't
 care. Ticks can be evenly spaced or not, as long as your entities'
 rules reflect that.
 
-== State Items, and the Difference Between Rules and State
+## State Items, and the Difference Between Rules and State
 
 Rules exist entirely within World Files and the Demiurge framework
 itself. The effects of rules can change according to current state,
@@ -75,7 +75,7 @@ This abstraction makes it easy to consider hypotheticals -- to ask,
 "if the state were different in this way, how would that change the
 world?"
 
-== Item Naming and Instances
+## Item Naming and Instances
 
 A Demiurge entity (including Zones, Locations, Agents and many others)
 must have a single, fully unique name within a given Engine. In World
@@ -120,7 +120,7 @@ and then some additional information, such as
 can use other punctuation (e.g. colon or dollar-sign), but these
 shouldn't occur in human-named objects in World Files.
 
-== Events and State Changes
+## Events and State Changes
 
 Often an Intention turns into a change of state. For example, an item
 is picked up, or a person moves from one location to another. When
@@ -147,7 +147,7 @@ that doesn't necessarily change any recorded part of their state. But
 another character may watch for the Notification and if they detect
 it, they may react to it.
 
-== The Cycle of a Tick
+## The Cycle of a Tick
 
 Initially, the state is effectively frozen - nothing should change
 it. It may be literally kept immutable in the program, depending on
@@ -187,7 +187,7 @@ Notifications raised in response to other Notifications, the tick
 begins again with the new state, which may be frozen during the early
 Intention phases.
 
-== Zones, Location and Position
+## Zones, Location and Position
 
 Location in Demiurge starts with the Zone. A Zone is a top-level
 entity that manages state and flow of execution roughly independently
@@ -252,7 +252,7 @@ in a form appropriate to their zone such as "7,25" or
 should not contain a pound-sign, a dollar sign or other characters
 that aren't legal in a Demiurge item name.
 
-== The Admin Zone and Positionless Actions
+## The Admin Zone and Positionless Actions
 
 Sometimes, a thing happens that doesn't belong in any specific game
 zone. A player might fail to create a new account - what zone would
