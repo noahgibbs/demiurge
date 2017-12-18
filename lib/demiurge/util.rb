@@ -1,4 +1,5 @@
 module Demiurge
+  # Utilities for deep-copying simple JSON-serializable data structures.
   module Util
     extend self
 

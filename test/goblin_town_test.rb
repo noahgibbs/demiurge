@@ -7,7 +7,7 @@ module GoblinTown
       @growmoss_intention = GrowMoss.new(name)
     end
 
-    def intentions_for_next_step(options)
+    def intentions_for_next_step()
       @growmoss_intention
     end
 

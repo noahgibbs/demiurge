@@ -28,6 +28,7 @@ module Demiurge
     builder.built_engine
   end
 
+  # This is the Builder class for the World File DSL.
   class ActionItemBuilder
     attr_reader :built_item
 
@@ -122,9 +123,12 @@ module Demiurge
     end
   end
 
+  # This is the top-level DSL Builder class, for parsing the top syntactic level of the World Files.
   class TopLevelBuilder
+    # This is the private structure of type names that are registered with the Demiurge World File DSL
     @@types = {}
 
+    # Constructor for a new set of World Files and their top-level state.
     def initialize(options = {})
       @zones = []
       @engine = options["engine"] || ::Demiurge::Engine.new(types: @@types, state: [])
@@ -145,6 +149,7 @@ module Demiurge
       @engine.register_state_item(inert_item)
     end
 
+    # Start a new Zone block, using a ZoneBuilder.
     def zone(name, options = {}, &block)
       if @zones.any? { |z| z.name == name }
         # Reopening an existing zone
@@ -178,12 +183,16 @@ module Demiurge
       end
     end
 
+    # Return the built Engine, but first call the .finished_init
+    # callback. This will make sure that cached and duplicated data
+    # structures are properly filled in.
     def built_engine
       @engine.finished_init
       @engine
     end
   end
 
+  # Declare an "agent" block in the World File DSL.
   class AgentBuilder < ActionItemBuilder
     def initialize(name, engine, options = {})
       options = { "type" => "Agent" }.merge(options)
@@ -191,7 +200,10 @@ module Demiurge
     end
   end
 
+  # Declare a "zone" block in the World File DSL.
   class ZoneBuilder < ActionItemBuilder
+    # Constructor. See if this zone name already exists, and either
+    # create a new zone or append to the old one.
     def initialize(name, engine, options = {})
       @existing = options.delete("existing")
       if @existing
@@ -208,6 +220,7 @@ module Demiurge
       @agents = []
     end
 
+    # Declare a location in this zone.
     def location(name, options = {}, &block)
       state = { "zone" => @name }.merge(options)
       builder = LocationBuilder.new(name, @engine, "type" => options["type"] || "Location", "state" => state)
@@ -216,6 +229,10 @@ module Demiurge
       nil
     end
 
+    # Declare an agent in this zone. If the agent doesn't get a
+    # location declaration, by default the agent will usually be
+    # invisible (not an interactable location) but will be
+    # instantiable as a parent.
     def agent(name, options = {}, &block)
       state = { "zone" => @name }.merge(options)
       builder = AgentBuilder.new(name, @engine, "type" => options["type"] || "Agent", "state" => state)
@@ -225,17 +242,21 @@ module Demiurge
     end
   end
 
+  # Declare a "location" block in a World File.
   class LocationBuilder < ActionItemBuilder
+    # Constructor for a "location" DSL block
     def initialize(name, engine, options = {})
       options["type"] ||= "Location"
       super
       @agents = []
     end
 
+    # Declare a description for this location.
     def description(d)
       @state["description"] = d
     end
 
+    # Declare an agent in this location.
     def agent(name, options = {}, &block)
       state = { "position" => @name, "zone" => @state["zone"] }
       builder = AgentBuilder.new(name, @engine, options.merge("state" => state) )
