@@ -214,7 +214,10 @@ module Demiurge
     end
 
     def dump_state(filename = "statedump.json")
-      return unless @item.state["admin"] # Admin-only command
+      unless @item.state["admin"] # Admin-only command
+        cancel_intention_if_present("The dump_state operation is admin-only!")
+        return
+      end
 
       ss = @item.engine.structured_state
       File.open(filename) do |f|
