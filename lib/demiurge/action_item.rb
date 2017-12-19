@@ -458,21 +458,50 @@ module Demiurge
       loc.receive_offer(@action_name, self, intention_id)
     end
 
+    # Apply the ActionIntention's effects to the appropriate StateItems.
+    #
+    # @param engine [Demiurge::Engine] The engine to operate within
+    # return [void]
+    # @since 0.0.1
     def apply(engine, options = {})
       @item.run_action(@action_name, *@action_args, current_intention: self)
     end
 
+    # Send out a notification to indicate this ActionIntention was canceled.
+    # If "silent" is set to true in the cancellation info, no notification
+    # will be sent.
+    #
+    # @return [void]
+    # @since 0.0.1
     def cancel_notification
       # "Silent" notifications are things like an agent's action queue
       # being empty so it cancels its intention.  These are normal
       # operation and nobody is likely to need notification every
       # tick that they didn't ask to do anything so they didn't.
       return if @cancelled_info && @cancelled_info["silent"]
-      @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class.to_s },
-        type: "intention_cancelled", zone: @item.zone_name, location: @item.location_name, actor: @item.name)
+      @engine.send_notification({
+                                  reason: @cancelled_reason,
+                                  by: @cancelled_by,
+                                  id: @intention_id,
+                                  intention_type: self.class.to_s
+                                },
+                                type: "intention_cancelled",
+                                zone: @item.zone_name,
+                                location: @item.location_name,
+                                actor: @item.name)
+      nil
     end
   end
 
+  # This class acts to wrap item state to avoid reading fields that
+  # haven't been set. Later, it may prevent access to protected state
+  # from lower-privilege code.  Though it should always be kept in
+  # mind that no World File DSL code is actually secure. At best,
+  # security in this API may prevent accidents by the
+  # well-intentioned.
+  #
+  # @api private
+  # @since 0.0.1
   class ActionItemStateWrapper
     def initialize(item)
       @item = item
@@ -513,6 +542,11 @@ module Demiurge
     end
   end
 
+  # This is a simple Intention that performs a particular action every
+  # so many ticks. It expects its state to be set up via the DSL
+  # Builder classes.
+  #
+  # @since 0.0.1
   class EveryXTicksIntention < Intention
     def initialize(engine, name)
       @name = name

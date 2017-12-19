@@ -11,6 +11,8 @@ module Demiurge
   # intentional 30-square move that works in a single tick, but it
   # slows the rate of actions. Agents get a single "real" intention,
   # unlike, say, rooms, which can have lots going on at once.
+  #
+  # @since 0.0.1
   class Agent < ActionItem
 
     def initialize(*args)
@@ -25,12 +27,16 @@ module Demiurge
       state["busy"] ||= 0 # By default, start out idle.
     end
 
-    # This will move the agent and notify about that change.  It
+    # This method will move the agent and notify about that change. It
     # doesn't use an intention or an agent's action queue, and it
     # doesn't wait for a tick to happen. It just does it. The method
     # *does* handle exits and generally allows the location to
     # respond.  But it's assumed that the offer cycle, if it needs to
     # happen, has happened already.
+    #
+    # @param pos [String] A position string to move to
+    # @return [void]
+    # @since 0.0.1
     def move_to_position(pos)
       old_pos = self.position
       old_loc = self.location_name
