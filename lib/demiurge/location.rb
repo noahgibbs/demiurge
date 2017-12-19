@@ -1,5 +1,12 @@
 module Demiurge
   class Location < Container
+    # Constructor - set up exits
+    #
+    # @param name [String] The Engine-unique item name
+    # @param engine [Demiurge::Engine] The Engine this item is part of
+    # @param state [Hash] State data to initialize from
+    # @return [void]
+    # @since 0.0.1
     def initialize(name, engine, state)
       super
       state["exits"] ||= []
