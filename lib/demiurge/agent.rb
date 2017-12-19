@@ -27,6 +27,14 @@ module Demiurge
       state["busy"] ||= 0 # By default, start out idle.
     end
 
+    # An Agent is, indeed, an Agent.
+    #
+    # @return [Boolean] Return true for Agent and its subclasses.
+    # @since 0.0.1
+    def agent?
+      true
+    end
+
     # This method will move the agent and notify about that change. It
     # doesn't use an intention or an agent's action queue, and it
     # doesn't wait for a tick to happen. It just does it. The method

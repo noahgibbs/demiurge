@@ -646,7 +646,7 @@ module Demiurge
     # @return [Boolean] Whether this item is considered a Zone.
     # @since 0.0.1
     def zone?
-      self.is_a?(::Demiurge::Zone)
+      false
     end
 
     # This method determines whether the item will be treated as an
@@ -658,7 +658,7 @@ module Demiurge
     # @return [Boolean] Whether this item is considered an Agent.
     # @since 0.0.1
     def agent?
-      self.is_a?(::Demiurge::Agent)
+      false
     end
 
     # Return this StateItem's current state in a JSON-serializable

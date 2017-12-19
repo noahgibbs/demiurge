@@ -37,6 +37,14 @@ module Demiurge
       @name
     end
 
+    # A Zone is, indeed, a Zone.
+    #
+    # @return [Boolean] Return true for Zone and its subclasses.
+    # @since 0.0.1
+    def zone?
+      true
+    end
+
     # By default, a zone just passes control to all its non-agent
     # items, gathering up their intentions into a list. It doesn't ask
     # agents since agents located directly in zones are usually only
