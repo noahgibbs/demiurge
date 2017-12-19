@@ -1,14 +1,27 @@
 require_relative "../demiurge"
 
 module Demiurge
+  # This is a primary method for creating a new Demiurge Engine. It
+  # should be passed a list of filenames to load World File DSL
+  # from. It will return a fully-configured Engine which has called
+  # finished_init. If the Engine should load from an existing
+  # state-dump, that can be accomplished via load_state_from_dump.
+  #
+  # @param filenames [Array<String>] An array of filenames, suitable for calling File.read on
+  # @return [Demiurge::Engine] A configured Engine
+  # @since 0.0.1
   def self.engine_from_dsl_files(*filenames)
     filename_string_pairs = filenames.map { |fn| [fn, File.read(fn)] }
     engine_from_dsl_text(*filename_string_pairs)
   end
 
-  # Note: may supply either strings or filename/string pairs.
-  # In the latter case, eval errors will give the filename along
-  # with the error.
+  # This method takes either strings containing World File DSL text,
+  # or name/string pairs. If a pair is supplied, the name gives the
+  # origin of the text for error messages.
+  #
+  # @param specs [Array<String>, Array<Array<String>>] Either an array of chunks of DSL text, or an Array of two-element Arrays. Each two-element Array is a String name followed by a String of DSL text
+  # @return [Demiurge::Engine] A configured Engine
+  # @since 0.0.1
   def self.engine_from_dsl_text(*specs)
     builder = Demiurge::DSL::TopLevelBuilder.new
 
