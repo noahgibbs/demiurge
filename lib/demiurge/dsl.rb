@@ -47,10 +47,12 @@ module Demiurge::DSL
   class ActionItemBuilder
     attr_reader :built_item
 
+    private
     def check_options(hash, legal_options)
       illegal_options = hash.keys - legal_options
       raise "Illegal options #{illegal_options.inspect} passed to #{caller(1, 3).inspect}!" unless illegal_options.empty?
     end
+    public
 
     LEGAL_OPTIONS = [ "state", "type", "no_build" ]
     def initialize(name, engine, options = {})
