@@ -92,15 +92,15 @@ module Demiurge
 
     # Normally, the agent's maintenance intention can't be blocked,
     # cancelled or modified.
-    def offer(engine, intention_id)
+    def offer(intention_id)
     end
 
-    def allowed?(engine)
+    def allowed?
       true
     end
 
-    def apply(engine)
-      agent = engine.item_by_name(@name)
+    def apply
+      agent = @engine.item_by_name(@name)
       agent.state["busy"] -= 1 if agent.state["busy"] > 0
     end
   end
@@ -121,7 +121,7 @@ module Demiurge
     end
 
     # An action being pulled from the action queue is offered normally.
-    def offer(engine, intention_id)
+    def offer(intention_id)
       # Don't offer the action if it's going to be a no-op.
       if @agent.state["busy"] > 0
         # See comment on "silent" in allowed?() below.
@@ -135,10 +135,10 @@ module Demiurge
       action = @agent.state["queued_actions"][0]
       @action_name, @action_args, @action_queue_number = *action
       @action_struct = @agent.get_action(@action_name)
-      super(engine, intention_id)
+      super(intention_id)
     end
 
-    def allowed?(engine)
+    def allowed?
       # If the agent's busy state will clear this turn, this action could happen.
       return false if @agent.state["busy"] > 1
 
@@ -154,7 +154,7 @@ module Demiurge
       true
     end
 
-    def apply(engine)
+    def apply
       unless agent.state["busy"] > 0 || agent.state["queued_actions"].empty?
         # Pull the first entry off the action queue
         queue = @agent.state["queued_actions"]
@@ -201,18 +201,18 @@ module Demiurge
       super(engine, name, "", *args)
     end
 
-    def allowed?(engine)
+    def allowed?
       true
     end
 
     # For now, WanderIntention is unblockable. That's not perfect, but
     # otherwise we have to figure out how to offer an action without
     # an action name.
-    def offer(engine, intention_id)
+    def offer(intention_id)
     end
 
-    def apply(engine)
-      agent = engine.item_by_name(@name)
+    def apply
+      agent = @engine.item_by_name(@name)
       agent.state["wander_counter"] += 1
       wander_every = agent.state["wander_every"] || 3
       return if agent.state["wander_counter"] < wander_every

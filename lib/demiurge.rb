@@ -216,7 +216,7 @@ module Demiurge
             if a.cancelled?
               admin_warning("Trying to apply a cancelled intention of type #{a.class}!", "inspect" => a.inspect)
             else
-              a.try_apply(self, id)
+              a.try_apply(id)
             end
           end
         rescue RetryableError
@@ -791,7 +791,7 @@ module Demiurge
     #
     # @return [Boolean] If this method returns false, the Intention will quietly self-cancel before the offer phase.
     # @since 0.0.1
-    def allowed?(engine)
+    def allowed?
       raise "Unimplemented 'allowed?' for intention: #{self.inspect}!"
     end
 
@@ -803,7 +803,7 @@ module Demiurge
     #
     # @return [void]
     # @since 0.0.1
-    def apply(engine)
+    def apply
       raise "Unimplemented 'apply' for intention: #{self.inspect}!"
     end
 
@@ -818,7 +818,7 @@ module Demiurge
     # @param intention_id [Integer] The intention ID that Demiurge has assigned to this Intention
     # @return [void]
     # @since 0.0.1
-    def offer(engine, intention_id)
+    def offer(intention_id)
       raise "Unimplemented 'offer' for intention: #{self.inspect}!"
     end
 
@@ -827,16 +827,16 @@ module Demiurge
     #
     # @return [void]
     # @since 0.0.1
-    def try_apply(engine, intention_id)
+    def try_apply(intention_id)
       @intention_id = intention_id
-      unless allowed?(engine)
+      unless allowed?
         # Certain intentions can send an "intention failed" notification.
         # Such a notification would be sent from here.
         return
       end
-      offer(engine, intention_id)
+      offer(intention_id)
       return if cancelled? # Notification should already have been sent out
-      apply(engine)
+      apply
       nil
     end
   end

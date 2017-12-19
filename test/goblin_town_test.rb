@@ -4,7 +4,7 @@ module GoblinTown
   class MossCave < Demiurge::StateItem
     def initialize(name, engine, state)
       super
-      @growmoss_intention = GrowMoss.new(name)
+      @growmoss_intention = GrowMoss.new(name, engine)
     end
 
     def intentions_for_next_step()
@@ -17,20 +17,21 @@ module GoblinTown
   end
 
   class GrowMoss < Demiurge::Intention
-    def initialize(name)
+    def initialize(name, engine)
       @name = name
+      super(engine)
     end
 
-    def allowed?(engine)
+    def allowed?
       true
     end
 
-    def offer(engine, intention_id)
+    def offer(intention_id)
       # Do nothing
     end
 
-    def apply(engine)
-      item = engine.item_by_name(@name)
+    def apply
+      item = @engine.item_by_name(@name)
       item.state["moss"] += 1
       if item.state["moss"] >= item.state["growmoss_every"]
         item.state["grown_moss"] += 1
