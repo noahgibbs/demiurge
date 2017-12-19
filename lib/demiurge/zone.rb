@@ -41,7 +41,7 @@ module Demiurge
     # items, gathering up their intentions into a list. It doesn't ask
     # agents since agents located directly in zones are usually only
     # for instantiation.
-    def intentions_for_next_step(options = {})
+    def intentions_for_next_step
       intentions = @state["contents"].flat_map do |item_name|
         item = @engine.item_by_name(item_name)
         item.agent? ? [] : item.intentions_for_next_step

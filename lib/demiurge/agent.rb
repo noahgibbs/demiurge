@@ -60,7 +60,7 @@ module Demiurge
                                   type: "move_to", zone: self.zone_name, location: self.location_name, actor: @name)
     end
 
-    def intentions_for_next_step(options = {})
+    def intentions_for_next_step
       agent_action = AgentActionIntention.new(@name, engine)
       super + [@agent_maintenance, agent_action]
     end
@@ -84,14 +84,14 @@ module Demiurge
 
     # Normally, the agent's maintenance intention can't be blocked,
     # cancelled or modified.
-    def offer(engine, intention_id, options)
+    def offer(engine, intention_id)
     end
 
-    def allowed?(engine, options)
+    def allowed?(engine)
       true
     end
 
-    def apply(engine, options)
+    def apply(engine)
       agent = engine.item_by_name(@name)
       agent.state["busy"] -= 1 if agent.state["busy"] > 0
     end
@@ -113,7 +113,7 @@ module Demiurge
     end
 
     # An action being pulled from the action queue is offered normally.
-    def offer(engine, intention_id, options)
+    def offer(engine, intention_id)
       # Don't offer the action if it's going to be a no-op.
       if @agent.state["busy"] > 0
         # See comment on "silent" in allowed?() below.
@@ -130,7 +130,7 @@ module Demiurge
       super(engine, intention_id)
     end
 
-    def allowed?(engine, options)
+    def allowed?(engine)
       # If the agent's busy state will clear this turn, this action could happen.
       return false if @agent.state["busy"] > 1
 
@@ -146,7 +146,7 @@ module Demiurge
       true
     end
 
-    def apply(engine, options)
+    def apply(engine)
       unless agent.state["busy"] > 0 || agent.state["queued_actions"].empty?
         # Pull the first entry off the action queue
         queue = @agent.state["queued_actions"]
@@ -181,7 +181,7 @@ module Demiurge
       end
     end
 
-    def intentions_for_next_step(options = {})
+    def intentions_for_next_step
       super + [@wander_intention]
     end
   end
@@ -193,17 +193,17 @@ module Demiurge
       super(engine, name, "", *args)
     end
 
-    def allowed?(engine, options)
+    def allowed?(engine)
       true
     end
 
     # For now, WanderIntention is unblockable. That's not perfect, but
     # otherwise we have to figure out how to offer an action without
     # an action name.
-    def offer(engine, intention_id, options = {})
+    def offer(engine, intention_id)
     end
 
-    def apply(engine, options)
+    def apply(engine)
       agent = engine.item_by_name(@name)
       agent.state["wander_counter"] += 1
       wander_every = agent.state["wander_every"] || 3

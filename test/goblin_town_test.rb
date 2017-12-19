@@ -21,15 +21,15 @@ module GoblinTown
       @name = name
     end
 
-    def allowed?(engine, options)
+    def allowed?(engine)
       true
     end
 
-    def offer(engine, intention_id, options)
+    def offer(engine, intention_id)
       # Do nothing
     end
 
-    def apply(engine, options)
+    def apply(engine)
       item = engine.item_by_name(@name)
       item.state["moss"] += 1
       if item.state["moss"] >= item.state["growmoss_every"]

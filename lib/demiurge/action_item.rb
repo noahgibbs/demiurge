@@ -92,7 +92,7 @@ module Demiurge
     #
     # @return [Array<Demiurge::Intention>] An array of intentions for next tick
     # @since 0.0.1
-    def intentions_for_next_step(options = {})
+    def intentions_for_next_step
       everies = @state["everies"]
       return [] if everies.nil? || everies.empty?
       [@every_x_ticks_intention]
@@ -442,7 +442,7 @@ module Demiurge
     # @param engine [Demiurge::Engine] The engine to operate within
     # return [void]
     # @since 0.0.1
-    def allowed?(engine, options = {})
+    def allowed?(engine)
       true
     end
 
@@ -453,7 +453,7 @@ module Demiurge
     # @param intention_id [Integer] The intention ID assigned to this Intention
     # return [void]
     # @since 0.0.1
-    def offer(engine, intention_id, options = {})
+    def offer(engine, intention_id)
       loc = @item.location || @item.zone
       loc.receive_offer(@action_name, self, intention_id)
     end
@@ -463,7 +463,7 @@ module Demiurge
     # @param engine [Demiurge::Engine] The engine to operate within
     # return [void]
     # @since 0.0.1
-    def apply(engine, options = {})
+    def apply(engine)
       @item.run_action(@action_name, *@action_args, current_intention: self)
     end
 
@@ -553,13 +553,13 @@ module Demiurge
       super(engine)
     end
 
-    def allowed?(engine, options)
+    def allowed?(engine)
       true
     end
 
     # For now, empty. Later we'll want it to honor
     # the offer setting of the underlying action.
-    def offer(engine, intention_id, options)
+    def offer(engine, intention_id)
     end
 
     # Shouldn't normally happen, but just in case...
@@ -574,7 +574,7 @@ module Demiurge
                                 type: "intention_cancelled", zone: item.zone_name, location: item.location_name, actor: item.name)
     end
 
-    def apply(engine, options)
+    def apply(engine)
       item = engine.item_by_name(@name)
       everies = item.state["everies"]
       everies.each do |every|

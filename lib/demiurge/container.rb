@@ -76,11 +76,11 @@ module Demiurge
     end
 
     # Include everything under the container: anything have an action to perform?
-    def intentions_for_next_step(options = {})
+    def intentions_for_next_step
       intentions = super
       @state["contents"].each do |item_name|
         item = @engine.item_by_name(item_name)
-        intentions += item.intentions_for_next_step(options)
+        intentions += item.intentions_for_next_step
       end
       intentions
     end

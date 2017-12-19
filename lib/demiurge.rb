@@ -104,7 +104,7 @@ module Demiurge
     # @since 0.0.1
     # @see #load_state_from_dump
     def structured_state(options = { "copy" => false })
-      dump = @state_items.values.map { |item| item.get_structure(options) }
+      dump = @state_items.values.map { |item| item.get_structure }
       if options["copy"]
         dump = deepcopy(dump)  # Make sure it doesn't share state...
       end
@@ -199,7 +199,7 @@ module Demiurge
     #
     # @return [void]
     # @since 0.0.1
-    def flush_intentions(options = { })
+    def flush_intentions
       state_backup = structured_state("copy" => true)
 
       infinite_loop_detector = 0
@@ -216,7 +216,7 @@ module Demiurge
             if a.cancelled?
               admin_warning("Trying to apply a cancelled intention of type #{a.class}!", "inspect" => a.inspect)
             else
-              a.try_apply(self, id, options)
+              a.try_apply(self, id)
             end
           end
         rescue RetryableError
@@ -367,8 +367,6 @@ module Demiurge
     # This sets the Engine's internal state from a structured array of
     # items. It is normally used via load_state_from_dump.
     def state_from_structured_array(arr)
-      options = options.dup.freeze unless options.frozen?
-
       @finished_init = false
       @state_items = {}
       @zones = []
@@ -677,7 +675,7 @@ module Demiurge
     # @see Demiurge::StateItem
     # @return [Array] The serialized state
     # @since 0.0.1
-    def get_structure(options = {})
+    def get_structure()
       [state_type, @name, @state]
     end
 
@@ -686,7 +684,7 @@ module Demiurge
     # @see Demiurge::StateItem
     # @return [Demiurge::StateItem] The deserialized StateItem
     # @since 0.0.1
-    def self.from_name_type(engine, type, name, state, options = {})
+    def self.from_name_type(engine, type, name, state)
       engine.get_type(type).new(name, engine, state)
     end
 
@@ -793,7 +791,7 @@ module Demiurge
     #
     # @return [Boolean] If this method returns false, the Intention will quietly self-cancel before the offer phase.
     # @since 0.0.1
-    def allowed?(engine, options = {})
+    def allowed?(engine)
       raise "Unimplemented 'allowed?' for intention: #{self.inspect}!"
     end
 
@@ -805,7 +803,7 @@ module Demiurge
     #
     # @return [void]
     # @since 0.0.1
-    def apply(engine, options = {})
+    def apply(engine)
       raise "Unimplemented 'apply' for intention: #{self.inspect}!"
     end
 
@@ -820,7 +818,7 @@ module Demiurge
     # @param intention_id [Integer] The intention ID that Demiurge has assigned to this Intention
     # @return [void]
     # @since 0.0.1
-    def offer(engine, intention_id, options = {})
+    def offer(engine, intention_id)
       raise "Unimplemented 'offer' for intention: #{self.inspect}!"
     end
 
@@ -829,16 +827,16 @@ module Demiurge
     #
     # @return [void]
     # @since 0.0.1
-    def try_apply(engine, intention_id, options = {})
+    def try_apply(engine, intention_id)
       @intention_id = intention_id
-      unless allowed?(engine, options)
+      unless allowed?(engine)
         # Certain intentions can send an "intention failed" notification.
         # Such a notification would be sent from here.
         return
       end
-      offer(engine, intention_id, options)
+      offer(engine, intention_id)
       return if cancelled? # Notification should already have been sent out
-      apply(engine, options)
+      apply(engine)
       nil
     end
   end
