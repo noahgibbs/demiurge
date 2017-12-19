@@ -618,6 +618,9 @@ module Demiurge
     # @since 0.0.1
     attr_reader :name
 
+    # @return [Demiurge::Engine] The Engine this item is part of
+    attr_reader :engine
+
     # @return [String] The default StateItem type of this item. Can be overridden by child classes.
     # @since 0.0.1
     def state_type
