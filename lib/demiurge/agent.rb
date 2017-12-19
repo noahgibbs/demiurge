@@ -74,7 +74,7 @@ module Demiurge
     end
 
     def queue_action(action_name, *args)
-      raise ::Demiurge::NoSuchActionError.new("Not an action: #{action_name.inspect}!", "action_name" => action_name) unless get_action(action_name)
+      raise ::Demiurge::Errors::NoSuchActionError.new("Not an action: #{action_name.inspect}!", "action_name" => action_name) unless get_action(action_name)
       state["queued_actions"].push([action_name, args, state["queue_number"]])
       state["queue_number"] += 1
     end
@@ -113,7 +113,7 @@ module Demiurge
       @name = name
       @engine = engine
       @agent = @engine.item_by_name(@name)
-      raise NoSuchAgentError.new("No such agent as #{name.inspect} found in AgentActionIntention!", "agent" => @name) unless @agent
+      raise ::Demiurge::Errors::NoSuchAgentError.new("No such agent as #{name.inspect} found in AgentActionIntention!", "agent" => @name) unless @agent
       super(engine, name, "")
     end
 

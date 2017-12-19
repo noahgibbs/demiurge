@@ -137,11 +137,11 @@ module Demiurge
     # @since 0.0.1
     def run_action(action_name, *args, current_intention: nil)
       action = get_action(action_name)
-      raise NoSuchActionError.new("No such action as #{action_name.inspect} for #{@name.inspect}!",
-                                  "item" => self.name, "action" => action_name) unless action
+      raise ::Demiurge::Errors::NoSuchActionError.new("No such action as #{action_name.inspect} for #{@name.inspect}!",
+                                                      "item" => self.name, "action" => action_name) unless action
       block = action["block"]
-      raise NoSuchActionError.new("Action was never defined for #{action_name.inspect} of object #{@name.inspect}!",
-                                  "item" => self.name, "action" => action_name) unless block
+      raise ::Demiurge::Errors::NoSuchActionError.new("Action was never defined for #{action_name.inspect} of object #{@name.inspect}!",
+                                                      "item" => self.name, "action" => action_name) unless block
 
       runner_constructor_args = {}
       if action["engine_code"]
@@ -158,8 +158,8 @@ module Demiurge
       begin
         block_runner.instance_exec(*args, &block)
       rescue
-        raise BadScriptError.new("Script error of type #{$!.class} with message: #{$!.message}",
-                                 "runner type": block_runner_type.to_s, "action" => action_name);
+        raise ::Demiurge::Errors::BadScriptError.new("Script error of type #{$!.class} with message: #{$!.message}",
+                                                     "runner type": block_runner_type.to_s, "action" => action_name);
       end
       nil
     end
@@ -321,7 +321,7 @@ module Demiurge
     # @return [void]
     # @since 0.0.1
     def cancel_intention(reason, extra_info = {})
-      raise NoCurrentIntentionError.new("No current intention in action of item #{@item.name}!", "script_item": @item.name) unless @current_intention
+      raise ::Demiurge::Errors::NoCurrentIntentionError.new("No current intention in action of item #{@item.name}!", "script_item": @item.name) unless @current_intention
       @current_intention.cancel(reason, extra_info)
       nil
     end
@@ -377,8 +377,8 @@ module Demiurge
       end
       act = @item.get_action(action_name)
       unless act
-        raise Demiurge::NoSuchActionError.new("Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it!",
-                                              "item" => @item.name, "action" => action_name)
+        raise Demiurge::Errors::NoSuchActionError.new("Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it!",
+                                                      "item" => @item.name, "action" => action_name)
         return
       end
       @item.queue_action(action_name, args)
@@ -439,7 +439,6 @@ module Demiurge
     # For now, ActionIntentions don't have a way to specify "allowed"
     # blocks in their DSL, so they are always considered "allowed".
     #
-    # @param engine [Demiurge::Engine] The engine to operate within
     # return [void]
     # @since 0.0.1
     def allowed?
@@ -449,7 +448,6 @@ module Demiurge
     # Make an offer of this ActionIntention and see if it is canceled or modified.
     # By default, offers are coordinated through the item's location.
     #
-    # @param engine [Demiurge::Engine] The engine to operate within
     # @param intention_id [Integer] The intention ID assigned to this Intention
     # return [void]
     # @since 0.0.1
@@ -460,7 +458,6 @@ module Demiurge
 
     # Apply the ActionIntention's effects to the appropriate StateItems.
     #
-    # @param engine [Demiurge::Engine] The engine to operate within
     # return [void]
     # @since 0.0.1
     def apply
@@ -533,7 +530,7 @@ module Demiurge
       end
 
       # Nope, no matching state.
-      raise NoSuchStateKeyError.new("No such state key as #{method_name.inspect}", "method" => method_name, "item" => @item.name)
+      raise ::Demiurge::Errors::NoSuchStateKeyError.new("No such state key as #{method_name.inspect}", "method" => method_name, "item" => @item.name)
       super
     end
 

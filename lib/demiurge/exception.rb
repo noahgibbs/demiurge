@@ -1,5 +1,7 @@
-module Demiurge
-  # Demiurge::Exception is the parent class of all Demiurge-specific
+module Demiurge;end
+
+module Demiurge::Errors
+  # Demiurge::Errors::Exception is the parent class of all Demiurge-specific
   # Exceptions.
   #
   # @since 0.0.1
@@ -19,7 +21,7 @@ module Demiurge
 
     # Serialize this exception to a JSON-serializable PORO.
     #
-    # @return [Hash] The serialized {Demiurge::Exception} data
+    # @return [Hash] The serialized {Demiurge::Errors::Exception} data
     # @since 0.0.1
     def jsonable()
       {
@@ -35,7 +37,7 @@ module Demiurge
   # reasonable attempt at a solution.
   #
   # @since 0.0.1
-  class RetryableError < ::Demiurge::Exception; end
+  class RetryableError < ::Demiurge::Errors::Exception; end
 
   # A BadScriptError will normally not benefit from retrying. Instead,
   # one or more scripts associated with this error is presumed to be
@@ -50,7 +52,7 @@ module Demiurge
   # script "frames" a correct script by causing errors downstream.
   #
   # @since 0.0.1
-  class BadScriptError < ::Demiurge::Exception; end
+  class BadScriptError < ::Demiurge::Errors::Exception; end
 
   # This exception occurs when trying to use an action that doesn't
   # exist, such as from {Demiurge::ActionItem#run_action} or
@@ -95,4 +97,8 @@ module Demiurge
   #
   # @since 0.0.1
   class TooManyNotificationLoopsError < BadScriptError; end
+end
+
+module Demiurge
+  include Demiurge::Errors
 end

@@ -206,7 +206,7 @@ module Demiurge
       until @queued_intentions.empty?
         infinite_loop_detector += 1
         if infinite_loop_detector > 20
-          raise ::Demiurge::TooManyIntentionLoopsError.new("Over 20 batches of intentions were dispatched in the same call! Error and die!", "final_batch" => @queued_intentions.map { |i| i.class.to_s })
+          raise ::Demiurge::Errors::TooManyIntentionLoopsError.new("Over 20 batches of intentions were dispatched in the same call! Error and die!", "final_batch" => @queued_intentions.map { |i| i.class.to_s })
         end
 
         intentions = @queued_intentions
@@ -219,7 +219,7 @@ module Demiurge
               a.try_apply(id)
             end
           end
-        rescue RetryableError
+        rescue ::Demiurge::Errors::RetryableError
           admin_warning("Exception when updating! Throwing away speculative state!", "exception" => $_.jsonable)
           load_state_from_dump(state_backup)
         end
@@ -551,7 +551,7 @@ module Demiurge
       until @queued_notifications.empty?
         infinite_loop_detector += 1
         if infinite_loop_detector > 20
-          raise TooManyNotificationLoopsError.new("Over 20 batches of notifications were dispatched in the same call! Error and die!", "last batch" => @queued_notifications.map { |n| n.class.to_s })
+          raise ::Demiurge::Errors::TooManyNotificationLoopsError.new("Over 20 batches of notifications were dispatched in the same call! Error and die!", "last batch" => @queued_notifications.map { |n| n.class.to_s })
         end
 
         current_notifications = @queued_notifications
