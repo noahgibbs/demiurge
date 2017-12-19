@@ -10,7 +10,7 @@ module Demiurge
   # In the latter case, eval errors will give the filename along
   # with the error.
   def self.engine_from_dsl_text(*specs)
-    builder = Demiurge::TopLevelBuilder.new
+    builder = Demiurge::DSL::TopLevelBuilder.new
 
     specs.each do |spec|
       if spec.is_a?(String)
@@ -27,7 +27,9 @@ module Demiurge
 
     builder.built_engine
   end
+end
 
+module Demiurge::DSL
   # This is the Builder class for the World File DSL.
   class ActionItemBuilder
     attr_reader :built_item
@@ -60,7 +62,7 @@ module Demiurge
     end
 
     def state
-      @wrapper ||= ActionItemStateWrapper.new(self)
+      @wrapper ||= ::Demiurge::ActionItemStateWrapper.new(self)
     end
 
     # This all happens at DSL builder time, so we can't directly
@@ -69,7 +71,7 @@ module Demiurge
     # conflict within the builder.
     def register_built_action(action)
       raise("Must specify a string 'name' to register_build_action! Only gave #{action.inspect}!") unless action["name"]
-      check_options(action, ActionItem::ACTION_LEGAL_KEYS)
+      check_options(action, ::Demiurge::ActionItem::ACTION_LEGAL_KEYS)
       @built_item.register_actions(action["name"] => action)
     end
 
@@ -268,9 +270,9 @@ module Demiurge
 
 end
 
-Demiurge::TopLevelBuilder.register_type "ActionItem", Demiurge::ActionItem
-Demiurge::TopLevelBuilder.register_type "InertStateItem", Demiurge::InertStateItem
-Demiurge::TopLevelBuilder.register_type "Zone", Demiurge::Zone
-Demiurge::TopLevelBuilder.register_type "Location", Demiurge::Location
-Demiurge::TopLevelBuilder.register_type "Agent", Demiurge::Agent
-Demiurge::TopLevelBuilder.register_type "WanderingAgent", Demiurge::WanderingAgent
+Demiurge::DSL::TopLevelBuilder.register_type "ActionItem", Demiurge::ActionItem
+Demiurge::DSL::TopLevelBuilder.register_type "InertStateItem", Demiurge::InertStateItem
+Demiurge::DSL::TopLevelBuilder.register_type "Zone", Demiurge::Zone
+Demiurge::DSL::TopLevelBuilder.register_type "Location", Demiurge::Location
+Demiurge::DSL::TopLevelBuilder.register_type "Agent", Demiurge::Agent
+Demiurge::DSL::TopLevelBuilder.register_type "WanderingAgent", Demiurge::WanderingAgent

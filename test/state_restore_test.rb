@@ -3,7 +3,7 @@ require_relative 'test_helper'
 require "demiurge/dsl"
 
 class ZoneSubtype < Demiurge::Zone; end
-Demiurge::TopLevelBuilder.register_type "ZoneSubtype", ZoneSubtype
+Demiurge::DSL::TopLevelBuilder.register_type "ZoneSubtype", ZoneSubtype
 
 class StateRestoreTest < Minitest::Test
   DSL_TEXT = <<-GOBLIN_DSL

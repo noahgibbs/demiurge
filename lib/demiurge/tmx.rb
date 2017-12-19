@@ -29,44 +29,46 @@ require "tmx"
 # TMX parsing.
 
 module Demiurge
-  class ZoneBuilder
-    # This is currently an ugly monkeypatch to allow declaring a
-    # "tmx_location" separate from other kinds of declarable
-    # StateItems. This remains ugly until the plugin system catches up
-    # with the intrusiveness of what TMX needs to plug in (which isn't
-    # bad, but the plugin system barely exists.)
-    def tmx_location(name, options = {}, &block)
-      state = { "zone" => @name }.merge(options)
-      builder = TmxLocationBuilder.new(name, @engine, "type" => options["type"] || "TmxLocation", "state" => state)
-      builder.instance_eval(&block)
-      @built_item.state["contents"] << name
-      nil
-    end
-  end
-
-  class TmxLocationBuilder < LocationBuilder
-    def initialize(name, engine, options = {})
-      options["type"] ||= "TmxLocation"
-      super
+  module DSL
+    class ZoneBuilder
+      # This is currently an ugly monkeypatch to allow declaring a
+      # "tmx_location" separate from other kinds of declarable
+      # StateItems. This remains ugly until the plugin system catches up
+      # with the intrusiveness of what TMX needs to plug in (which isn't
+      # bad, but the plugin system barely exists.)
+      def tmx_location(name, options = {}, &block)
+        state = { "zone" => @name }.merge(options)
+        builder = TmxLocationBuilder.new(name, @engine, "type" => options["type"] || "TmxLocation", "state" => state)
+        builder.instance_eval(&block)
+        @built_item.state["contents"] << name
+        nil
+      end
     end
 
-    def tile_layout(tmx_spec)
-      # Make sure this loads correctly, but use the cache for efficiency.
-      TmxLocation.tile_cache_entry(nil, tmx_spec)
+    class TmxLocationBuilder < LocationBuilder
+      def initialize(name, engine, options = {})
+        options["type"] ||= "TmxLocation"
+        super
+      end
 
-      @state["tile_layout"] = tmx_spec
-    end
+      def tile_layout(tmx_spec)
+        # Make sure this loads correctly, but use the cache for efficiency.
+        TmxLocation.tile_cache_entry(nil, tmx_spec)
 
-    def manasource_tile_layout(tmx_spec)
-      # Make sure this loads correctly, but use the cache for efficiency.
-      TmxLocation.tile_cache_entry(tmx_spec, nil)
+        @state["tile_layout"] = tmx_spec
+      end
 
-      @state["manasource_tile_layout"] = tmx_spec
-    end
+      def manasource_tile_layout(tmx_spec)
+        # Make sure this loads correctly, but use the cache for efficiency.
+        TmxLocation.tile_cache_entry(tmx_spec, nil)
 
-    def built_item
-      raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout"] || @state["manasource_tile_layout"]
-      super
+        @state["manasource_tile_layout"] = tmx_spec
+      end
+
+      def built_item
+        raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout"] || @state["manasource_tile_layout"]
+        super
+      end
     end
   end
 
@@ -282,8 +284,8 @@ module Demiurge
   end
 end
 
-Demiurge::TopLevelBuilder.register_type "TmxZone", Demiurge::TmxZone
-Demiurge::TopLevelBuilder.register_type "TmxLocation", Demiurge::TmxLocation
+Demiurge::DSL::TopLevelBuilder.register_type "TmxZone", Demiurge::TmxZone
+Demiurge::DSL::TopLevelBuilder.register_type "TmxLocation", Demiurge::TmxLocation
 
 module Demiurge
   # This is to support TMX files for ManaSource, ManaWorld, Land of
