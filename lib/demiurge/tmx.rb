@@ -30,6 +30,7 @@ require "tmx"
 
 module Demiurge
   module DSL
+    # Monkeypatch to allow tmx_location in World File zones.
     class ZoneBuilder
       # This is currently an ugly monkeypatch to allow declaring a
       # "tmx_location" separate from other kinds of declarable
@@ -45,12 +46,15 @@ module Demiurge
       end
     end
 
+    # Special builder for tmx_location blocks
     class TmxLocationBuilder < LocationBuilder
+      # Constructor
       def initialize(name, engine, options = {})
         options["type"] ||= "TmxLocation"
         super
       end
 
+      # Specify a TMX file as the tile layout, but assume relatively little about the TMX format.
       def tile_layout(tmx_spec)
         # Make sure this loads correctly, but use the cache for efficiency.
         TmxLocation.tile_cache_entry(nil, tmx_spec)
@@ -58,6 +62,7 @@ module Demiurge
         @state["tile_layout"] = tmx_spec
       end
 
+      # Specify a TMX file as the tile layout, and interpret it according to ManaSource TMX conventions.
       def manasource_tile_layout(tmx_spec)
         # Make sure this loads correctly, but use the cache for efficiency.
         TmxLocation.tile_cache_entry(tmx_spec, nil)
@@ -65,6 +70,7 @@ module Demiurge
         @state["manasource_tile_layout"] = tmx_spec
       end
 
+      # Validate built_item before returning it
       def built_item
         raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout"] || @state["manasource_tile_layout"]
         super
@@ -112,6 +118,7 @@ module Demiurge
       end
     end
 
+    # Return the list of valid adjacent positions from this one
     def adjacent_positions(pos, options = {})
       location, pos_spec = pos.split("#", 2)
       loc = @engine.item_by_name(location)
@@ -123,11 +130,13 @@ module Demiurge
   end
 
   class TmxLocation < Location
+    # Parse a tiled position string and return the X and Y tile coordinates
     def self.position_to_coords(pos)
       loc, x, y = position_to_loc_coords(pos)
       return x, y
     end
 
+    # Parse a tiled position string and return the location name and the X and Y tile coordinates
     def self.position_to_loc_coords(pos)
       loc, coords = pos.split("#",2)
       if coords
@@ -138,6 +147,9 @@ module Demiurge
       end
     end
 
+    # When an item changes position in a TmxLocation, check if the new
+    # position leads out an exit. If so, send them where the exit
+    # leads instead.
     def item_change_position(item, old_pos, new_pos)
       exit = @state["exits"].detect { |e| e["from"] == new_pos }
       return super unless exit  # No exit? Do what you were going to.
@@ -172,6 +184,7 @@ module Demiurge
       return tiles[:collision][y][x] == 0
     end
 
+    # Determine whether this position can accomodate the given agent's shape and size.
     def can_accomodate_agent?(agent, position)
       loc, x, y = TmxLocation.position_to_loc_coords(position)
       raise "Location #{@name.inspect} asked about different location #{loc.inspect} in can_accomodate_agent!" if loc != @name
@@ -179,6 +192,8 @@ module Demiurge
       can_accomodate_shape?(x, y, shape)
     end
 
+    # Determine whether this coordinate location can accomodate a
+    # rectangular item of the given coordinate dimensions.
     def can_accomodate_dimensions?(left_x, upper_y, width, height)
       return false if left_x < 0 || upper_y < 0
       right_x = left_x + width - 1
@@ -193,6 +208,9 @@ module Demiurge
       return true
     end
 
+    # Determine whether this coordinate location can accomodate an
+    # item of the given shape.
+    #
     # For now, don't distinguish between walkable/swimmable or
     # whatever, just say a collision value of 0 means valid,
     # everything else is invalid.
@@ -243,15 +261,18 @@ module Demiurge
       end
     end
 
+    # Return the tile object for this location
     def tiles
       raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless state["tile_layout"] || state["manasource_tile_layout"]
       TmxLocation.tile_cache_entry(state["manasource_tile_layout"], state["tile_layout"])
     end
 
+    # Return a TMX object's structure, for an object of the given name, or nil.
     def tmx_object_by_name(name)
       tiles[:objects].detect { |o| o[:name] == name }
     end
 
+    # Return the tile coordinates of the TMX object with the given name, or nil.
     def tmx_object_coords_by_name(name)
       obj = tiles[:objects].detect { |o| o[:name] == name }
       if obj
@@ -293,9 +314,11 @@ module Demiurge
   # perfect since there's some variation between them, but it can
   # follow most major conventions.
 
+  # Load a TMX file and calculate the objects inside including the
+  # Spritesheet and Spritestack. Assume this TMX file obeys ManaSource
+  # conventions such as fields for exits and names for layers.
   def self.sprites_from_manasource_tmx(filename)
     objs = sprites_from_tmx filename
-    #sheet = objs[:spritesheet]
     stack = objs[:spritestack]
 
     stack_layers = stack[:layers]
@@ -322,32 +345,9 @@ module Demiurge
     objs
   end
 
-  def self.frames_from_tileset(tileset)
-    frames = []
-    framecount = 0
-
-    ycoords = [tileset.margin]
-    ycoords.push(ycoords[-1] + tileset.tileheight + tileset.spacing) until (ycoords[-1] + tileset.spacing) >= tileset.imageheight - tileset.margin - tileset.tileheight
-
-    xcoords = [tileset.margin]
-    xcoords.push(xcoords[-1] + tileset.tilewidth + tileset.spacing) until (xcoords[-1] + tileset.spacing) >= tileset.imagewidth - tileset.margin - tileset.tilewidth
-
-    ycoords.each do |y|
-      xcoords.each do |x|
-        framecount += 1
-        frames.push({
-                      gid: tileset.firstgid + framecount,
-                      image: tileset.image,
-                      x: x,
-                      y: y,
-                      width: tileset.tilewidth,
-                      height: tileset.tileheight })
-      end
-    end
-
-    frames
-  end
-
+  # Load a TMX file and calculate the objects inside including the
+  # Spritesheet and Spritestack. Do not assume this TMX file obeys any
+  # particular additional conventions beyond basic TMX format.
   def self.sprites_from_tmx(filename)
     spritesheet = {}
     spritestack = {}
@@ -377,7 +377,6 @@ module Demiurge
         margin: tileset.margin,
         imagetrans: tileset.imagetrans, # Currently unused, color to treat as transparent
         properties: tileset.properties,
-        #frame_definitions: frames_from_tileset(tileset),  # TODO: make it possible to ask for explicit frame mapping (for control) or implicit (for bandwidth savings)
       }
     end
     spritesheet[:cyclic_animations] = animations_from_tilesets tiles.tilesets
@@ -404,6 +403,7 @@ module Demiurge
     { filename: filename, tmx_name: File.basename(filename).split(".")[0], spritesheet: spritesheet, spritestack: spritestack, objects: objects }
   end
 
+  # Find the animations included in the TMX file
   def self.animations_from_tilesets tilesets
     tilesets.flat_map do |tileset|
       (tileset.tiles || []).map do |tile|

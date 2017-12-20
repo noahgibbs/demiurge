@@ -42,6 +42,9 @@ module Demiurge
   end
 end
 
+# This module contains the Builder classes that parse the World File DSL.
+#
+# @since 0.0.1
 module Demiurge::DSL
 
   # ActionItemBuilder is the parent class of all Builder classes

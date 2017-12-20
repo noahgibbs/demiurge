@@ -1,5 +1,6 @@
 module Demiurge;end
 
+# The Errors module exists to scope errors out of the top-level namespace.
 module Demiurge::Errors
   # Demiurge::Errors::Exception is the parent class of all Demiurge-specific
   # Exceptions.
