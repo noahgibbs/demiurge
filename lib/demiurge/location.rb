@@ -1,4 +1,6 @@
 module Demiurge
+  # A Location is generally found inside a Zone.  It may contain items
+  # and agents.
   class Location < Container
     # Constructor - set up exits
     #

@@ -129,6 +129,10 @@ module Demiurge
     end
   end
 
+  # A TmxLocation is a special location that is attached to a tile
+  # layout, a TMX file. This affects the size and shape of the room,
+  # and how agents may travel through it. TmxLocations have X and Y
+  # coordinates (grid coordinates) for their positions.
   class TmxLocation < Location
     # Parse a tiled position string and return the X and Y tile coordinates
     def self.position_to_coords(pos)

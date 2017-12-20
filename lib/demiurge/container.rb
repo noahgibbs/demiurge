@@ -1,6 +1,7 @@
 # A Container may contain other items. Common examples include Zones and Locations.
 
 module Demiurge
+  # Container is the parent class of Locations, Zones and other items that can contain items.
   class Container < ActionItem
     # Constructor - set up contents
     #
