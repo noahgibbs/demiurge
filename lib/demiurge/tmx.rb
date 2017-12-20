@@ -162,7 +162,8 @@ module Demiurge
 
       # Eh, just send them through for now. We'll figure out how to
       # make detecting and blocking exit intentions easy later.
-      item.state["position"] = exit["to"]
+
+      item_change_location(item, old_pos, exit["to"])
     end
 
     # This just determines if the position is valid at all.  It does
