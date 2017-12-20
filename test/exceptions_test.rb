@@ -49,7 +49,7 @@ class ExceptionsTest < Minitest::Test
 
     agent_item = engine.item_by_name("guy on fire")
 
-    assert_raises(Demiurge::TooManyIntentionLoopsError) do
+    assert_raises(Demiurge::Errors::TooManyIntentionLoopsError) do
       agent_item.queue_action("bad_intention")
       engine.advance_one_tick
     end
@@ -61,7 +61,7 @@ class ExceptionsTest < Minitest::Test
 
     agent_item = engine.item_by_name("guy on fire")
 
-    assert_raises(Demiurge::TooManyNotificationLoopsError) do
+    assert_raises(Demiurge::Errors::TooManyNotificationLoopsError) do
       agent_item.queue_action("bad_notification")
       engine.advance_one_tick
     end
@@ -73,24 +73,24 @@ class ExceptionsTest < Minitest::Test
 
     agent_item = engine.item_by_name("guy on fire")
 
-    assert_raises(Demiurge::NoSuchActionError) do
+    assert_raises(Demiurge::Errors::NoSuchActionError) do
       agent_item.queue_action("no such action")
     end
 
-    assert_raises(Demiurge::NoSuchActionError) do
+    assert_raises(Demiurge::Errors::NoSuchActionError) do
       agent_item.run_action("no such action")
     end
 
     begin
       agent_item.queue_action("check no such action")
       engine.advance_one_tick
-    rescue Demiurge::BadScriptError
+    rescue Demiurge::Errors::BadScriptError
       assert_equal "no such action", $!.cause.info["action"]  # Make sure we got the right no-such-action
     end
 
     begin
       agent_item.run_action("undefined body action")
-    rescue Demiurge::NoSuchActionError
+    rescue Demiurge::Errors::NoSuchActionError
       assert $!.message["was never defined"], "NoSuchActionError message should contain 'was never defined' for a never-defined action!"
     end
   end
@@ -98,7 +98,7 @@ class ExceptionsTest < Minitest::Test
   def test_no_such_agent
     engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
 
-    assert_raises(Demiurge::NoSuchAgentError) do
+    assert_raises(Demiurge::Errors::NoSuchAgentError) do
       Demiurge::AgentActionIntention.new "no such agent", engine
     end
   end
@@ -111,8 +111,8 @@ class ExceptionsTest < Minitest::Test
     begin
       agent_item.queue_action("no such key test")
       engine.advance_one_tick
-    rescue ::Demiurge::BadScriptError
-      assert_equal ::Demiurge::NoSuchStateKeyError, $!.cause.class
+    rescue ::Demiurge::Errors::BadScriptError
+      assert_equal ::Demiurge::Errors::NoSuchStateKeyError, $!.cause.class
     end
   end
 
@@ -123,8 +123,8 @@ class ExceptionsTest < Minitest::Test
 
     begin
       agent_item.run_action("cancel intention")
-    rescue Demiurge::BadScriptError
-      assert_equal ::Demiurge::NoCurrentIntentionError, $!.cause.class
+    rescue Demiurge::Errors::BadScriptError
+      assert_equal ::Demiurge::Errors::NoCurrentIntentionError, $!.cause.class
     end
   end
 end

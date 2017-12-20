@@ -99,7 +99,3 @@ module Demiurge::Errors
   # @since 0.0.1
   class TooManyNotificationLoopsError < BadScriptError; end
 end
-
-module Demiurge
-  include Demiurge::Errors
-end
