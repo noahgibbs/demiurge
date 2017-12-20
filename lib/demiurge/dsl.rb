@@ -43,8 +43,14 @@ module Demiurge
 end
 
 module Demiurge::DSL
-  # This is the Builder class for the World File DSL.
+
+  # ActionItemBuilder is the parent class of all Builder classes
+  # except the {Demiurge::DSL::TopLevelBuilder}. It's used for a block
+  # of the World File DSL.
+  #
+  # @since 0.0.1
   class ActionItemBuilder
+    # @return [StateItem] The item built by this builder
     attr_reader :built_item
 
     private
@@ -54,7 +60,19 @@ module Demiurge::DSL
     end
     public
 
+    # @return [Array<String>] Legal options to pass to {ActionItemBuilder#initialize}
     LEGAL_OPTIONS = [ "state", "type", "no_build" ]
+
+    # Initialize a DSL Builder block to configure some sort of ActionItem.
+    #
+    # @param name [String] The name to be registered with the Engine
+    # @param engine [Demiurge::Engine] The engine that will include this item
+    # @param options [Hash] Options for how the DSL block acts
+    # @option options [Hash] state The initial state Hash to create the item with
+    # @option options [String] type The item type to create
+    # @option options [Boolean] no_build If true, don't create and register a new StateItem with the Engine
+    # @return [void]
+    # @since 0.0.1
     def initialize(name, engine, options = {})
       check_options(options, LEGAL_OPTIONS)
       @name = name
@@ -70,73 +88,173 @@ module Demiurge::DSL
         @built_item = ::Demiurge::StateItem.from_name_type(@engine, options["type"], @name, @state)
         @engine.register_state_item(@built_item)
       end
+      nil
     end
 
+    # If the DSL block sets state on the Builder object, this allows
+    # it to get to the internal Hash object rather than a
+    # wrapper. This should only be used internally to the DSL, not by
+    # others.
+    #
+    # @see #state
+    # @return [Hash] The state Hash
+    # @api private
+    # @since 0.0.1
     def __state_internal
       @built_item.state
     end
 
+    # Get the state, or at least a wrapper object to it, for DSL usage.
+    #
+    # @return [Demiurge::ActionItemStateWrapper] The state Hash wrapper
+    # @since 0.0.1
     def state
       @wrapper ||= ::Demiurge::ActionItemStateWrapper.new(self)
     end
 
-    # This all happens at DSL builder time, so we can't directly
-    # register an action yet - the item doesn't exist in the engine.
-    # But we can make sure the registered block and settings don't
-    # conflict within the builder.
+    # Register an action with the Engine. Since StateItems are
+    # effectively disposable, we need somewhere outside of the
+    # StateItem itself to store its actions as Ruby code. The Engine
+    # is the place they are stored.
+    #
+    # @param action [Hash] The action hash to use as the internal action structure
+    # @api private
+    # @since 0.0.1
+    private
     def register_built_action(action)
       raise("Must specify a string 'name' to register_build_action! Only gave #{action.inspect}!") unless action["name"]
       check_options(action, ::Demiurge::ActionItem::ACTION_LEGAL_KEYS)
       @built_item.register_actions(action["name"] => action)
     end
+    public
 
+    # Perform the given action every so many ticks. This will set up
+    # the necessary state entries to cause the action to occur each
+    # time that many ticks pass.  The given action name is attached to
+    # the given block (if any.) The named action can be modified using
+    # define_action if you want to set extra settings like engine_code
+    # or busy for the action in question. If no block is given, you
+    # should use define_action to create the action in question, or it
+    # will have no definition and cause errors.
+    #
+    # @param action_name [String] The action name for this item to use repeatedly
+    # @param t [Integer] The number of ticks that pass between actions
+    # @yield [...] Called when the action is performed with any arguments supplied by the caller
+    # @yieldreturn [void]
+    # @return [void]
+    # @since 0.0.1
     def every_X_ticks(action_name, t, &block)
       raise("Must provide a positive number for how many ticks, not #{t.inspect}!") unless t.is_a?(Numeric) && t >= 0.0
       @built_item.state["everies"] ||= []
       @built_item.state["everies"] << { "action" => action_name, "every" => t, "counter" => 0 }
       @built_item.register_actions(action_name => { "name" => action_name, "block" => block })
+      nil
     end
 
+    # Set the position of the built object.
+    #
+    # @param pos [String] The new position string for this built object.
+    # @return [void]
+    # @since 0.0.1
     def position(pos)
       @built_item.state["position"] = pos
+      nil
     end
 
+    # Pass a block through that is intended for the display library to
+    # use later.  If no display library is used, this is a no-op.
+    #
+    # @yield [] The block will be called by the display library, in a display-library-specific context, or not at all
+    # @return [void]
+    # @since 0.0.1
     def display(&block)
       # Need to figure out how to pass this through to the Display
       # library.  By design, the simulation/state part of Demiurge
       # ignores this completely.
       @built_item.register_actions("$display" => { "name" => "$display", "block" => block })
+      nil
     end
 
-    # This catches notifications of the appropriate type and runs the corresponding action.
-    def on(event, action_name, options = {}, &block)
+    # The specified action will be called for notifications of the
+    # appropriate type.
+    # @todo Figure out timing of the subscription - right now it will use the item's location midway through parsing the DSL!
+    #
+    # @param event [String] The name of the notification to subscribe to
+    # @param action_name [String] The action name of the new action
+    # @param options [Hash] Additional specifications about what/how to subscribe
+    # @option options [String,:all] location The location name to subscribe for - defaults to this item's location
+    # @option options [String,:all] zone The zone name to subscribe for - defaults to this item's zone
+    # @option options [String,:all] actor The acting item name to subscribe for - defaults to any item
+    # @yield [Hash] Receives notification hashes when these notifications occur
+    # @return [void]
+    # @since 0.0.1
+    def on_notification(event, action_name, options = {}, &block)
       @built_item.state["on_handlers"] ||= {}
       @built_item.state["on_handlers"][event] = action_name
       register_built_action("name" => action_name, "block" => block)
 
       location = options[:location] || options["location"] || @built_item.location
-      zone = options[:zone] || options["zone"] || location.zone_name || @built_item.state["zone"]
-      item = options[:actor] || options["actor"] || options[:actor] || options["actor"] || :all
+      zone = options[:zone] || options["zone"] || location.zone_name || @built_item.zone_name
+      item = options[:actor] || options["actor"] || :all
 
       @engine.subscribe_to_notifications type: event, zone: zone, location: location, actor: item do |notification|
         # To keep this statedump-safe, need to look up the item again
         # every time. @built_item isn't guaranteed to last.
         @engine.item_by_name(@name).run_action(action_name, notification)
       end
+      nil
     end
 
-    def on_action(caught_action, action_to_run, options = {}, &block)
+    # "on" is an older name for "on_notification" and is deprecated.
+    # @deprecated
+    alias_method :on, :on_notification
+
+    # The specified action will be called for Intentions using the
+    # appropriate action. This is used to modify or cancel an
+    # Intention before it runs.
+    #
+    # @param caught_action [String] The action type of the Intention being caught, or "all" for all intentions
+    # @param action_to_run [String] The action name of the new intercepting action
+    # @yield [Intention] Receives the Intention when these Intentions occur
+    # @return [void]
+    # @since 0.0.1
+    def on_intention(caught_action, action_to_run, &block)
       @built_item.state["on_action_handlers"] ||= {}
       raise "Already have an on_action (offer) handler for action #{caught_action}! Failing!" if @built_item.state["on_action_handlers"][caught_action]
       @built_item.state["on_action_handlers"][caught_action] = action_to_run
       register_built_action("name" => action_to_run, "block" => block)
+      nil
     end
 
+    # "on_action" is an older name for "on_intention" and is deprecated.
+    # @deprecated
+    alias_method :on_action, :on_intention
+
+    # If you want to define an action for later calling, or to set
+    # options on an action that was defined as part of another
+    # handler, you can call define_action to make that happen.
+    #
+    # @example Make an every_X_ticks action also keep the agent busy and run as Engine code
+    # ```
+    # every_X_ticks("burp", 15) { engine.item_by_name("sooper sekrit").ruby_only_burp_action }
+    # define_action("burp", "engine_code" => true, "busy" => 7)
+    # ```
+    #
+    # @param action_name [String] The action name to declare or modify
+    # @param options [Hash] Options for this action
+    # @option options [Integer] busy How many ticks an agent should remain busy for after taking this action
+    # @option options [Boolean] engine_code If true, use the EngineBlockRunner instead of a normal runner for this code; usually a bad idea
+    # @option options [Array<String>] tags Tags that the action can be queried by later - useful for tagging player or agent actions, or admin-only actions
+    # @yield [...] Actions receive whatever arguments their later caller supplies
+    # @yieldreturn [void]
+    # @return [void]
+    # @since 0.0.1
     def define_action(action_name, options = {}, &block)
       legal_options = [ "busy", "engine_code", "tags" ]
       illegal_keys = options.keys - legal_options
       raise("Illegal keys #{illegal_keys.inspect} passed to define_action of #{action_name.inspect}!") unless illegal_keys.empty?;
       register_built_action({ "name" => action_name, "block" => block }.merge(options))
+      nil
     end
   end
 
