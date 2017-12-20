@@ -259,6 +259,8 @@ module Demiurge::DSL
   end
 
   # This is the top-level DSL Builder class, for parsing the top syntactic level of the World Files.
+  #
+  # @since 0.0.1
   class TopLevelBuilder
     # This is the private structure of type names that are registered with the Demiurge World File DSL
     @@types = {}
@@ -277,11 +279,20 @@ module Demiurge::DSL
     # Later, this may be a way to describe how important or transitory
     # state is - is it reset like a zone? Completely transient?
     # Cleared per reboot?
+    #
+    # @param item_name [String] The item name for scoping the state in the Engine
+    # @param options [Hash] Options about the InertStateItem
+    # @option options [String] zone The zone this InertStateItem considers itself to be in, defaults to "admin"
+    # @option options [Hash] state The initial state Hash
+    # @option options [String] type The object type to instantiate, if not InertStateItem
+    # @return [void]
+    # @since 0.0.1
     def inert(item_name, options = {})
       zone_name = options["zone"] || "admin"
       state = options["state"] || {}
       inert_item = ::Demiurge::StateItem.from_name_type(@engine, options["type"] || "InertStateItem", item_name, state.merge("zone" => zone_name))
       @engine.register_state_item(inert_item)
+      nil
     end
 
     # Start a new Zone block, using a ZoneBuilder.
