@@ -9,7 +9,7 @@ class IntentionQueueTest < Minitest::Test
   DSL_TEXT = <<-DSL
     zone "mage city", "type" => "TmxZone" do
       tmx_location "east end" do
-        manasource_tile_layout "test/magecity_cc0_lorestrome.tmx"
+        manasource_tile_layout "test/data/magecity_cc0_lorestrome.tmx"
       end
       agent "wanderer" do
         position "east end#10,10"

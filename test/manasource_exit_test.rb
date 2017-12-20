@@ -7,11 +7,11 @@ class ManaSourceExitTmxTest < Minitest::Test
   DSL_TEXT = <<-DSL
     zone "manasource exit test zone", "type" => "TmxZone" do
       tmx_location "room 1" do
-        manasource_tile_layout "test/exit_test_1.tmx"
+        manasource_tile_layout "test/data/exit_test_1.tmx"
         state.some_var = 7
       end
       tmx_location "room 2" do
-        manasource_tile_layout "test/exit_test_2.tmx"
+        manasource_tile_layout "test/data/exit_test_2.tmx"
         state.other_var = 7
       end
     end
