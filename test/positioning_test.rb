@@ -203,4 +203,28 @@ class PositioningTest < Minitest::Test
     end
     assert_equal 0, cancellations.size
   end
+
+  # Make sure that a queued intention in an agent does *not* happen
+  # when the agent is in a normal top-level zone, which shouldn't
+  # allow the agent to act.
+  def test_no_agent_tick_in_top_level_zones
+    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    agent = engine.item_by_name("MoveTester")
+    refute_nil agent
+
+    cancellations = []
+    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+      cancellations.push(n)
+    end
+    assert_equal 0, cancellations.size
+
+    # Either movement *or* a cancellation from the agent means that it
+    # got to set an intention. In either case, it acted when it
+    # shouldn't have.
+    agent.move_to_position("other test zone")  # Move into a top-level zone
+    agent.queue_action("move_to_position", "nontmx")
+    engine.advance_one_tick
+    assert_equal 0, cancellations.size
+    assert_equal "other test zone", agent.position
+  end
 end
