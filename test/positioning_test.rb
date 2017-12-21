@@ -3,7 +3,7 @@ require_relative 'test_helper'
 require "demiurge/dsl"
 require "demiurge/tmx"
 
-class PathfindingTest < Minitest::Test
+class PositioningTest < Minitest::Test
   DSL_TEXT = <<-DSL
     zone "pathfinder city", "type" => "TmxZone" do
       tmx_location "room_exits_ne" do
@@ -52,7 +52,7 @@ class PathfindingTest < Minitest::Test
   DSL
 
   def test_adjacent_positions
-    engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
+    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     loc = engine.item_by_name("east end")
     refute_nil loc
 
@@ -63,7 +63,7 @@ class PathfindingTest < Minitest::Test
   end
 
   def test_tmx_position_movement
-    engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
+    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
@@ -87,7 +87,7 @@ class PathfindingTest < Minitest::Test
   end
 
   def test_tmx_exit_movement
-    engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
+    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
@@ -106,7 +106,7 @@ class PathfindingTest < Minitest::Test
   end
 
   def test_tmx_blocked_movement
-    engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
+    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
@@ -125,7 +125,7 @@ class PathfindingTest < Minitest::Test
   end
 
   def test_tmx_and_room_movement
-    engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
+    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
