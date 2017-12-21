@@ -18,6 +18,10 @@ class PathfindingTest < Minitest::Test
         manasource_tile_layout "test/data/ms_room_exits_se.tmx"
         agent "MoveTester" do
           position "room_exits_se#3,3"
+
+          define_action("moveto") do |x, y|
+            move_to_instant "\#{item.location_name}#\#{x},\#{y}"
+          end
         end
       end
 
@@ -55,10 +59,20 @@ class PathfindingTest < Minitest::Test
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
+    #engine.subscribe_to_notifications do |n|
+    #  STDERR.puts "Notification: #{n.inspect}"
+    #end
     assert_equal "room_exits_se#3,3", agent.position
     assert_equal "room_exits_se", agent.location_name
     assert_equal "pathfinder city", agent.zone_name
     agent.move_to_position("room_exits_se#6,6")
+
+    agent.queue_action("moveto", 6, 7)
+    agent.queue_action("moveto", 6, 8)
+    engine.advance_one_tick
+    assert_equal "room_exits_se#6,7", agent.position
+    engine.advance_one_tick
+    assert_equal "room_exits_se#6,8", agent.position
   end
 
   #def test_tmx_exit_movement

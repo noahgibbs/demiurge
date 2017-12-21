@@ -158,6 +158,7 @@ module Demiurge
       begin
         block_runner.instance_exec(*args, &block)
       rescue
+        #STDERR.puts "#{$!.message}\n#{$!.backtrace.join("\n")}"
         raise ::Demiurge::Errors::BadScriptError.new("Script error of type #{$!.class} with message: #{$!.message}",
                                                      "runner type": block_runner_type.to_s, "action" => action_name);
       end
@@ -480,7 +481,8 @@ module Demiurge
                                   reason: @cancelled_reason,
                                   by: @cancelled_by,
                                   id: @intention_id,
-                                  intention_type: self.class.to_s
+                                  intention_type: self.class.to_s,
+                                  info: @cancelled_info,
                                 },
                                 type: "intention_cancelled",
                                 zone: @item.zone_name,
