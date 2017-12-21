@@ -59,9 +59,11 @@ class PathfindingTest < Minitest::Test
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
-    #engine.subscribe_to_notifications do |n|
-    #  STDERR.puts "Notification: #{n.inspect}"
-    #end
+    cancellations = []
+    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+      cancellations.push(n)
+    end
+    assert_equal 0, cancellations.size
     assert_equal "room_exits_se#3,3", agent.position
     assert_equal "room_exits_se", agent.location_name
     assert_equal "pathfinder city", agent.zone_name
@@ -73,11 +75,27 @@ class PathfindingTest < Minitest::Test
     assert_equal "room_exits_se#6,7", agent.position
     engine.advance_one_tick
     assert_equal "room_exits_se#6,8", agent.position
+    assert_equal 0, cancellations.size
   end
 
-  #def test_tmx_exit_movement
-  #  engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
-  #  agent = engine.item_by_name("MoveTester")
-  #  refute_nil agent
-  #end
+  def test_tmx_exit_movement
+    engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
+    agent = engine.item_by_name("MoveTester")
+    refute_nil agent
+
+    cancellations = []
+    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+      STDERR.puts "Notification: #{n.inspect}"
+      cancellations.push(n)
+    end
+    assert_equal 0, cancellations.size
+    assert_equal "room_exits_se#3,3", agent.position
+
+    # Go through the east exit
+    agent.queue_action("moveto", 18, 10)
+    engine.advance_one_tick
+    assert_equal 0, cancellations.size
+    assert_equal "room_exits_sw#2,10", agent.position
+  end
+
 end

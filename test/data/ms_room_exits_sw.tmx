@@ -66,7 +66,7 @@
 362,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,
 362,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,
 362,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,
-362,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,
 362,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,
 362,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,
 362,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,362,
@@ -81,21 +81,21 @@
  <objectgroup name="Objects">
   <object id="1" name="West exit" type="warp" x="32" y="320" width="32" height="32">
    <properties>
-    <property name="dest_map" value="ms_room_exit_se"/>
+    <property name="dest_map" value="ms_room_exits_se"/>
     <property name="dest_x" type="int" value="17"/>
     <property name="dest_y" type="int" value="10"/>
    </properties>
   </object>
   <object id="3" name="South exit 1" type="warp" x="256" y="576" width="32" height="32">
    <properties>
-    <property name="dest_map" value="ms_room_exit_nw"/>
+    <property name="dest_map" value="ms_room_exits_nw"/>
     <property name="dest_x" type="int" value="8"/>
     <property name="dest_y" type="int" value="2"/>
    </properties>
   </object>
   <object id="4" name="South exit 2" type="warp" x="288" y="576" width="32" height="32">
    <properties>
-    <property name="dest_map" value="ms_room_exit_se"/>
+    <property name="dest_map" value="ms_room_exits_se"/>
     <property name="dest_x" type="int" value="9"/>
     <property name="dest_y" type="int" value="2"/>
    </properties>

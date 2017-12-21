@@ -98,7 +98,9 @@ module Demiurge
         # zones.
         if location.is_a?(TmxLocation) && location.state["manasource_tile_layout"]
           location.tiles[:objects].select { |obj| obj[:type].downcase == "warp" }.each do |obj|
-            dest_location = contents.detect { |loc| obj[:properties] && loc.is_a?(TmxLocation) && loc.tiles[:tmx_name] == obj[:properties]["dest_map"] }
+            next unless obj[:properties]
+            dest_map_name = obj[:properties]["dest_map"]
+            dest_location = contents.detect { |loc| loc.is_a?(TmxLocation) && loc.tiles[:tmx_name] == dest_map_name }
             if dest_location
               dest_position = "#{dest_location.name}##{obj[:properties]["dest_x"]},#{obj[:properties]["dest_y"]}"
               src_x_coord = obj[:x] / location.tiles[:spritesheet][:tilewidth]
