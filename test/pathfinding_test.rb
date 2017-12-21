@@ -22,11 +22,19 @@ class PathfindingTest < Minitest::Test
           define_action("moveto") do |x, y|
             move_to_instant "\#{item.location_name}#\#{x},\#{y}"
           end
+
+          define_action("move_to_position") do |pos|
+            move_to_instant pos
+          end
         end
       end
 
       tmx_location "room_exits_sw" do
         manasource_tile_layout "test/data/ms_room_exits_sw.tmx"
+      end
+
+      location "nontmx" do
+        description "Yup, a lonely old-style room..."
       end
     end
 
@@ -85,7 +93,6 @@ class PathfindingTest < Minitest::Test
 
     cancellations = []
     engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
-      STDERR.puts "Notification: #{n.inspect}"
       cancellations.push(n)
     end
     assert_equal 0, cancellations.size
@@ -98,4 +105,52 @@ class PathfindingTest < Minitest::Test
     assert_equal "room_exits_sw#2,10", agent.position
   end
 
+  def test_tmx_blocked_movement
+    engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
+    agent = engine.item_by_name("MoveTester")
+    refute_nil agent
+
+    cancellations = []
+    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+      cancellations.push(n)
+    end
+    assert_equal 0, cancellations.size
+    assert_equal "room_exits_se#3,3", agent.position
+
+    # Go to an illegal position
+    agent.queue_action("moveto", 0, 3)
+    engine.advance_one_tick
+    assert_equal 1, cancellations.size
+    assert_equal "room_exits_se#3,3", agent.position
+  end
+
+  def test_tmx_and_room_movement
+    engine = Demiurge.engine_from_dsl_text(["Pathfinding DSL", DSL_TEXT])
+    agent = engine.item_by_name("MoveTester")
+    refute_nil agent
+
+    cancellations = []
+    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+      cancellations.push(n)
+    end
+    assert_equal 0, cancellations.size
+    assert_equal "room_exits_se#3,3", agent.position
+
+    # Move to a non-TMX room
+    agent.queue_action("move_to_position", "nontmx")
+    engine.advance_one_tick
+    assert_equal 0, cancellations.size
+    assert_equal "nontmx", agent.position
+
+    # Move back into TMX rooms
+    agent.queue_action("move_to_position", "room_exits_sw#7,4")
+    agent.queue_action("move_to_position", "room_exits_ne#9,8")
+    engine.advance_one_tick
+    assert_equal "room_exits_sw#7,4", agent.position
+    engine.advance_one_tick
+    assert_equal "room_exits_ne#9,8", agent.position
+    assert_equal 0, cancellations.size
+
+    assert_engine_sanity_check_contents(engine)
+  end
 end
