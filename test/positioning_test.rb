@@ -153,4 +153,54 @@ class PositioningTest < Minitest::Test
 
     assert_engine_sanity_check_contents(engine)
   end
+
+  def test_various_location_transitions
+    # This list of positions will test a number of transitions:
+    queueable_position_list = [
+      # Implicit start for agent: room_exits_se#3,3
+      "nontmx",                        # TMX to same-zone non-TMX
+      "room_exits_nw#11,11",           # Non-TMX to same-zone TMX
+      "east end#4,4",                  # TMX to other-zone TMX
+      "nontmx",                        # TMX to other-zone non-TMX
+      "empty room",                    # Non-TMX to other-zone non-TMX
+      "pathfinder city",               # Non-TMX to other top-level Zone (not a sub-location) and have to stop...
+    ]
+    # If you're moving from top-level zones, the agent won't receive a tick so it can't use a queueable action.
+    nonqueueable_position_list = [
+      # Implicit start: pathfinder city (last entry in queueable_position_list)
+      "other test zone",               # One top-level zone to another top-level Zone
+      "room_exits_se#7,7",             # Top-level zone to other-zone TMX
+      "other test zone", "nontmx",     # Top-level zone to other-zone non-TMX
+      "other test zone", "east end#4,4",    # Top-level zone to same-zone TMX
+      "other test zone", "empty room",      # Top-level zone to same-zone non-TMX
+    ]
+
+    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    agent = engine.item_by_name("MoveTester")
+    refute_nil agent
+    assert_equal "room_exits_se#3,3", agent.position
+
+    cancellations = []
+    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+      cancellations.push(n)
+    end
+    assert_equal 0, cancellations.size
+
+    queueable_position_list.each do |position|
+      last_position = agent.position
+      agent.queue_action("move_to_position", position)
+      engine.advance_one_tick
+      assert_engine_sanity_check_contents(engine)
+      assert_equal 0, cancellations.size
+      assert position == agent.position, "Got wrong agent position (#{agent.position.inspect}) when transitioning from #{last_position.inspect} to #{position.inspect}... But didn't see a cancellation!"
+    end
+
+    nonqueueable_position_list.each do |position|
+      last_position = agent.position
+      agent.run_action("move_to_position", position)  # Agents don't get a tick in top-level zones, so run the action directly
+      assert_engine_sanity_check_contents(engine)
+      assert position == agent.position, "Got wrong agent position (#{agent.position.inspect}) when transitioning from #{last_position.inspect} to #{position.inspect} using non-queue transitions..."
+    end
+    assert_equal 0, cancellations.size
+  end
 end

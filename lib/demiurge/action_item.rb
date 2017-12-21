@@ -356,7 +356,7 @@ module Demiurge
       loc_name, next_x, next_y = TmxLocation.position_to_loc_coords(position)
       location = @item.engine.item_by_name(loc_name)
       if !location
-        cancel_intention_if_present "That location doesn't exist.", "position" => position, "mover" => @item.name
+        cancel_intention_if_present "Location #{loc_name.inspect} doesn't exist.", "position" => position, "mover" => @item.name
       elsif location.can_accomodate_agent?(@item, position)
         @item.move_to_position(position)
       else
