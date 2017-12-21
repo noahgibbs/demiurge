@@ -136,7 +136,7 @@ module Demiurge
     end
 
     # When an item has an {Demiurge::Intention}, that Intention is
-    # offered in order to be potentially modified or canceled by
+    # offered in order to be potentially modified or cancelled by
     # environmental effects. For instance, a room might have a muddy
     # floor that slows walking or prevents running, or an icy floor
     # that causes sliding around. That offer is normally coordinated

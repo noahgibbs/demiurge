@@ -737,7 +737,7 @@ module Demiurge
     # This cancels the intention, and gives the reason for the
     # cancellation.
     #
-    # @param reason [String] A human-readable reason this action was canceled
+    # @param reason [String] A human-readable reason this action was cancelled
     # @param info [Hash] A String-keyed Hash of additional information about the cancellation
     # @return [void]
     # @since 0.0.1
@@ -751,11 +751,11 @@ module Demiurge
     end
 
     # Most intentions will send a cancellation notice when they are
-    # canceled. By default, this will include who canceled the
+    # cancelled. By default, this will include who cancelled the
     # intention and why.  If the cancellation info Hash includes
     # "silent" with a true value, by default no notification will be
     # sent out. This is to avoid an avalache of notifications for
-    # common canceled intentions that happen nearly every
+    # common cancelled intentions that happen nearly every
     # tick. {#cancel_notification} can be overridden by child classes
     # for more specific cancel notifications.
     #
@@ -777,9 +777,9 @@ module Demiurge
                                 type: "intention_cancelled", zone: "admin", location: nil, actor: nil)
     end
 
-    # This returns whether this intention has been canceled.
+    # This returns whether this intention has been cancelled.
     #
-    # @return [Boolean] Whether the notification is canceled.
+    # @return [Boolean] Whether the notification is cancelled.
     def cancelled?
       @cancelled
     end

@@ -446,8 +446,9 @@ module Demiurge
       true
     end
 
-    # Make an offer of this ActionIntention and see if it is canceled or modified.
-    # By default, offers are coordinated through the item's location.
+    # Make an offer of this ActionIntention and see if it is cancelled
+    # or modified.  By default, offers are coordinated through the
+    # item's location.
     #
     # @param intention_id [Integer] The intention ID assigned to this Intention
     # return [void]
@@ -465,9 +466,9 @@ module Demiurge
       @item.run_action(@action_name, *@action_args, current_intention: self)
     end
 
-    # Send out a notification to indicate this ActionIntention was canceled.
-    # If "silent" is set to true in the cancellation info, no notification
-    # will be sent.
+    # Send out a notification to indicate this ActionIntention was
+    # cancelled.  If "silent" is set to true in the cancellation info,
+    # no notification will be sent.
     #
     # @return [void]
     # @since 0.0.1
