@@ -97,7 +97,7 @@ module Demiurge
         # boundaries to avoid unexpected behavior in other folks'
         # zones.
         if location.is_a?(TmxLocation) && location.state["manasource_tile_layout"]
-          location.tiles[:objects].select { |obj| obj[:type] == "warp" }.each do |obj|
+          location.tiles[:objects].select { |obj| obj[:type].downcase == "warp" }.each do |obj|
             dest_location = contents.detect { |loc| obj[:properties] && loc.is_a?(TmxLocation) && loc.tiles[:tmx_name] == obj[:properties]["dest_map"] }
             if dest_location
               dest_position = "#{dest_location.name}##{obj[:properties]["dest_x"]},#{obj[:properties]["dest_y"]}"
@@ -342,6 +342,7 @@ module Demiurge
     objs[:heights] = heights_layer
 
     fringe_index = stack_layers.index { |l| l[:name].downcase == "fringe" }
+    raise ::Demiurge::Errors::TmxFormatError.new("No Fringe layer found in ManaSource TMX File #{filename.inspect}!", "filename" => filename) unless fringe_index
     stack_layers.each_with_index do |layer, index|
       # Assign a Z value based on layer depth, with fringe = 0 as a special case
       layer["z"] = (index - fringe_index) * 10.0

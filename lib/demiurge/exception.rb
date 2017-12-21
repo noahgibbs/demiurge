@@ -55,6 +55,14 @@ module Demiurge::Errors
   # @since 0.0.1
   class BadScriptError < ::Demiurge::Errors::Exception; end
 
+  # An AssetError means that there's a problem in the format of a TMX
+  # file, image, JSON file or other game asset. It is unlikely to be
+  # retryable, but it isn't normally the result of bad admin-written
+  # code.
+  #
+  # @since 0.0.1
+  class AssetError < ::Demiurge::Errors::Exception; end
+
   # This exception occurs when trying to use an action that doesn't
   # exist, such as from {Demiurge::ActionItem#run_action} or
   # {Demiurge::Agent#queue_action}.
@@ -98,4 +106,11 @@ module Demiurge::Errors
   #
   # @since 0.0.1
   class TooManyNotificationLoopsError < BadScriptError; end
+
+  # This occurs if there's a problem in the TMX file or in some kind
+  # of file convention (such as using "Fringe" for a hardcoded layer)
+  # in a specific subformat like ManaSource.
+  #
+  # @since 0.0.1
+  class TmxFormatError < AssetError; end
 end
