@@ -262,7 +262,7 @@ module Demiurge
     # Access the item's state via a state wrapper. This only allows
     # setting new fields or reading fields that already exist.
     #
-    # @return [Demiurge::ActionItemStateWrapper] The state wrapper to control access
+    # @return [Demiurge::ActionItemInternal::ActionItemStateWrapper] The state wrapper to control access
     # @since 0.0.1
     def state
       @state_wrapper ||= ActionItemInternal::ActionItemStateWrapper.new(@item)

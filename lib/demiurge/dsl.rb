@@ -1,5 +1,76 @@
 require_relative "../demiurge"
 
+class Demiurge::Engine
+  # This method loads new World File code into an existing engine.  It
+  # should be passed a list of filenames, normally roughly the same
+  # list that was passed to Demiurge::DSL.engine_from_dsl_files to
+  # create the engine initially. Where the files and world objects are
+  # essentially the same, this should reload any code changes into the
+  # engine. Where they are different, the method will try to determine
+  # the best match between the new and old state, but may fail at
+  # doing so.
+  #
+  # Ordinarily, this method should be called on a fully-configured,
+  # fully-initialized engine with its full state loaded, in between
+  # ticks.
+  #
+  # When in doubt, it's better to save state and reload the engine
+  # from nothing. This gives far better opportunities for a human to
+  # determine what changes have occurred and manually fix any errors.
+  # A game's current state is a complex thing and a computer simply
+  # cannot correctly determine all possible changes to it in a useful
+  # way.
+  #
+  # @see file:RELOADING.md
+  # @see Demiurge::DSL.engine_from_dsl_files
+  # @see Demiurge::DSL.engine_from_dsl_text
+  # @see #reload_from_dsl_text
+  # @see #load_state_from_dump
+  # @param filenames [Array<String>] An array of filenames, suitable for calling File.read on
+  # @param options [Hash] An optional hash of options for modifying the behavior of the reload
+  # @return [void] A configured Engine
+  # @since 0.0.1
+  def reload_from_dsl_files(*filenames, options: {})
+  end
+
+  # This method loads new World File code into an existing engine.  It
+  # should be passed a list of "specs", normally roughly the same list
+  # that was passed to Demiurge::DSL.engine_from_dsl_files to create
+  # the engine initially. A "spec" is either a single string of World
+  # File DSL code, or a two-element array of the form: ["label",
+  # "code"]. Each is a string. "Code" is World File DSL Ruby code,
+  # while "label" is the name that will be used in stack traces.
+  #
+  # Where the files and world objects are
+  # essentially the same, this should reload any code changes into the
+  # engine. Where they are different, the method will try to determine
+  # the best match between the new and old state, but may fail at
+  # doing so.
+  #
+  # Ordinarily, this method should be called on a fully-configured,
+  # fully-initialized engine with its full state loaded, in between
+  # ticks.
+  #
+  # When in doubt, it's better to save state and reload the engine
+  # from nothing. This gives far better opportunities for a human to
+  # determine what changes have occurred and manually fix any errors.
+  # A game's current state is a complex thing and a computer simply
+  # cannot correctly determine all possible changes to it in a useful
+  # way.
+  #
+  # @see file:RELOADING.md
+  # @see Demiurge::DSL.engine_from_dsl_files
+  # @see Demiurge::DSL.engine_from_dsl_text
+  # @see #reload_from_dsl_files
+  # @see #load_state_from_dump
+  # @param specs [Array<String>,Array<Array<String>>] An array of specs, see above
+  # @param options [Hash] An optional hash of options for modifying the behavior of the reload
+  # @return [void] A configured Engine
+  # @since 0.0.1
+  def reload_from_dsl_text(*specs, options: {})
+  end
+end
+
 # This module contains the Builder classes that parse the World File DSL.
 #
 # @since 0.0.1
@@ -10,6 +81,9 @@ module Demiurge::DSL
   # finished_init. If the Engine should load from an existing
   # state-dump, that can be accomplished via load_state_from_dump.
   #
+  # @see file:RELOADING.md
+  # @see Demiurge::Engine#load_state_from_dump
+  # @see Demiurge::Engine#reload_from_dsl_files
   # @param filenames [Array<String>] An array of filenames, suitable for calling File.read on
   # @return [Demiurge::Engine] A configured Engine
   # @since 0.0.1
@@ -22,6 +96,9 @@ module Demiurge::DSL
   # or name/string pairs. If a pair is supplied, the name gives the
   # origin of the text for error messages.
   #
+  # @see file:RELOADING.md
+  # @see Demiurge::Engine#load_state_from_dump
+  # @see Demiurge::Engine#reload_from_dsl_text
   # @param specs [Array<String>, Array<Array<String>>] Either an array of chunks of DSL text, or an Array of two-element Arrays. Each two-element Array is a String name followed by a String of DSL text
   # @return [Demiurge::Engine] A configured Engine
   # @since 0.0.1

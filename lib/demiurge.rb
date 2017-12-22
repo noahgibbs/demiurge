@@ -439,8 +439,8 @@ module Demiurge
     #
     # @see Demiurge::DSL.engine_from_dsl_files
     # @see Demiurge::DSL.engine_from_dsl_text
-    # @see Demiurge::DSL.reload_from_dsl_files
-    # @see Demiurge::DSL.reload_from_dsl_text
+    # @see Demiurge::Engine#reload_from_dsl_files
+    # @see Demiurge::Engine#reload_from_dsl_text
     # @param arr [Array] {Demiurge::StateItem} structured state in the form of Ruby objects
     # @return [void]
     # @since 0.0.1
