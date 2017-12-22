@@ -99,7 +99,7 @@ class ExceptionsTest < Minitest::Test
     engine = Demiurge::DSL.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
 
     assert_raises(Demiurge::Errors::NoSuchAgentError) do
-      Demiurge::AgentActionIntention.new "no such agent", engine
+      Demiurge::AgentInternal::AgentActionIntention.new "no such agent", engine
     end
   end
 

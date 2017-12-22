@@ -23,7 +23,7 @@ module Demiurge
 
     def finished_init
       super
-      @agent_maintenance = AgentMaintenanceIntention.new(engine, @name)
+      @agent_maintenance = AgentInternal::AgentMaintenanceIntention.new(engine, @name)
       state["busy"] ||= 0 # By default, start out idle.
     end
 
@@ -68,23 +68,51 @@ module Demiurge
                                   type: "move_to", zone: self.zone_name, location: self.location_name, actor: @name)
     end
 
+    # Calculate the agent's intentions for the following tick. These
+    # Intentions can potentially trigger other Intentions.
+    #
+    # @return [Array<Intention>] The Intentions for the (first part of the) following tick.
+    # @since 0.0.1
     def intentions_for_next_step
-      agent_action = AgentActionIntention.new(@name, engine)
+      agent_action = AgentInternal::AgentActionIntention.new(@name, engine)
       super + [@agent_maintenance, agent_action]
     end
 
+    # Queue an action to be run after previous actions are complete,
+    # and when the agent is no longer busy from taking them.
+    #
+    # @param action_name [String] The name of the action to take when possible
+    # @param args [Array] Additional arguments to pass to the action's code block
+    # @return [void]
+    # @since 0.0.1
     def queue_action(action_name, *args)
       raise ::Demiurge::Errors::NoSuchActionError.new("Not an action: #{action_name.inspect}!", "action_name" => action_name) unless get_action(action_name)
       state["queued_actions"].push([action_name, args, state["queue_number"]])
       state["queue_number"] += 1
+      nil
     end
 
+    # Any queued actions waiting to occur will be discarded.
+    #
+    # @return [void]
+    # @since 0.0.1
     def clear_intention_queue
       state.delete "queued_actions"
+      nil
     end
   end
 
-  class AgentMaintenanceIntention < Intention
+  # Code objects internal to the Agent implementation
+  # @api private
+  module AgentInternal; end
+
+  # The AgentMaintenanceIntention reduces the level of "busy"-ness of
+  # the agent on each tick.
+  # @todo Merge this with the AgentActionIntention used for taking queued actions
+  #
+  # @api private
+  class AgentInternal::AgentMaintenanceIntention < Intention
+    # Constructor. Takes an engine and agent name.
     def initialize(engine, name)
       @name = name
       super(engine)
@@ -95,29 +123,35 @@ module Demiurge
     def offer(intention_id)
     end
 
+    # An AgentMaintenanceIntention is always considered to be allowed.
     def allowed?
       true
     end
 
+    # Reduce the amount of busy-ness.
     def apply
       agent = @engine.item_by_name(@name)
       agent.state["busy"] -= 1 if agent.state["busy"] > 0
     end
   end
 
-  class AgentActionIntention < ActionIntention
+  # An AgentActionIntention is how the agent takes queued actions each
+  # tick.
+  #
+  # @api private
+  class AgentInternal::AgentActionIntention < ActionIntention
+    # @return [StateItem] The agent to whom this Intention applies
     attr_reader :agent
+    # @return [String] The queued action name this Intention will next take
     attr_reader :action_name
 
+    # Constructor. Takes an agent name and an engine
     def initialize(name, engine)
       @name = name
       @engine = engine
       @agent = @engine.item_by_name(@name)
       raise ::Demiurge::Errors::NoSuchAgentError.new("No such agent as #{name.inspect} found in AgentActionIntention!", "agent" => @name) unless @agent
       super(engine, name, "")
-    end
-
-    def finished_init
     end
 
     # An action being pulled from the action queue is offered normally.
@@ -138,6 +172,7 @@ module Demiurge
       super(intention_id)
     end
 
+    # This action is allowed if the agent is not busy, or will become not-busy soon
     def allowed?
       # If the agent's busy state will clear this turn, this action could happen.
       return false if @agent.state["busy"] > 1
@@ -154,6 +189,7 @@ module Demiurge
       true
     end
 
+    # If the agent can do so, take the action in question.
     def apply
       unless agent.state["busy"] > 0 || agent.state["queued_actions"].empty?
         # Pull the first entry off the action queue
@@ -171,14 +207,18 @@ module Demiurge
     end
   end
 
-  # This agent will wander around. A simple way to make a decorative mobile.
+  # This agent will wander around. A simple way to make a decorative
+  # mobile.  Do we want this longer term, or should it be merged into
+  # the normal agent?
   class WanderingAgent < Agent
+    # Constructor
     def initialize(name, engine, state)
       super
-      @wander_intention = WanderIntention.new(engine, name)
+      @wander_intention = AgentInternal::WanderIntention.new(engine, name)
       state["wander_counter"] ||= 0
     end
 
+    # If we're in a room but don't know where, pick a legal location.
     def finished_init
       super
       unless state["position"] && state["position"]["#"]
@@ -189,18 +229,23 @@ module Demiurge
       end
     end
 
+    # Get intentions for the next upcoming tick
     def intentions_for_next_step
       super + [@wander_intention]
     end
   end
 
   # This is a simple Wandering agent for use with TmxLocations and similar grid-based maps.
-  class WanderIntention < ActionIntention
+  #
+  # @api private
+  class AgentInternal::WanderIntention < ActionIntention
+    # Constructor
     def initialize(engine, name, *args)
       @name = name
       super(engine, name, "", *args)
     end
 
+    # Always allowed
     def allowed?
       true
     end
@@ -211,6 +256,7 @@ module Demiurge
     def offer(intention_id)
     end
 
+    # Actually wander to an adjacent position, chosen randomly
     def apply
       agent = @engine.item_by_name(@name)
       agent.state["wander_counter"] += 1

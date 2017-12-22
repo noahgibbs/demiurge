@@ -68,17 +68,17 @@ class IntentionQueueTest < Minitest::Test
     agent = engine.item_by_name("standing still")
     cancels = []
     engine.subscribe_to_notifications(type: "intention_cancelled") do |notification|
-      cancels.push([ notification["reason"], notification["intention_type"] ])
+      cancels.push([ notification["reason"], notification["intention_type"].split("::")[-1] ])
     end
 
     engine.flush_notifications
     assert_equal [], cancels
     agent.queue_action("maybe move")
     engine.advance_one_tick
-    assert_equal [ ["Nope, don't feel like it.", "Demiurge::AgentActionIntention" ] ], cancels
+    assert_equal [ ["Nope, don't feel like it.", "AgentActionIntention" ] ], cancels
     agent.run_action("get inspired")
-    assert_equal [ ["Nope, don't feel like it.", "Demiurge::AgentActionIntention" ] ], cancels
+    assert_equal [ ["Nope, don't feel like it.", "AgentActionIntention" ] ], cancels
     agent.run_action("maybe move")
-    assert_equal [ ["Nope, don't feel like it.", "Demiurge::AgentActionIntention" ] ], cancels
+    assert_equal [ ["Nope, don't feel like it.", "AgentActionIntention" ] ], cancels
   end
 end
