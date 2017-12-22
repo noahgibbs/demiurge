@@ -36,7 +36,7 @@ class SimpleDslTest < Minitest::Test
   GOBLIN_DSL
 
   def test_trivial_dsl_actions
-    engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
     first_cave_item = engine.item_by_name("first moss cave")
     refute_nil first_cave_item
     second_cave_item = engine.item_by_name("second moss cave")
@@ -69,7 +69,7 @@ class SimpleDslTest < Minitest::Test
   end
 
   def test_dsl_type_specs
-    engine = Demiurge.engine_from_dsl_text(["Goblin DSL", <<-DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Goblin DSL", <<-DSL_TEXT])
 zone "first zone", "type" => "ZoneSubtype" do
 end
     DSL_TEXT
@@ -78,7 +78,7 @@ end
   end
 
   def test_item_unregister
-    engine = Demiurge.engine_from_dsl_text(["Simple DSL Test", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Simple DSL Test", DSL_TEXT])
     agent = engine.item_by_name("wanderer")
     refute_nil agent
 

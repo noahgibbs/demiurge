@@ -44,7 +44,7 @@ class IntentionQueueTest < Minitest::Test
   DSL
 
   def test_stop_on_busy
-    engine = Demiurge.engine_from_dsl_text(["Mage City DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Mage City DSL", DSL_TEXT])
     loc = engine.item_by_name("east end")
     refute_nil loc
     agent = engine.item_by_name("wanderer")
@@ -64,7 +64,7 @@ class IntentionQueueTest < Minitest::Test
   end
 
   def test_cancel_intention
-    engine = Demiurge.engine_from_dsl_text(["Cancel Intention DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Cancel Intention DSL", DSL_TEXT])
     agent = engine.item_by_name("standing still")
     cancels = []
     engine.subscribe_to_notifications(type: "intention_cancelled") do |notification|

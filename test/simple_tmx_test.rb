@@ -14,7 +14,7 @@ class SimpleTmxTest < Minitest::Test
   DSL
 
   def test_dsl_tmx_support
-    engine = Demiurge.engine_from_dsl_text(["Mage City DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Mage City DSL", DSL_TEXT])
     loc = engine.item_by_name("east end")
     refute_nil loc
     x, y = loc.tmx_object_coords_by_name("waypoint 1")

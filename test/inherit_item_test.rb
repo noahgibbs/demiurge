@@ -30,7 +30,7 @@ class CopyItemTest < Minitest::Test
   # as a fallback. So it could still basically be prototype
   # inheritance.
   def test_simple_item_copy
-    engine = Demiurge.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
     first_cave_item = engine.item_by_name("first moss cave")
     refute_nil first_cave_item
     zone = engine.item_by_name("moss caves")

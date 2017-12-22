@@ -64,7 +64,7 @@ class StateRestoreTest < Minitest::Test
   DSL
 
   def test_dsl_actions_after_state_restore
-    engine = Demiurge.engine_from_dsl_text(["State Restore DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["State Restore DSL", DSL_TEXT])
     first_cave_item = engine.item_by_name("first moss cave")
     refute_nil first_cave_item
     second_cave_item = engine.item_by_name("second moss cave")
@@ -113,7 +113,7 @@ class StateRestoreTest < Minitest::Test
   end
 
   def test_dsl_actions_with_middle_state_restore
-    engine = Demiurge.engine_from_dsl_text(["State Restore DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["State Restore DSL", DSL_TEXT])
     first_cave_item = engine.item_by_name("first moss cave")
     refute_nil first_cave_item
     second_cave_item = engine.item_by_name("second moss cave")
@@ -142,7 +142,7 @@ class StateRestoreTest < Minitest::Test
   end
 
   def test_intentions_and_notifications_across_state_restore
-    engine = Demiurge.engine_from_dsl_text(["State Restore DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["State Restore DSL", DSL_TEXT])
     disco_cave = engine.item_by_name("second moss cave")
     bandit = engine.item_by_name("disco bandit")
 

@@ -18,7 +18,7 @@ class ManaSourceExitTmxTest < Minitest::Test
   DSL
 
   def test_tmx_manasource_exit_support
-    engine = Demiurge.engine_from_dsl_text(["ManaSource Exit Zone DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["ManaSource Exit Zone DSL", DSL_TEXT])
     loc1 = engine.item_by_name("room 1")
     refute_nil loc1
     loc2 = engine.item_by_name("room 2")

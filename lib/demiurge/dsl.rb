@@ -1,6 +1,9 @@
 require_relative "../demiurge"
 
-module Demiurge
+# This module contains the Builder classes that parse the World File DSL.
+#
+# @since 0.0.1
+module Demiurge::DSL
   # This is a primary method for creating a new Demiurge Engine. It
   # should be passed a list of filenames to load World File DSL
   # from. It will return a fully-configured Engine which has called
@@ -40,12 +43,6 @@ module Demiurge
 
     builder.built_engine
   end
-end
-
-# This module contains the Builder classes that parse the World File DSL.
-#
-# @since 0.0.1
-module Demiurge::DSL
 
   # ActionItemBuilder is the parent class of all Builder classes
   # except the {Demiurge::DSL::TopLevelBuilder}. It's used for a block

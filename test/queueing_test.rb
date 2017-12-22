@@ -50,7 +50,7 @@ class QueueingTest < Minitest::Test
   DSL
 
   def test_notification_queueing
-    engine = Demiurge.engine_from_dsl_text(["Queueing DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Queueing DSL", DSL_TEXT])
 
     loc_item = engine.item_by_name("clifftop")
 
@@ -74,7 +74,7 @@ class QueueingTest < Minitest::Test
   end
 
   def test_intention_queueing
-    engine = Demiurge.engine_from_dsl_text(["Queueing DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Queueing DSL", DSL_TEXT])
 
     loc_item = engine.item_by_name("clifftop")
     guy_item = engine.item_by_name("guy on fire")
@@ -92,7 +92,7 @@ class QueueingTest < Minitest::Test
   end
 
   def test_intention_queue_and_offers
-    engine = Demiurge.engine_from_dsl_text(["Queueing DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Queueing DSL", DSL_TEXT])
 
     loc_item = engine.item_by_name("clifftop")
     guy_item = engine.item_by_name("guy on fire")

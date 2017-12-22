@@ -19,7 +19,7 @@ class NotificationTest < Minitest::Test
     end
   DSL
   def test_unsubscribe
-    engine = Demiurge.engine_from_dsl_text(["Subscription Test DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Subscription Test DSL", DSL_TEXT])
     loc = engine.item_by_name("topzone")
     refute_nil loc
 
@@ -43,7 +43,7 @@ class NotificationTest < Minitest::Test
   end
 
   def test_basic_subscribe
-    engine = Demiurge.engine_from_dsl_text(["Subscription Test DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Subscription Test DSL", DSL_TEXT])
     loc = engine.item_by_name("one")
     refute_nil loc
 
@@ -61,7 +61,7 @@ class NotificationTest < Minitest::Test
   end
 
   def test_modified_subscribe
-    engine = Demiurge.engine_from_dsl_text(["Subscription Test DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Subscription Test DSL", DSL_TEXT])
     loc_one = engine.item_by_name("one")
     refute_nil loc_one
     loc_other_one = engine.item_by_name("other one")

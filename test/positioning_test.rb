@@ -52,7 +52,7 @@ class PositioningTest < Minitest::Test
   DSL
 
   def test_adjacent_positions
-    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     loc = engine.item_by_name("east end")
     refute_nil loc
 
@@ -63,7 +63,7 @@ class PositioningTest < Minitest::Test
   end
 
   def test_tmx_position_movement
-    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
@@ -87,7 +87,7 @@ class PositioningTest < Minitest::Test
   end
 
   def test_tmx_exit_movement
-    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
@@ -106,7 +106,7 @@ class PositioningTest < Minitest::Test
   end
 
   def test_tmx_blocked_movement
-    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
@@ -125,7 +125,7 @@ class PositioningTest < Minitest::Test
   end
 
   def test_tmx_and_room_movement
-    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 
@@ -175,7 +175,7 @@ class PositioningTest < Minitest::Test
       "other test zone", "empty room",      # Top-level zone to same-zone non-TMX
     ]
 
-    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
     assert_equal "room_exits_se#3,3", agent.position
@@ -208,7 +208,7 @@ class PositioningTest < Minitest::Test
   # when the agent is in a normal top-level zone, which shouldn't
   # allow the agent to act.
   def test_no_agent_tick_in_top_level_zones
-    engine = Demiurge.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Positioning DSL", DSL_TEXT])
     agent = engine.item_by_name("MoveTester")
     refute_nil agent
 

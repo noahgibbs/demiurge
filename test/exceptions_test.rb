@@ -45,7 +45,7 @@ class ExceptionsTest < Minitest::Test
   ERRORS_DSL
 
   def test_too_many_intention_loops
-    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
 
     agent_item = engine.item_by_name("guy on fire")
 
@@ -57,7 +57,7 @@ class ExceptionsTest < Minitest::Test
   end
 
   def test_too_many_notification_loops
-    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
 
     agent_item = engine.item_by_name("guy on fire")
 
@@ -69,7 +69,7 @@ class ExceptionsTest < Minitest::Test
   end
 
   def test_no_such_action
-    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
 
     agent_item = engine.item_by_name("guy on fire")
 
@@ -96,7 +96,7 @@ class ExceptionsTest < Minitest::Test
   end
 
   def test_no_such_agent
-    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
 
     assert_raises(Demiurge::Errors::NoSuchAgentError) do
       Demiurge::AgentActionIntention.new "no such agent", engine
@@ -104,7 +104,7 @@ class ExceptionsTest < Minitest::Test
   end
 
   def test_no_such_state_key
-    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
 
     agent_item = engine.item_by_name("guy on fire")
 
@@ -117,7 +117,7 @@ class ExceptionsTest < Minitest::Test
   end
 
   def test_no_current_intention
-    engine = Demiurge.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
 
     agent_item = engine.item_by_name("guy on fire")
 

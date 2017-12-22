@@ -56,7 +56,7 @@ class DslTest < Minitest::Test
   FIRE_DSL
 
   def test_action_tags
-    engine = Demiurge.engine_from_dsl_text(["DSL-Test Sample", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["DSL-Test Sample", DSL_TEXT])
     loc_item = engine.item_by_name("flaming cave")
     assert_equal [ "fake_action2", "mem_statedump" ], loc_item.get_actions_with_tags("admin").map { |a| a["name"] }.sort
     assert_equal [ "fake_action1", "mem_statedump" ], loc_item.get_actions_with_tags(["player_action"]).map { |a| a["name"] }.sort
@@ -64,7 +64,7 @@ class DslTest < Minitest::Test
   end
 
   def test_more_dsl_actions
-    engine = Demiurge.engine_from_dsl_text(["DSL-Test Sample", DSL_TEXT])
+    engine = Demiurge::DSL.engine_from_dsl_text(["DSL-Test Sample", DSL_TEXT])
 
     settings_item = engine.item_by_name("config_settings")
     refute_nil settings_item
