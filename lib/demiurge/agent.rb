@@ -139,7 +139,7 @@ module Demiurge
   # tick.
   #
   # @api private
-  class AgentInternal::AgentActionIntention < ActionIntention
+  class AgentInternal::AgentActionIntention < ActionItemInternal::ActionIntention
     # @return [StateItem] The agent to whom this Intention applies
     attr_reader :agent
     # @return [String] The queued action name this Intention will next take
@@ -238,7 +238,7 @@ module Demiurge
   # This is a simple Wandering agent for use with TmxLocations and similar grid-based maps.
   #
   # @api private
-  class AgentInternal::WanderIntention < ActionIntention
+  class AgentInternal::WanderIntention < ActionItemInternal::ActionIntention
     # Constructor
     def initialize(engine, name, *args)
       @name = name

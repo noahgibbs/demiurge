@@ -106,10 +106,10 @@ module Demiurge::DSL
 
     # Get the state, or at least a wrapper object to it, for DSL usage.
     #
-    # @return [Demiurge::ActionItemStateWrapper] The state Hash wrapper
+    # @return [Demiurge::ActionItemInternal::ActionItemStateWrapper] The state Hash wrapper
     # @since 0.0.1
     def state
-      @wrapper ||= ::Demiurge::ActionItemStateWrapper.new(self)
+      @wrapper ||= ::Demiurge::ActionItemInternal::ActionItemStateWrapper.new(self)
     end
 
     # Register an action with the Engine. Since StateItems are

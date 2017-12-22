@@ -14,7 +14,7 @@ module Demiurge
     # @since 0.0.1
     def initialize(name, engine, state)
       super # Set @name and @engine and @state
-      @every_x_ticks_intention = EveryXTicksIntention.new(engine, name)
+      @every_x_ticks_intention = ActionItemInternal::EveryXTicksIntention.new(engine, name)
       nil
     end
 
@@ -145,12 +145,12 @@ module Demiurge
 
       runner_constructor_args = {}
       if action["engine_code"]
-        block_runner_type = EngineBlockRunner
+        block_runner_type = ActionItemInternal::EngineBlockRunner
       elsif self.agent?
-        block_runner_type = AgentBlockRunner
+        block_runner_type = ActionItemInternal::AgentBlockRunner
         runner_constructor_args[:current_intention] = current_intention
       else
-        block_runner_type = ActionItemBlockRunner
+        block_runner_type = ActionItemInternal::ActionItemBlockRunner
         runner_constructor_args[:current_intention] = current_intention
       end
       # TODO: can we save block runners between actions?
@@ -199,13 +199,20 @@ module Demiurge
     end
   end
 
+  # This module is for Intentions, BlockRunners and whatnot that are
+  # internal implementation details of ActionItem.
+  #
+  # @api private
+  # @since 0.0.1
+  module ActionItemInternal; end
+
   # BlockRunners set up the environment for an action's block of code.
   # They provide available information and available actions. The
   # BlockRunner parent class is mostly to provide a root location to
   # begin looking for BlockRunners.
   #
   # @since 0.0.1
-  class BlockRunner
+  class ActionItemInternal::BlockRunner
     # @return [Demiurge::ActionItem] The item the BlockRunner is attached to
     attr_reader :item
 
@@ -228,7 +235,7 @@ module Demiurge
   # passing the "engine_code" option to define_action.
   #
   # @since 0.0.1
-  class EngineBlockRunner < BlockRunner
+  class ActionItemInternal::EngineBlockRunner < ActionItemInternal::BlockRunner
   end
 
   # The ActionItemBlockRunner is a good, general-purpose block runner
@@ -237,7 +244,7 @@ module Demiurge
   # to be used in the block code.
   #
   # @since 0.0.1
-  class ActionItemBlockRunner < BlockRunner
+  class ActionItemInternal::ActionItemBlockRunner < ActionItemInternal::BlockRunner
     # @return [Demiurge::Intention, nil] The current intention, if any
     # @since 0.0.1
     attr_reader :current_intention
@@ -258,7 +265,7 @@ module Demiurge
     # @return [Demiurge::ActionItemStateWrapper] The state wrapper to control access
     # @since 0.0.1
     def state
-      @state_wrapper ||= ActionItemStateWrapper.new(@item)
+      @state_wrapper ||= ActionItemInternal::ActionItemStateWrapper.new(@item)
     end
 
     private
@@ -300,7 +307,7 @@ module Demiurge
     # @return [void]
     # @since 0.0.1
     def action(name, *args)
-      intention = ActionIntention.new(engine, @item.name, name, *args)
+      intention = ActionItemInternal::ActionIntention.new(engine, @item.name, name, *args)
       @item.engine.queue_intention(intention)
       nil
     end
@@ -342,7 +349,7 @@ module Demiurge
   # "engine_code" isn't set and the item for the action is an agent.
   #
   # @since 0.0.1
-  class AgentBlockRunner < ActionItemBlockRunner
+  class ActionItemInternal::AgentBlockRunner < ActionItemInternal::ActionItemBlockRunner
     # Move the agent to a specific position immediately. Don't play a
     # walking animation or anything. Just put it where it needs to be.
     #
@@ -411,7 +418,7 @@ module Demiurge
   # - more than one can occur, for instance.
   #
   # @since 0.0.1
-  class ActionIntention < Intention
+  class ActionItemInternal::ActionIntention < Demiurge::Intention
     # @return [String] The action name to perform
     # @since 0.0.1
     attr :action_name
@@ -502,7 +509,7 @@ module Demiurge
   #
   # @api private
   # @since 0.0.1
-  class ActionItemStateWrapper
+  class ActionItemInternal::ActionItemStateWrapper
     def initialize(item)
       @item = item
     end
@@ -547,7 +554,7 @@ module Demiurge
   # Builder classes.
   #
   # @since 0.0.1
-  class EveryXTicksIntention < Intention
+  class ActionItemInternal::EveryXTicksIntention < Intention
     def initialize(engine, name)
       @name = name
       super(engine)

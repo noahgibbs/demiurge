@@ -311,6 +311,25 @@ module Demiurge
       @item_actions[item_name]
     end
 
+    # This method creates a new StateItem based on an existing parent
+    # StateItem, and will retain some level of linkage to that parent
+    # StateItem afterward as well. This provides a simple form of
+    # action inheritance and data inheritance.
+    #
+    # The new child item will begin with a copy of the parent's state
+    # which can then be overridden. There will not be a longer-term
+    # link to the parent's state, and any later state changes in the
+    # parent or child will not affect each other.
+    #
+    # There *will* be a longer-term link to the parent's actions, and
+    # any action not overridden in the child item will fall back to
+    # the parent's action of the same name.
+    #
+    # @param name [String] The new item name to register with the engine
+    # @param parent [Demiurge::StateItem] The parent StateItem
+    # @param extra_state [Hash] Additional state data for the child
+    # @return [Demiurge::StateItem] The newly-created StateItem which has been registered with the engine
+    # @since 0.0.1
     def instantiate_new_item(name, parent, extra_state = {})
       parent = item_by_name(parent) unless parent.is_a?(StateItem)
       ss = parent.get_structure
@@ -418,10 +437,10 @@ module Demiurge
     # use it, or reload the two in an order of your choice. Keep in
     # mind that some World File changes can rename state items.
     #
-    # @see Demiurge.engine_from_dsl_files
-    # @see Demiurge.engine_from_dsl_text
-    # @see #reload_from_dsl_files
-    # @see #reload_from_dsl_text
+    # @see Demiurge::DSL.engine_from_dsl_files
+    # @see Demiurge::DSL.engine_from_dsl_text
+    # @see Demiurge::DSL.reload_from_dsl_files
+    # @see Demiurge::DSL.reload_from_dsl_text
     # @param arr [Array] {Demiurge::StateItem} structured state in the form of Ruby objects
     # @return [void]
     # @since 0.0.1
