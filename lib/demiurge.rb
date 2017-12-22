@@ -297,10 +297,16 @@ module Demiurge
       end
     end
 
+    # Fetch an action for an ActionItem that's stored in the engine.
+    #
+    # @api private
     def action_for_item(item_name, action_name)
       @item_actions[item_name] ? @item_actions[item_name][action_name] : nil
     end
 
+    # Fetch actions for an ActionItem that's stored in the engine.
+    #
+    # @api private
     def actions_for_item(item_name)
       @item_actions[item_name]
     end
@@ -326,10 +332,20 @@ module Demiurge
       child
     end
 
+    # Determine whether the item name is basically allowable.
+    #
+    # @param name String The item name to check
+    # @return [Boolean] Whether the item name is valid, just in terms of its characters.
+    # @since 0.0.1
     def valid_item_name?(name)
       !!(name =~ /\A[-_ 0-9a-zA-Z]+\Z/)
     end
 
+    # Register a new StateItem
+    #
+    # @param item [Demiurge::StateItem]
+    # @return [Demiurge::StateItem] The same item
+    # @since 0.0.1
     def register_state_item(item)
       name = item.name
       if @state_items[name]
@@ -393,6 +409,19 @@ module Demiurge
     # method to restore state from a JSON dump or a hypothetical
     # scenario that didn't work out.
     #
+    # Note that this does *not* update code from Ruby files or
+    # otherwise handle any changes in the World Files. For that, use
+    # {#reload_from_dsl_files} or {#reload_from_dsl_text}.
+    #
+    # You can only reload state or World Files for a running engine,
+    # never both. If you want to reload *both*, make a new engine and
+    # use it, or reload the two in an order of your choice. Keep in
+    # mind that some World File changes can rename state items.
+    #
+    # @see Demiurge.engine_from_dsl_files
+    # @see Demiurge.engine_from_dsl_text
+    # @see #reload_from_dsl_files
+    # @see #reload_from_dsl_text
     # @param arr [Array] {Demiurge::StateItem} structured state in the form of Ruby objects
     # @return [void]
     # @since 0.0.1
