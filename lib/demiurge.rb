@@ -300,6 +300,7 @@ module Demiurge
     # Fetch an action for an ActionItem that's stored in the engine.
     #
     # @api private
+    # @since 0.0.1
     def action_for_item(item_name, action_name)
       @item_actions[item_name] ? @item_actions[item_name][action_name] : nil
     end

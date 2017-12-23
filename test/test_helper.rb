@@ -4,6 +4,26 @@ require 'demiurge/tmx'
 
 require 'minitest/autorun'
 
+# This is basically a tiny Minitest plugin
+class Minitest::UnexpectedError
+  def message
+    # Build a chain of exception causes starting from the outermost
+    exc = self.exception
+    cause_chain = []
+    loop do
+      cause_chain.push(exc)
+      exc = exc.cause
+      break unless exc
+    end
+
+    bt_lines = cause_chain.map { |c|
+      [c.message] + Minitest.filter_backtrace(c.backtrace)
+    }.inject() { |acc, bt| acc + ["... Caused By ..."] + bt }
+    bt_out = bt_lines.join "\n    "
+    return "#{self.exception.class}: #{self.exception.message}\n    #{bt_out}"
+  end
+end
+
 class Minitest::Test
   def assert_engine_sanity_check_contents(engine)
     # Get all registered item names
