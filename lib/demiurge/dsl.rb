@@ -4,33 +4,27 @@ class Demiurge::Engine
   # This method loads new World File code into an existing engine.  It
   # should be passed a list of filenames, normally roughly the same
   # list that was passed to Demiurge::DSL.engine_from_dsl_files to
-  # create the engine initially. Where the files and world objects are
-  # essentially the same, this should reload any code changes into the
-  # engine. Where they are different, the method will try to determine
-  # the best match between the new and old state, but may fail at
-  # doing so.
+  # create the engine initially.
   #
-  # Ordinarily, this method should be called on a fully-configured,
-  # fully-initialized engine with its full state loaded, in between
-  # ticks.
-  #
-  # When in doubt, it's better to save state and reload the engine
-  # from nothing. This gives far better opportunities for a human to
-  # determine what changes have occurred and manually fix any errors.
-  # A game's current state is a complex thing and a computer simply
-  # cannot correctly determine all possible changes to it in a useful
-  # way.
+  # See {#reload_from_dsl_text} for more details and allowed
+  # options. It is identical in operation except for taking code as
+  # parameters instead of filenames.
   #
   # @see file:RELOADING.md
   # @see Demiurge::DSL.engine_from_dsl_files
-  # @see Demiurge::DSL.engine_from_dsl_text
   # @see #reload_from_dsl_text
   # @see #load_state_from_dump
   # @param filenames [Array<String>] An array of filenames, suitable for calling File.read on
   # @param options [Hash] An optional hash of options for modifying the behavior of the reload
+  # @option options [Boolean] verify_only Only see if the new engine code would load, don't replace any code.
+  # @option options [Boolean] guessing_okay Attempt to guess about renamed objects
+  # @option options [Boolean] no_addition Don't allow adding new StateItems, raise an error instead
+  # @option options [Boolean] no_addition Don't allow removing StateItems, raise an error instead
   # @return [void] A configured Engine
   # @since 0.0.1
   def reload_from_dsl_files(*filenames, options: {})
+    filename_string_pairs = filenames.map { |fn| [fn, File.read(fn)] }
+    engine_from_dsl_text(*filename_string_pairs)
   end
 
   # This method loads new World File code into an existing engine.  It
@@ -40,6 +34,18 @@ class Demiurge::Engine
   # File DSL code, or a two-element array of the form: ["label",
   # "code"]. Each is a string. "Code" is World File DSL Ruby code,
   # while "label" is the name that will be used in stack traces.
+  #
+  # Options:
+  #
+  # * verify_only - only check for errors, don't load the new code into the engine, aka "dry run mode"
+  # * guessing_okay - attempt to notice renames and modify old state to new state accordingly
+  # * no_addition - if any new StateItem would be created, raise a NonMatchingStateError
+  # * no_removal - if any StateItem would be removed, raise a NonMatchingStateError
+  #
+  # Note that if "guessing_okay" is turned on, certain cases where
+  # same-type or (in the future) similar-type items are added and
+  # removed may be "guessed" as renames rather than treated as
+  # addition or removal.
   #
   # Where the files and world objects are
   # essentially the same, this should reload any code changes into the
@@ -61,13 +67,90 @@ class Demiurge::Engine
   # @see file:RELOADING.md
   # @see Demiurge::DSL.engine_from_dsl_files
   # @see Demiurge::DSL.engine_from_dsl_text
-  # @see #reload_from_dsl_files
   # @see #load_state_from_dump
   # @param specs [Array<String>,Array<Array<String>>] An array of specs, see above
   # @param options [Hash] An optional hash of options for modifying the behavior of the reload
+  # @option options [Boolean] verify_only Only see if the new engine code would load, don't replace any code.
+  # @option options [Boolean] guessing_okay Attempt to guess about renamed objects
+  # @option options [Boolean] no_addition Don't allow adding new StateItems, raise an error instead
+  # @option options [Boolean] no_addition Don't allow removing StateItems, raise an error instead
   # @return [void] A configured Engine
   # @since 0.0.1
-  def reload_from_dsl_text(*specs, options: {})
+  def reload_from_dsl_text(*specs, options: { "verify_only" => false, "guessing_okay" => false, "no_addition" => false, "no_removal" => false })
+    old_engine = self
+    new_engine = nil
+
+    send_notification type: "load_world_verify", zone: "admin", location: nil, actor: nil
+
+    begin
+      new_engine = Demiurge::DSL.engine_from_dsl_text(*specs)
+    rescue
+      # Didn't work? Leave the existing engine intact, but raise.
+      raise Demiurge::Errors::CannotLoadWorldFiles.new("Error reloading World File text")
+    end
+
+    # Match up old and new state items, but the "admin" InertStateItem doesn't get messed with
+    old_item_names = old_engine.all_item_names - ["admin"]
+    new_item_names = new_engine.all_item_names - ["admin"]
+
+    shared_item_names = old_item_names & new_item_names
+    added_item_names = new_item_names - shared_item_names
+    removed_item_names = old_item_names - shared_item_names
+    renamed_pairs = {}
+
+    if options["guessing_okay"]
+      # For right this second, don't guess. When guessing happens,
+      # this will populate the renamed_pairs hash.
+    end
+
+    if options["no_addition"] && !added_item_names.empty?
+      raise NonMatchingStateError.new "StateItems added when they weren't allowed: #{added_item_names.inspect}!"
+    end
+
+    if options["no_removal"] && !removed_item_names.empty?
+      raise NonMatchingStateError.new "StateItems removed when they weren't allowed: #{removed_item_names.inspect}!"
+    end
+
+    # Okay, finished with error checking - the dry-run is over
+    return if options["verify_only"]
+
+    # Now, replace the engine code
+
+    send_notification type: "load_world_start", zone: "admin", location: nil, actor: nil
+
+    # Replace all actions performed by ActionItems
+    old_engine.replace_all_actions_for_all_items(new_engine.all_actions_for_all_items)
+
+    # For removed items, delete the StateItem from the old engine
+    removed_item_names.each do |removed_item_name|
+      old_engine.unregister_state_item(old_engine.item_by_name removed_item_name)
+    end
+
+    # For added items, use the state data from the new engine and add the item to the old engine
+    added_item_names.each do |added_item_name|
+      new_item = new_engine.item_by_name(added_item_name)
+      ss = new_item.structured_state
+      old_engine.register_state_item(StateItem.from_name_type(old_engine, *ss))
+    end
+
+    # A rename is basically an add and a remove... But not necessarily
+    # with the same name. And the newly-created item uses the state
+    # from the older item. A rename is also permitted to choose a new
+    # type, so create the new item in the old engine with the new name
+    # and type, but the old state.
+    renamed_pairs.each do |old_name, new_name|
+      old_item = old_engine.item_by_name(old_name)
+      new_item = new_engine.item_by_name(new_name)
+
+      old_type, _, old_state = *old_item.structured_state
+      new_type, _, new_state = *new_item.structured_state
+
+      old_engine.unregister_state_item(old_item)
+      old_engine.register_state_item(StateItem.from_name_type(old_engine, new_type, new_name, old_state))
+    end
+
+    send_notification type: "load_world_end", zone: "admin", location: nil, actor: nil
+    nil
   end
 end
 

@@ -63,6 +63,16 @@ module Demiurge::Errors
   # @since 0.0.1
   class AssetError < ::Demiurge::Errors::Exception; end
 
+  # A ReloadError is a result of state that doesn't match perfectly on
+  # reload.  Deleting non-transient objects, renaming objects, giving
+  # objects a new type and changing an object's state format can all
+  # give a ReloadError in certain circumstances.
+  #
+  # @since 0.0.1
+  class ReloadError < ::Demiurge::Errors::Exception; end
+
+
+
   # This exception occurs when trying to use an action that doesn't
   # exist, such as from {Demiurge::ActionItem#run_action} or
   # {Demiurge::Agent#queue_action}.
@@ -113,4 +123,19 @@ module Demiurge::Errors
   #
   # @since 0.0.1
   class TmxFormatError < AssetError; end
+
+  # When loading or reloading, we got an exception when parsing
+  # WorldFile code.
+  #
+  # @since 0.0.1
+  class CannotLoadWorldFiles < ReloadError; end
+
+  # When reloading, this error or a subclass can be raised if the new
+  # state structure or StateItems don't seem to match the old one in
+  # illegal ways.  "Illegal" can vary, depending how conservative the
+  # reloading options are set.
+  #
+  # @since 0.0.1
+  class NonMatchingStateError < ReloadError; end
+
 end

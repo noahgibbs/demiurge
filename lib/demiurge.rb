@@ -308,8 +308,29 @@ module Demiurge
     # Fetch actions for an ActionItem that's stored in the engine.
     #
     # @api private
+    # @since 0.0.1
     def actions_for_item(item_name)
       @item_actions[item_name]
+    end
+
+    # Fetch all actions for all items in an internal format.
+    #
+    # @api private
+    # @since 0.0.1
+    def all_actions_for_all_items
+      @item_actions
+    end
+
+    # Replace actions for an item with other, potentially quite
+    # different, actions. This is normally done to reload engine state
+    # from World Files.
+    #
+    # @api private
+    # @return [void]
+    # @since 0.0.1
+    def replace_all_actions_for_all_items(item_action_hash)
+      @item_actions = item_action_hash
+      nil
     end
 
     # This method creates a new StateItem based on an existing parent
