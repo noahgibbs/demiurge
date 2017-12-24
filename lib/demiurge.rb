@@ -7,6 +7,7 @@ module Demiurge
 end
 
 require "demiurge/intention"
+require "demiurge/notification_names"
 require "demiurge/exception"
 require "demiurge/action_item"
 require "demiurge/inert_state_item"
@@ -180,7 +181,7 @@ module Demiurge
     # we should collect data about the problem. The warning normally
     # indicates a problem in user-supplied code, current state, or the
     # Demiurge gem itself. These warnings can be subscribed to with
-    # the notification type "admin_warning".
+    # the notification type {Demiurge::Notifications::AdminWarning}.
     #
     # @param message [String] A user-readable log message indicating the problem that occurred
     # @param info [Hash] A hash of additional fields that indicate the nature of the problem being reported
@@ -189,7 +190,7 @@ module Demiurge
     # @return [void]
     # @since 0.0.1
     def admin_warning(message, info = {})
-      send_notification({"message" => message, "info" => info}, type: "admin_warning", zone: "admin", location: nil, actor: nil)
+      send_notification({"message" => message, "info" => info}, type: ::Demiurge::Notifications::AdminWarning, zone: "admin", location: nil, actor: nil)
     end
 
     # Send out all pending {Demiurge::Intention}s in the
@@ -225,7 +226,6 @@ module Demiurge
         end
       end
 
-      send_notification({}, type: "tick finished", location: "", zone: "", actor: nil)
       @state_items["admin"].state["ticks"] += 1
       nil
     end
@@ -238,6 +238,7 @@ module Demiurge
     def advance_one_tick()
       queue_item_intentions
       flush_intentions
+      send_notification({}, type: Demiurge::Notifications::TickFinished, location: "", zone: "", actor: nil)
       flush_notifications
       nil
     end
@@ -397,7 +398,7 @@ module Demiurge
         @zones.push(item)
       end
       if @finished_init
-        send_notification(type: "new item", zone: item.zone_name, location: item.location_name, actor: name)
+        send_notification(type: ::Demiurge::Notifications::NewItem, zone: item.zone_name, location: item.location_name, actor: name)
       end
       item
     end
@@ -467,10 +468,10 @@ module Demiurge
     # @return [void]
     # @since 0.0.1
     def load_state_from_dump(arr)
-      send_notification(type: "load_state_start", actor: nil, location: nil, zone: "admin")
+      send_notification(type: Demiurge::Notifications::LoadStateStart, actor: nil, location: nil, zone: "admin")
       state_from_structured_array(arr)
       finished_init
-      send_notification(type: "load_state_end", actor: nil, location: nil, zone: "admin")
+      send_notification(type: Demiurge::Notifications::LoadStateEnd, actor: nil, location: nil, zone: "admin")
       flush_notifications
     end
 
@@ -771,7 +772,5 @@ module Demiurge
     def intentions_for_next_step(*args)
       raise "StateItem must be subclassed to be used!"
     end
-
   end
-
 end

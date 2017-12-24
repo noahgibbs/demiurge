@@ -108,14 +108,14 @@ class WorldReloadTest < Minitest::Test
     assert_equal "second moss cave", agent.location_name
 
     notification_queue = []
-    engine.subscribe_to_notifications(type: ["load_world_start", "load_world_verify", "load_world_end"]) do |notification|
+    engine.subscribe_to_notifications(type: [Demiurge::Notifications::LoadWorldStart, Demiurge::Notifications::LoadWorldVerify, Demiurge::Notifications::LoadWorldEnd]) do |notification|
       notification_queue.push notification["type"]
     end
 
     # Test-restore before anything interesting happens...
     engine.reload_from_dsl_text(["World Reload DSL", DSL_TEXT])
     engine.flush_notifications
-    assert_equal [ "load_world_verify", "load_world_start", "load_world_end" ], notification_queue
+    assert_equal [ Demiurge::Notifications::LoadWorldVerify, Demiurge::Notifications::LoadWorldStart, Demiurge::Notifications::LoadWorldEnd ], notification_queue
 
     # Re-query items, which should be untouched
     first_cave_item = engine.item_by_name("first moss cave")
@@ -193,7 +193,7 @@ class WorldReloadTest < Minitest::Test
     engine.flush_notifications
 
     notifications = []
-    engine.subscribe_to_notifications("type": ["intention_cancelled", "sight"]) do |n|
+    engine.subscribe_to_notifications("type": [Demiurge::Notifications::IntentionCancelled, "sight"]) do |n|
       notifications.push(n)
     end
 
@@ -209,7 +209,7 @@ class WorldReloadTest < Minitest::Test
     engine.flush_notifications
     # Done w/ restore, now go forward a tick
     engine.advance_one_tick
-    assert_equal "intention_cancelled", notifications[0]["type"]
+    assert_equal Demiurge::Notifications::IntentionCancelled, notifications[0]["type"]
     assert disco_cave.state["saw_maybe_flash"] == true, "The cave should have seen a flash and cancelled the action!"
     notifications.pop  # Clear the queue
 

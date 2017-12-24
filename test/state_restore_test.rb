@@ -71,10 +71,10 @@ class StateRestoreTest < Minitest::Test
     assert_equal "second moss cave", agent.location_name
 
     notification_queue = []
-    engine.subscribe_to_notifications(type: "load_state_start") do |notification|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::LoadStateStart) do |notification|
       notification_queue.push notification["type"]
     end
-    engine.subscribe_to_notifications(type: "load_state_end") do |notification|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::LoadStateEnd) do |notification|
       notification_queue.push notification["type"]
     end
 
@@ -82,7 +82,7 @@ class StateRestoreTest < Minitest::Test
     ss = engine.structured_state
     engine.load_state_from_dump(ss)
     engine.flush_notifications
-    assert_equal [ "load_state_start", "load_state_end" ], notification_queue
+    assert_equal [ Demiurge::Notifications::LoadStateStart, Demiurge::Notifications::LoadStateEnd ], notification_queue
 
     # Re-query items, which may have been recreated
     first_cave_item = engine.item_by_name("first moss cave")
@@ -148,7 +148,7 @@ class StateRestoreTest < Minitest::Test
     engine.load_state_from_dump(ss)
 
     notifications = []
-    engine.subscribe_to_notifications("type": ["intention_cancelled", "sight"]) do |n|
+    engine.subscribe_to_notifications("type": [Demiurge::Notifications::IntentionCancelled, "sight"]) do |n|
       notifications.push(n)
     end
 
@@ -164,7 +164,7 @@ class StateRestoreTest < Minitest::Test
     engine.load_state_from_dump(ss)
     # Done w/ restore, now go forward a tick
     engine.advance_one_tick
-    assert_equal "intention_cancelled", notifications[0]["type"]
+    assert_equal Demiurge::Notifications::IntentionCancelled, notifications[0]["type"]
     assert disco_cave.state["saw_maybe_flash"] == true, "The cave should have seen a flash and cancelled the action!"
     notifications.pop  # Clear the queue
 

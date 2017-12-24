@@ -63,9 +63,9 @@ module Demiurge
       new_loc = self.location_name
 
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
-                                  type: "move_from", zone: old_zone_name, location: old_loc, actor: @name)
+                                  type: Demiurge::Notifications::MoveFrom, zone: old_zone_name, location: old_loc, actor: @name)
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
-                                  type: "move_to", zone: self.zone_name, location: self.location_name, actor: @name)
+                                  type: Demiurge::Notifications::MoveTo, zone: self.zone_name, location: self.location_name, actor: @name)
     end
 
     # Calculate the agent's intentions for the following tick. These

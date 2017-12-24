@@ -68,7 +68,7 @@ class PositioningTest < Minitest::Test
     refute_nil agent
 
     cancellations = []
-    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::IntentionCancelled) do |n|
       cancellations.push(n)
     end
     assert_equal 0, cancellations.size
@@ -92,7 +92,7 @@ class PositioningTest < Minitest::Test
     refute_nil agent
 
     cancellations = []
-    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::IntentionCancelled) do |n|
       cancellations.push(n)
     end
     assert_equal 0, cancellations.size
@@ -111,7 +111,7 @@ class PositioningTest < Minitest::Test
     refute_nil agent
 
     cancellations = []
-    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::IntentionCancelled) do |n|
       cancellations.push(n)
     end
     assert_equal 0, cancellations.size
@@ -130,7 +130,7 @@ class PositioningTest < Minitest::Test
     refute_nil agent
 
     cancellations = []
-    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::IntentionCancelled) do |n|
       cancellations.push(n)
     end
     assert_equal 0, cancellations.size
@@ -181,7 +181,7 @@ class PositioningTest < Minitest::Test
     assert_equal "room_exits_se#3,3", agent.position
 
     cancellations = []
-    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::IntentionCancelled) do |n|
       cancellations.push(n)
     end
     assert_equal 0, cancellations.size
@@ -213,7 +213,7 @@ class PositioningTest < Minitest::Test
     refute_nil agent
 
     cancellations = []
-    engine.subscribe_to_notifications(type: "intention_cancelled") do |n|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::IntentionCancelled) do |n|
       cancellations.push(n)
     end
     assert_equal 0, cancellations.size

@@ -67,7 +67,7 @@ class IntentionQueueTest < Minitest::Test
     engine = Demiurge::DSL.engine_from_dsl_text(["Cancel Intention DSL", DSL_TEXT])
     agent = engine.item_by_name("standing still")
     cancels = []
-    engine.subscribe_to_notifications(type: "intention_cancelled") do |notification|
+    engine.subscribe_to_notifications(type: Demiurge::Notifications::IntentionCancelled) do |notification|
       cancels.push([ notification["reason"], notification["intention_type"].split("::")[-1] ])
     end
 

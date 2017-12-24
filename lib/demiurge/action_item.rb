@@ -492,7 +492,7 @@ module Demiurge
                                   intention_type: self.class.to_s,
                                   info: @cancelled_info,
                                 },
-                                type: "intention_cancelled",
+                                type: Demiurge::Notifications::IntentionCancelled,
                                 zone: @item.zone_name,
                                 location: @item.location_name,
                                 actor: @item.name)
@@ -578,7 +578,7 @@ module Demiurge
       return if @cancelled_info && @cancelled_info["silent"]
       item = @engine.item_by_name(@name)
       @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class.to_s },
-                                type: "intention_cancelled", zone: item.zone_name, location: item.location_name, actor: item.name)
+                                type: Demiurge::Notifications::IntentionCancelled, zone: item.zone_name, location: item.location_name, actor: item.name)
     end
 
     def apply

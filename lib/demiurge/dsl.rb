@@ -80,7 +80,7 @@ class Demiurge::Engine
     old_engine = self
     new_engine = nil
 
-    send_notification type: "load_world_verify", zone: "admin", location: nil, actor: nil
+    send_notification type: Demiurge::Notifications::LoadWorldVerify, zone: "admin", location: nil, actor: nil
 
     begin
       new_engine = Demiurge::DSL.engine_from_dsl_text(*specs)
@@ -116,7 +116,7 @@ class Demiurge::Engine
 
     # Now, replace the engine code
 
-    send_notification type: "load_world_start", zone: "admin", location: nil, actor: nil
+    send_notification type: Demiurge::Notifications::LoadWorldStart, zone: "admin", location: nil, actor: nil
 
     # Replace all actions performed by ActionItems
     old_engine.replace_all_actions_for_all_items(new_engine.all_actions_for_all_items)
@@ -149,7 +149,7 @@ class Demiurge::Engine
       old_engine.register_state_item(StateItem.from_name_type(old_engine, new_type, new_name, old_state))
     end
 
-    send_notification type: "load_world_end", zone: "admin", location: nil, actor: nil
+    send_notification type: Demiurge::Notifications::LoadWorldEnd, zone: "admin", location: nil, actor: nil
     nil
   end
 end

@@ -70,7 +70,7 @@ module Demiurge
                                   :intention_type => self.class.to_s,
                                   :info => @cancelled_info
                                 },
-                                type: "intention_cancelled", zone: "admin", location: nil, actor: nil)
+                                type: Demiurge::Notifications::IntentionCancelled, zone: "admin", location: nil, actor: nil)
     end
 
     # This returns whether this intention has been cancelled.
@@ -128,11 +128,7 @@ module Demiurge
     # @since 0.0.1
     def try_apply(intention_id)
       @intention_id = intention_id
-      unless allowed?
-        # Certain intentions can send an "intention failed" notification.
-        # Such a notification would be sent from here.
-        return
-      end
+      return unless allowed?
       offer(intention_id)
       return if cancelled? # Notification should already have been sent out
       apply
