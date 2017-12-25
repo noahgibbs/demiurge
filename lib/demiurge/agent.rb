@@ -120,7 +120,7 @@ module Demiurge
 
     # Normally, the agent's maintenance intention can't be blocked,
     # cancelled or modified.
-    def offer(intention_id)
+    def offer
     end
 
     # An AgentMaintenanceIntention is always considered to be allowed.
@@ -155,7 +155,7 @@ module Demiurge
     end
 
     # An action being pulled from the action queue is offered normally.
-    def offer(intention_id)
+    def offer
       # Don't offer the action if it's going to be a no-op.
       if @agent.state["busy"] > 0
         # See comment on "silent" in allowed?() below.
@@ -169,7 +169,7 @@ module Demiurge
       action = @agent.state["queued_actions"][0]
       @action_name, @action_args, @action_queue_number = *action
       @action_struct = @agent.get_action(@action_name)
-      super(intention_id)
+      super
     end
 
     # This action is allowed if the agent is not busy, or will become not-busy soon
@@ -253,7 +253,7 @@ module Demiurge
     # For now, WanderIntention is unblockable. That's not perfect, but
     # otherwise we have to figure out how to offer an action without
     # an action name.
-    def offer(intention_id)
+    def offer
     end
 
     # Actually wander to an adjacent position, chosen randomly

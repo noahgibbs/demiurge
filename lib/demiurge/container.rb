@@ -149,10 +149,9 @@ module Demiurge
     # @see file:CONCEPTS.md
     # @param action_name [String] The name of the action for this Intention.
     # @param intention [Demiurge::Intention] The Intention being offered
-    # @param intention_id [Integer] The assigned intention ID for this Intention
     # @return [void]
     # @since 0.0.1
-    def receive_offer(action_name, intention, intention_id)
+    def receive_offer(action_name, intention)
       # Run handlers, if any
       on_actions = @state["on_action_handlers"]
       if on_actions && (on_actions[action_name] || on_actions["all"])

@@ -28,6 +28,7 @@ module Demiurge
     def initialize(engine)
       @cancelled = false
       @engine = engine
+      @intention_id = engine.get_intention_id
     end
 
     # This cancels the intention, and gives the reason for the
@@ -114,10 +115,10 @@ module Demiurge
     # spinning spaces.)
     #
     # @see file:CONCEPTS.md
-    # @param intention_id [Integer] The intention ID that Demiurge has assigned to this Intention
     # @return [void]
     # @since 0.0.1
-    def offer(intention_id)
+    # @note This method changed signature in 0.2.0 to stop taking an intention ID.
+    def offer
       raise "Unimplemented 'offer' for intention: #{self.inspect}!"
     end
 
@@ -126,10 +127,10 @@ module Demiurge
     #
     # @return [void]
     # @since 0.0.1
-    def try_apply(intention_id)
-      @intention_id = intention_id
+    # @note This method changed signature in 0.2.0 to stop taking an intention ID.
+    def try_apply
       return unless allowed?
-      offer(intention_id)
+      offer
       return if cancelled? # Notification should already have been sent out
       apply
       nil

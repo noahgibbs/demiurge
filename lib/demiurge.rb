@@ -137,6 +137,18 @@ module Demiurge
       @state_items.keys
     end
 
+    # Get an intention ID which is guaranteed to never be returned by
+    # this method again. It's not important that it be consecutive or
+    # otherwise special, just that it be unique.
+    #
+    # @return [Integer] The new intention ID
+    # @api private
+    # @since 0.2.0
+    def get_intention_id
+      @state_items["admin"].state["intention_id"] += 1
+      return @state_items["admin"].state["intention_id"]
+    end
+
     # Add an intention to the Engine's Intention queue. If this method
     # is called during the Intention phase of a tick, the intention
     # should be excecuted during this tick in standard order. If the
@@ -150,8 +162,7 @@ module Demiurge
     # @return [void]
     # @since 0.0.1
     def queue_intention(intention)
-      @state_items["admin"].state["intention_id"] += 1
-      @queued_intentions.push [@state_items["admin"].state["intention_id"], intention]
+      @queued_intentions.push intention
       nil
     end
 
@@ -213,11 +224,11 @@ module Demiurge
         intentions = @queued_intentions
         @queued_intentions = []
         begin
-          intentions.each do |id, a|
+          intentions.each do |a|
             if a.cancelled?
               admin_warning("Trying to apply a cancelled intention of type #{a.class}!", "inspect" => a.inspect)
             else
-              a.try_apply(id)
+              a.try_apply
             end
           end
         rescue ::Demiurge::Errors::RetryableError
@@ -429,17 +440,16 @@ module Demiurge
       @state_items = {}
       @zones = []
 
+      unless arr.any? { |type, name, state| name == "admin" }
+        register_state_item(StateItem.from_name_type(self, "InertStateItem", "admin", {}))
+        @state_items["admin"].state["ticks"] ||= 0
+        @state_items["admin"].state["notification_id"] ||= 0
+        @state_items["admin"].state["intention_id"] ||= 0
+      end
+
       arr.each do |type, name, state|
         register_state_item(StateItem.from_name_type(self, type.freeze, name.to_s.freeze, state))
       end
-
-      unless @state_items["admin"]
-        register_state_item(StateItem.from_name_type(self, "InertStateItem", "admin", {}))
-      end
-
-      @state_items["admin"].state["ticks"] ||= 0
-      @state_items["admin"].state["notification_id"] ||= 0
-      @state_items["admin"].state["intention_id"] ||= 0
 
       nil
     end

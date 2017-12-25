@@ -457,12 +457,12 @@ module Demiurge
     # or modified.  By default, offers are coordinated through the
     # item's location.
     #
-    # @param intention_id [Integer] The intention ID assigned to this Intention
     # return [void]
     # @since 0.0.1
-    def offer(intention_id)
+    # @note This method changed signature in 0.2.0 to stop taking an intention ID.
+    def offer
       loc = @item.location || @item.zone
-      loc.receive_offer(@action_name, self, intention_id)
+      loc.receive_offer(@action_name, self)
     end
 
     # Apply the ActionIntention's effects to the appropriate StateItems.
@@ -584,7 +584,7 @@ module Demiurge
 
     # For now, empty. Later we'll want it to honor
     # the offer setting of the underlying action.
-    def offer(intention_id)
+    def offer
     end
 
     # Shouldn't normally happen, but just in case...
