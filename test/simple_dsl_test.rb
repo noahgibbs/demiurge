@@ -11,7 +11,7 @@ class SimpleDslTest < Minitest::Test
     zone "moss caves" do
       location "first moss cave" do
         description "This cave is dim, with smooth sides. You can see delicious moss growing inside, out of the hot sunlight."
-        state.moss = 0
+        state["moss"] = 0
 
         every_X_ticks("grow", 3) do
           state.moss += 1

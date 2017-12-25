@@ -507,6 +507,12 @@ module Demiurge
   # security in this API may prevent accidents by the
   # well-intentioned.
   #
+  # ActionItemStateWrappers can act as Hashes (preferred) with
+  # square-bracket assignment, or can use (deprecated) method_missing
+  # to set fields. The method_missing version is deprecated both
+  # because it's slower and because it only allows certain key names
+  # to be used.
+  #
   # @api private
   # @since 0.0.1
   class ActionItemInternal::ActionItemStateWrapper
@@ -516,6 +522,18 @@ module Demiurge
 
     def has_key?(key)
       @item.__state_internal.has_key?(key)
+    end
+
+    def [](key)
+      unless @item.__state_internal.has_key?(key)
+        raise ::Demiurge::Errors::NoSuchStateKeyError.new("No such state key as #{method_name.inspect}",
+                                                          "method" => method_name, "item" => @item.name)
+      end
+      @item.__state_internal[key]
+    end
+
+    def []=(key, value)
+      @item.__state_internal[key] = value
     end
 
     def method_missing(method_name, *args, &block)
