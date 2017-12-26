@@ -89,8 +89,8 @@ module Demiurge
     # @since 0.0.1
     def queue_action(action_name, *args)
       raise ::Demiurge::Errors::NoSuchActionError.new("Not an action: #{action_name.inspect}!", "action_name" => action_name) unless get_action(action_name)
-      state["queued_actions"].push([action_name, args, state["queue_number"]])
       state["queue_number"] += 1
+      state["queued_actions"].push([action_name, args, state["queue_number"]])
       state["queue_number"]
     end
 
@@ -216,6 +216,47 @@ module Demiurge
         agent.run_action(@action_name, *@action_args, current_intention: self)
         agent.state["busy"] += (@action_struct["busy"] || 1)
       end
+    end
+
+    # Send out a notification to indicate this ActionIntention was
+    # cancelled. If "silent" is set to true in the cancellation info,
+    # no notification will be sent.
+    #
+    # @return [void]
+    # @since 0.2.0
+    def cancel_notification
+      return if @cancelled_info && @cancelled_info["silent"]
+      @engine.send_notification({
+                                  reason: @cancelled_reason,
+                                  by: @cancelled_by,
+                                  id: @intention_id,
+                                  intention_type: self.class.to_s,
+                                  info: @cancelled_info,
+                                  queue_number: @action_queue_number,
+                                },
+                                type: Demiurge::Notifications::IntentionCancelled,
+                                zone: @item.zone_name,
+                                location: @item.location_name,
+                                actor: @item.name)
+      nil
+    end
+
+    # Send out a notification to indicate this ActionIntention was
+    # applied.
+    #
+    # @return [void]
+    # @since 0.2.0
+    def apply_notification
+      @engine.send_notification({
+                                  id: @intention_id,
+                                  intention_type: self.class.to_s,
+                                  queue_number: @action_queue_number,
+                                },
+                                type: Demiurge::Notifications::IntentionApplied,
+                                zone: @item.zone_name,
+                                location: @item.location_name,
+                                actor: @item.name)
+      nil
     end
   end
 

@@ -25,6 +25,7 @@ module Demiurge
     def finished_init
       loc = self.location
       loc.move_item_inside(self) unless loc.nil?
+      nil
     end
 
     # Get the name of this item's location. This is compatible with
@@ -504,7 +505,6 @@ module Demiurge
       @engine.send_notification({
                                   id: @intention_id,
                                   intention_type: self.class.to_s,
-                                  info: @cancelled_info,
                                 },
                                 type: Demiurge::Notifications::IntentionApplied,
                                 zone: @item.zone_name,
