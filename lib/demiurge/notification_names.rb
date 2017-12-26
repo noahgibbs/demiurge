@@ -17,13 +17,13 @@ module Demiurge
     # This notification indicates that a tick has completed.
     #
     # @since 0.2.0
-    TickFinished = "tick finished"
+    TickFinished = "tick_finished"
 
     # This notification indicates that a new item has been registered
     # by the engine.
     #
     # @since 0.2.0
-    NewItem = "new item"
+    NewItem = "new_item"
 
     # This notification means that state loading has begun into an
     # initialized engine.
