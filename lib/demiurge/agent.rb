@@ -79,17 +79,19 @@ module Demiurge
     end
 
     # Queue an action to be run after previous actions are complete,
-    # and when the agent is no longer busy from taking them.
+    # and when the agent is no longer busy from taking them. The
+    # action queue entry is assigned a unique-per-agent queue number,
+    # which is returned from this action.
     #
     # @param action_name [String] The name of the action to take when possible
     # @param args [Array] Additional arguments to pass to the action's code block
-    # @return [void]
+    # @return [Integer] Returns the queue number for this action - note that queue numbers are only unique per-agent
     # @since 0.0.1
     def queue_action(action_name, *args)
       raise ::Demiurge::Errors::NoSuchActionError.new("Not an action: #{action_name.inspect}!", "action_name" => action_name) unless get_action(action_name)
       state["queued_actions"].push([action_name, args, state["queue_number"]])
       state["queue_number"] += 1
-      nil
+      state["queue_number"]
     end
 
     # Any queued actions waiting to occur will be discarded.
@@ -147,18 +149,16 @@ module Demiurge
 
     # Constructor. Takes an agent name and an engine
     def initialize(name, engine)
-      @name = name
-      @engine = engine
-      @agent = @engine.item_by_name(@name)
-      raise ::Demiurge::Errors::NoSuchAgentError.new("No such agent as #{name.inspect} found in AgentActionIntention!", "agent" => @name) unless @agent
       super(engine, name, "")
+      @agent = engine.item_by_name(name)
+      raise ::Demiurge::Errors::NoSuchAgentError.new("No such agent as #{name.inspect} found in AgentActionIntention!", "agent" => name) unless @agent
     end
 
     # An action being pulled from the action queue is offered normally.
     def offer
       # Don't offer the action if it's going to be a no-op.
       if @agent.state["busy"] > 0
-        # See comment on "silent" in allowed?() below.
+        # See comment on "silent" in #allowed? below.
         self.cancel "Agent #{@name.inspect} was too busy to act (#{@agent.state["busy"]}).", "silent" => "true"
         return
       elsif @agent.state["queued_actions"].empty?
