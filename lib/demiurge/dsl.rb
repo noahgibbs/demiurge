@@ -450,7 +450,8 @@ module Demiurge::DSL
     def inert(item_name, options = {})
       zone_name = options["zone"] || "admin"
       state = options["state"] || {}
-      inert_item = ::Demiurge::StateItem.from_name_type(@engine, options["type"] || "InertStateItem", item_name, state.merge("zone" => zone_name))
+      state.merge! "zone" => zone_name, "home_zone" => zone_name
+      inert_item = ::Demiurge::StateItem.from_name_type(@engine, options["type"] || "InertStateItem", item_name, state)
       @engine.register_state_item(inert_item)
       nil
     end
@@ -528,7 +529,7 @@ module Demiurge::DSL
 
     # Declare a location in this zone.
     def location(name, options = {}, &block)
-      state = { "zone" => @name }.merge(options)
+      state = { "zone" => @name, "home_zone" => @name }.merge(options)
       builder = LocationBuilder.new(name, @engine, "type" => options["type"] || "Location", "state" => state)
       builder.instance_eval(&block)
       @built_item.state["contents"] << name
@@ -540,7 +541,7 @@ module Demiurge::DSL
     # invisible (not an interactable location) but will be
     # instantiable as a parent.
     def agent(name, options = {}, &block)
-      state = { "zone" => @name }.merge(options)
+      state = { "zone" => @name, "home_zone" => @name }.merge(options)
       builder = AgentBuilder.new(name, @engine, "type" => options["type"] || "Agent", "state" => state)
       builder.instance_eval(&block)
       @built_item.state["contents"] << name
@@ -564,7 +565,7 @@ module Demiurge::DSL
 
     # Declare an agent in this location.
     def agent(name, options = {}, &block)
-      state = { "position" => @name, "zone" => @state["zone"] }
+      state = { "position" => @name, "zone" => @state["zone"], "home_zone" => @state["zone"] }
       builder = AgentBuilder.new(name, @engine, options.merge("state" => state) )
       builder.instance_eval(&block)
       @built_item.state["contents"] << name
