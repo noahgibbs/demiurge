@@ -93,7 +93,7 @@ class DslTest < Minitest::Test
 
     engine.flush_notifications # Don't send out notification about the 'disappear' action
     results = []
-    engine.subscribe_to_notifications(actor: ["guy on fire", "flaming cave"]) do |notification|
+    engine.subscribe_to_notifications(type: ["speech", "room_thought"], actor: ["guy on fire", "flaming cave"]) do |notification|
       results.push notification
     end
 
