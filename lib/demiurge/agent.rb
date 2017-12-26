@@ -140,6 +140,14 @@ module Demiurge
   # An AgentActionIntention is how the agent takes queued actions each
   # tick.
   #
+  # @note There is a bit of weirdness in how this intention handles
+  #   {#allowed?} and {#offer}. We want to be able to queue an action
+  #   on the same tick that we execute it if the agent is idle. So we
+  #   count this intention as #allowed?  even if the queue is empty,
+  #   then silent-cancel the intention during {#offer} if nobody has
+  #   added anything to it. If you see a lot of cancel notifications
+  #   from this object with "silent" set, now you know why.
+  #
   # @api private
   class AgentInternal::AgentActionIntention < ActionItemInternal::ActionIntention
     # @return [StateItem] The agent to whom this Intention applies
@@ -174,7 +182,11 @@ module Demiurge
 
     # This action is allowed if the agent is not busy, or will become not-busy soon
     def allowed?
-      # If the agent's busy state will clear this turn, this action could happen.
+      # If the agent's busy state will clear this turn, this action
+      # could happen.  We intentionally don't send a "disallowed"
+      # notification for the action. It's not cancelled, nor is it
+      # dispatched successfully. It's just waiting for a later tick to
+      # do one of those two things.
       return false if @agent.state["busy"] > 1
 
       # A dilemma: if we cancel now when no actions are queued, then
