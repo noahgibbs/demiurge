@@ -82,5 +82,12 @@ module Demiurge
     #
     # @since 0.2.0
     IntentionCancelled = "intention_cancelled"
+
+    # This notification is sent when an intention is successfully applied.
+    #
+    # Fields: id (Integer), intention_type (String), info (Hash)
+    #
+    # @since 0.2.0
+    IntentionApplied = "intention_applied"
   end
 end

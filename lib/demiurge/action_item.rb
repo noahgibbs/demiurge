@@ -474,16 +474,12 @@ module Demiurge
     end
 
     # Send out a notification to indicate this ActionIntention was
-    # cancelled.  If "silent" is set to true in the cancellation info,
+    # cancelled. If "silent" is set to true in the cancellation info,
     # no notification will be sent.
     #
     # @return [void]
     # @since 0.0.1
     def cancel_notification
-      # "Silent" notifications are things like an agent's action queue
-      # being empty so it cancels its intention.  These are normal
-      # operation and nobody is likely to need notification every
-      # tick that they didn't ask to do anything so they didn't.
       return if @cancelled_info && @cancelled_info["silent"]
       @engine.send_notification({
                                   reason: @cancelled_reason,
@@ -493,6 +489,24 @@ module Demiurge
                                   info: @cancelled_info,
                                 },
                                 type: Demiurge::Notifications::IntentionCancelled,
+                                zone: @item.zone_name,
+                                location: @item.location_name,
+                                actor: @item.name)
+      nil
+    end
+
+    # Send out a notification to indicate this ActionIntention was
+    # applied.
+    #
+    # @return [void]
+    # @since 0.2.0
+    def apply_notification
+      @engine.send_notification({
+                                  id: @intention_id,
+                                  intention_type: self.class.to_s,
+                                  info: @cancelled_info,
+                                },
+                                type: Demiurge::Notifications::IntentionApplied,
                                 zone: @item.zone_name,
                                 location: @item.location_name,
                                 actor: @item.name)

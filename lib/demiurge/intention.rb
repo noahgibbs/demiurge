@@ -49,20 +49,23 @@ module Demiurge
 
     # Most intentions will send a cancellation notice when they are
     # cancelled. By default, this will include who cancelled the
-    # intention and why.  If the cancellation info Hash includes
-    # "silent" with a true value, by default no notification will be
-    # sent out. This is to avoid an avalache of notifications for
-    # common cancelled intentions that happen nearly every
-    # tick. {#cancel_notification} can be overridden by child classes
+    # intention and why.
+    #
+    # If the cancellation info Hash includes "silent" with a true
+    # value, by default no notification will be sent out. This is to
+    # avoid an avalache of notifications for common cancelled
+    # intentions that happen nearly every tick. Examples include an
+    # agent's action queue being empty so it cancels its intention.
+    # These are normal operation and nobody is likely to need
+    # notification every tick that they didn't ask to do anything so
+    # they didn't.
+    #
+    # {#cancel_notification} can be overridden by child classes
     # for more specific cancel notifications.
     #
     # @return [void]
     # @since 0.0.1
     def cancel_notification
-      # "Silent" notifications are things like an agent's action queue
-      # being empty so it cancels its intention.  These are normal
-      # operation and nobody is likely to need notification every
-      # tick that they didn't ask to do anything so they didn't.
       return if @cancelled_info && @cancelled_info["silent"]
       @engine.send_notification({
                                   :reason => @cancelled_reason,
@@ -72,6 +75,23 @@ module Demiurge
                                   :info => @cancelled_info
                                 },
                                 type: Demiurge::Notifications::IntentionCancelled, zone: "admin", location: nil, actor: nil)
+      nil
+    end
+
+    # Intentions should send an apply notice when they are
+    # successfully applied. {#apply_notification} can be overridden by
+    # child classes to send more specific information.
+    #
+    # @return [void]
+    # @since 0.2.0
+    def apply_notification
+      @engine.send_notification({
+                                  :id => @intention_id,
+                                  :intention_type => self.class.to_s,
+                                  :info => @cancelled_info
+                                },
+                                type: Demiurge::Notifications::IntentionApplied, zone: "admin", location: nil, actor: nil)
+      nil
     end
 
     # This returns whether this intention has been cancelled.
