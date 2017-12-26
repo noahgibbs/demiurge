@@ -273,7 +273,7 @@ module Demiurge
     def to_demiurge_name(item)
       return item if item.is_a?(String)
       return item.name if item.respond_to?(:name)
-      raise "Not sure how to convert PORO to Demiurge name: #{item.inspect}!"
+      raise Demiurge::Errors::BadScriptError.new("Not sure how to convert PORO to Demiurge name: #{item.inspect}!")
     end
     public
 
@@ -439,6 +439,7 @@ module Demiurge
     def initialize(engine, name, action_name, *args)
       @name = name
       @item = engine.item_by_name(name)
+      raise Demiurge::Errors::NoSuchAgentError.new("Can't get agent's item for name #{name.inspect}!") unless @item
       @action_name = action_name
       @action_args = args
       super(engine)

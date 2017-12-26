@@ -153,6 +153,7 @@ module Demiurge
       offer
       return if cancelled? # Notification should already have been sent out
       apply
+      apply_notification
       nil
     end
   end

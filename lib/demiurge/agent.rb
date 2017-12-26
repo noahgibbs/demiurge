@@ -267,13 +267,13 @@ module Demiurge
     # Constructor
     def initialize(name, engine, state)
       super
-      @wander_intention = AgentInternal::WanderIntention.new(engine, name)
       state["wander_counter"] ||= 0
     end
 
     # If we're in a room but don't know where, pick a legal location.
     def finished_init
       super
+      @wander_intention = AgentInternal::WanderIntention.new(engine, name)
       unless state["position"] && state["position"]["#"]
         # Move to legal position. If this is a TMX location or similar, it will assign a specific position.
         if self.location.respond_to?(:any_legal_position)
