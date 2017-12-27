@@ -147,12 +147,14 @@ module Demiurge
     #
     # @return [void]
     # @since 0.0.1
+    # @api private
     # @note This method changed signature in 0.2.0 to stop taking an intention ID.
     def try_apply
       return unless allowed?
       offer
       return if cancelled? # Notification should already have been sent out
       apply
+      return if cancelled? # Notification should already have been sent out
       apply_notification
       nil
     end
