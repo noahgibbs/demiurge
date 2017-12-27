@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["the.codefolio.guy@gmail.com"]
 
   spec.summary       = %q{A creator and manager for game rules and state.}
-  spec.description   = %q{A creator and manager for game rules and state, separate from displaying and controlling the game. The idea is that a primarily-simulation game may be written using Ruby rules and a connection to the Demiurge process, while control and display are handled separately. This approach is primarily useful for games with a very 'living' world that players affect in small ways.}
+  spec.description   = %q{A creator and manager for game rules and state, separate from displaying and controlling the game. The idea is that a primarily-simulation game may be written using Ruby rules and a connection to the Demiurge process, while control and display are handled separately. This approach is primarily useful for 'simulation' games rather than fast-reflex 'twitch' games.}
   spec.homepage      = "https://github.com/noahgibbs/demiurge"
   spec.license       = "MIT"
 
