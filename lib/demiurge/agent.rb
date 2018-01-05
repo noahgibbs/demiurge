@@ -63,9 +63,9 @@ module Demiurge
       new_loc = self.location_name
 
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
-                                  type: Demiurge::Notifications::MoveFrom, zone: old_zone_name, location: old_loc, actor: @name)
+                                  type: Demiurge::Notifications::MoveFrom, zone: old_zone_name, location: old_loc, actor: @name, include_context: true)
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
-                                  type: Demiurge::Notifications::MoveTo, zone: self.zone_name, location: self.location_name, actor: @name)
+                                  type: Demiurge::Notifications::MoveTo, zone: self.zone_name, location: self.location_name, actor: @name, include_context: true)
     end
 
     # Calculate the agent's intentions for the following tick. These
@@ -88,7 +88,8 @@ module Demiurge
     # @return [Integer] Returns the queue number for this action - note that queue numbers are only unique per-agent
     # @since 0.0.1
     def queue_action(action_name, *args)
-      raise ::Demiurge::Errors::NoSuchActionError.new("Not an action: #{action_name.inspect}!", "action_name" => action_name) unless get_action(action_name)
+      raise ::Demiurge::Errors::NoSuchActionError.new("Not an action: #{action_name.inspect}!", { "action_name" => action_name },
+                                                      execution_context: @engine.execution_context) unless get_action(action_name)
       state["queue_number"] += 1
       state["queued_actions"].push([action_name, args, state["queue_number"]])
       state["queue_number"]
@@ -159,7 +160,8 @@ module Demiurge
     def initialize(name, engine)
       super(engine, name, "")
       @agent = engine.item_by_name(name)
-      raise ::Demiurge::Errors::NoSuchAgentError.new("No such agent as #{name.inspect} found in AgentActionIntention!", "agent" => name) unless @agent
+      raise ::Demiurge::Errors::NoSuchAgentError.new("No such agent as #{name.inspect} found in AgentActionIntention!", "agent" => name,
+                                                     execution_context: engine.execution_context) unless @agent
     end
 
     # An action being pulled from the action queue is offered normally.
@@ -239,7 +241,8 @@ module Demiurge
                                 type: Demiurge::Notifications::IntentionCancelled,
                                 zone: @item.zone_name,
                                 location: @item.location_name,
-                                actor: @item.name)
+                                actor: @item.name,
+                                include_context: true)
       nil
     end
 
@@ -259,7 +262,8 @@ module Demiurge
                                 type: Demiurge::Notifications::IntentionApplied,
                                 zone: @item.zone_name,
                                 location: @item.location_name,
-                                actor: @item.name)
+                                actor: @item.name,
+                                include_context: true)
       nil
     end
   end

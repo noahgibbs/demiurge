@@ -11,13 +11,30 @@ module Demiurge::Errors
     # @since 0.0.1
     attr_reader :info
 
-    # Optionally add a hash of extra data, called info, to this exception.
+    # @return [Hash{String=>String}] Context about where and how the error occurred
+    # @since 0.2.0
+    attr_reader :execution_context
+
+    # Optionally add a hash of extra data, called info, to this
+    # exception. You can also add the engine's execution context, if
+    # available.
     #
     # @param msg [String] The message for this Exception
     # @since 0.0.1
-    def initialize(msg, info = {})
+    def initialize(msg, info = {}, execution_context: nil)
       super(msg)
       @info = info
+      @execution_context = execution_context ? execution_context.dup : nil
+    end
+
+    def backtrace_chain
+      bt_chain = []
+      cur_cause = self.cause
+      while cur_cause
+        bt_chain.push(self.backtrace)
+        cur_cause = cur_cause.cause
+      end
+      bt_chain
     end
 
     # Serialize this exception to a JSON-serializable PORO.
@@ -25,11 +42,23 @@ module Demiurge::Errors
     # @return [Hash] The serialized {Demiurge::Errors::Exception} data
     # @since 0.0.1
     def jsonable()
+      bt = backtrace_chain.inject { |a, b| a + [ "... Caused by ..." ] + b }
       {
         "message" => self.message,
         "info" => self.info,
-        "backtrace" => self.backtrace
+        "execution_context" => self.execution_context,
+        "backtrace" => bt
       }
+    end
+
+    def formatted
+      bt = backtrace_chain.map { |t| t.join("\n") }.join("\n... Caused by ...\n")
+      <<FORMATTED_BLOCK
+#{self.message}
+Error info: #{info.inspect}
+Context: #{execution_context.inspect}
+#{bt}
+FORMATTED_BLOCK
     end
   end
 

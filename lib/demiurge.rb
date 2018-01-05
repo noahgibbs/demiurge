@@ -42,6 +42,10 @@ module Demiurge
     # @return [Integer] The number of ticks that have occurred since the beginning of this Engine's history.
     attr_reader :ticks
 
+    # @return [Hash{String=>String}] The current execution context for notifications and logging.
+    # @since 0.3.0
+    attr_reader :execution_context
+
     # This is the constructor for a new Engine object. Most frequently
     # this will be called by {Demiurge::DSL} or another external
     # source which will also supply item types and initial state.
@@ -69,6 +73,8 @@ module Demiurge
 
       @queued_notifications = []
       @queued_intentions = []
+
+      @execution_context = []
 
       nil
     end
@@ -201,7 +207,8 @@ module Demiurge
     # @return [void]
     # @since 0.0.1
     def admin_warning(message, info = {})
-      send_notification({"message" => message, "info" => info}, type: ::Demiurge::Notifications::AdminWarning, zone: "admin", location: nil, actor: nil)
+      send_notification({"message" => message, "info" => info},
+                        type: ::Demiurge::Notifications::AdminWarning, zone: "admin", location: nil, actor: nil, include_context: true)
     end
 
     # Send out all pending {Demiurge::Intention}s in the
@@ -345,6 +352,24 @@ module Demiurge
       nil
     end
 
+    # Certain context can be important to notifications, errors,
+    # logging and other admin-available information.  For instance:
+    # the current zone-in-tick (if any), a current item taking an
+    # action and so on. This context can be attached to notifications,
+    # admin warnings, system logging and similar.
+    #
+    # @param context [Hash{String=>String}]
+    # @yield Evaluate the following block with the given context set
+    # @api private
+    # @return [void]
+    # @since 0.3.0
+    def push_context(context)
+      @execution_context.push(context)
+      yield
+    ensure
+      @execution_context.pop
+    end
+
     # This method creates a new StateItem based on an existing parent
     # StateItem, and will retain some level of linkage to that parent
     # StateItem afterward as well. This provides a simple form of
@@ -478,10 +503,10 @@ module Demiurge
     # @return [void]
     # @since 0.0.1
     def load_state_from_dump(arr)
-      send_notification(type: Demiurge::Notifications::LoadStateStart, actor: nil, location: nil, zone: "admin")
+      send_notification(type: Demiurge::Notifications::LoadStateStart, actor: nil, location: nil, zone: "admin", include_context: true)
       state_from_structured_array(arr)
       finished_init
-      send_notification(type: Demiurge::Notifications::LoadStateEnd, actor: nil, location: nil, zone: "admin")
+      send_notification(type: Demiurge::Notifications::LoadStateEnd, actor: nil, location: nil, zone: "admin", include_context: true)
       flush_notifications
     end
 
@@ -597,7 +622,7 @@ module Demiurge
     # @param data [Hash] Additional data about this notification; please use String keys for the Hash
     # @return [void]
     # @since 0.0.1
-    def send_notification(data = {}, type:, zone:, location:, actor:)
+    def send_notification(data = {}, type:, zone:, location:, actor:, include_context:false)
       raise "Notification type must be a String, not #{type.class}!" unless type.is_a?(String)
       raise "Location must be a String, not #{location.class}!" unless location.is_a?(String) || location.nil?
       raise "Zone must be a String, not #{zone.class}!" unless zone.is_a?(String)
@@ -606,11 +631,13 @@ module Demiurge
       @state_items["admin"].state["notification_id"] += 1
 
       cleaned_data = {}
+      cleaned_data["context"] = @execution_context if include_context
       data.each do |key, val|
         # TODO: verify somehow that this is JSON-serializable?
         cleaned_data[key.to_s] = val
       end
-      cleaned_data.merge!("type" => type, "zone" => zone, "location" => location, "actor" => actor, "id" => @state_items["admin"].state["notification_id"])
+      cleaned_data.merge!("type" => type, "zone" => zone, "location" => location, "actor" => actor,
+        "notification_id" => @state_items["admin"].state["notification_id"])
 
       @queued_notifications.push(cleaned_data)
     end

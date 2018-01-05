@@ -139,10 +139,12 @@ module Demiurge
     def run_action(action_name, *args, current_intention: nil)
       action = get_action(action_name)
       raise ::Demiurge::Errors::NoSuchActionError.new("No such action as #{action_name.inspect} for #{@name.inspect}!",
-                                                      "item" => self.name, "action" => action_name) unless action
+                                                      "item" => self.name, "action" => action_name,
+                                                      execution_context: @engine.execution_context) unless action
       block = action["block"]
       raise ::Demiurge::Errors::NoSuchActionError.new("Action was never defined for #{action_name.inspect} of object #{@name.inspect}!",
-                                                      "item" => self.name, "action" => action_name) unless block
+                                                      "item" => self.name, "action" => action_name,
+                                                      execution_context: @engine.execution_context) unless block
 
       runner_constructor_args = {}
       if action["engine_code"]
@@ -157,11 +159,14 @@ module Demiurge
       # TODO: can we save block runners between actions?
       block_runner = block_runner_type.new(self, **runner_constructor_args)
       begin
-        block_runner.instance_exec(*args, &block)
+        @engine.push_context("running_action" => action_name, "running_action_item" => @name) do
+          block_runner.instance_exec(*args, &block)
+        end
       rescue
         #STDERR.puts "#{$!.message}\n#{$!.backtrace.join("\n")}"
         raise ::Demiurge::Errors::BadScriptError.new("Script error of type #{$!.class} with message: #{$!.message}",
-                                                     "runner type": block_runner_type.to_s, "action" => action_name);
+                                                     { "runner type": block_runner_type.to_s, "action" => action_name, },
+                                                     execution_context: @engine.execution_context);
       end
       nil
     end
@@ -273,7 +278,8 @@ module Demiurge
     def to_demiurge_name(item)
       return item if item.is_a?(String)
       return item.name if item.respond_to?(:name)
-      raise Demiurge::Errors::BadScriptError.new("Not sure how to convert PORO to Demiurge name: #{item.inspect}!")
+      raise Demiurge::Errors::BadScriptError.new("Not sure how to convert PORO to Demiurge name: #{item.inspect}!",
+                                                 execution_context: @item.engine.execution_context)
     end
     public
 
@@ -294,7 +300,7 @@ module Demiurge
       zone = to_demiurge_name(data.delete("zone") || data.delete(:zone) || @item.zone)
       location = to_demiurge_name(data.delete("location") || data.delete(:location) || @item.location)
       actor = to_demiurge_name(data.delete("actor") || data.delete(:actor) || @item)
-      @item.engine.send_notification(data, type: type.to_s, zone: zone, location: location, actor: actor)
+      @item.engine.send_notification(data, type: type.to_s, zone: zone, location: location, actor: actor, include_context: true)
       nil
     end
 
@@ -330,7 +336,8 @@ module Demiurge
     # @return [void]
     # @since 0.0.1
     def cancel_intention(reason, extra_info = {})
-      raise ::Demiurge::Errors::NoCurrentIntentionError.new("No current intention in action of item #{@item.name}!", "script_item": @item.name) unless @current_intention
+      raise ::Demiurge::Errors::NoCurrentIntentionError.new("No current intention in action of item #{@item.name}!", { "script_item": @item.name },
+                                                            execution_context: @item.engine.execution_context) unless @current_intention
       @current_intention.cancel(reason, extra_info)
       nil
     end
@@ -387,7 +394,7 @@ module Demiurge
       act = @item.get_action(action_name)
       unless act
         raise Demiurge::Errors::NoSuchActionError.new("Trying to queue an action #{action_name.inspect} for an item #{@item.name.inspect} that doesn't have it!",
-                                                      "item" => @item.name, "action" => action_name)
+                                                      "item" => @item.name, "action" => action_name, execution_context: @item.engine.execution_context)
         return
       end
       @item.queue_action(action_name, args)
@@ -439,7 +446,7 @@ module Demiurge
     def initialize(engine, name, action_name, *args)
       @name = name
       @item = engine.item_by_name(name)
-      raise Demiurge::Errors::NoSuchAgentError.new("Can't get agent's item for name #{name.inspect}!") unless @item
+      raise Demiurge::Errors::NoSuchAgentError.new("Can't get agent's item for name #{name.inspect}!", execution_context: engine.execution_context) unless @item
       @action_name = action_name
       @action_args = args
       super(engine)
@@ -464,7 +471,9 @@ module Demiurge
     # @note This method changed signature in 0.2.0 to stop taking an intention ID.
     def offer
       loc = @item.location || @item.zone
-      loc.receive_offer(@action_name, self)
+      @engine.push_context("offered_action" => @action_name, "offered_location" => loc.name, "offering_item" => @item.name) do
+        loc.receive_offer(@action_name, self)
+      end
     end
 
     # Apply the ActionIntention's effects to the appropriate StateItems.
@@ -493,7 +502,8 @@ module Demiurge
                                 type: Demiurge::Notifications::IntentionCancelled,
                                 zone: @item.zone_name,
                                 location: @item.location_name,
-                                actor: @item.name)
+                                actor: @item.name,
+                                include_context: true)
       nil
     end
 
@@ -510,7 +520,8 @@ module Demiurge
                                 type: Demiurge::Notifications::IntentionApplied,
                                 zone: @item.zone_name,
                                 location: @item.location_name,
-                                actor: @item.name)
+                                actor: @item.name,
+                                include_context: true)
       nil
     end
   end
@@ -542,7 +553,8 @@ module Demiurge
     def [](key)
       unless @item.__state_internal.has_key?(key)
         raise ::Demiurge::Errors::NoSuchStateKeyError.new("No such state key as #{method_name.inspect}",
-                                                          "method" => method_name, "item" => @item.name)
+                                                          "method" => method_name, "item" => @item.name,
+                                                          execution_context: @item.engine.execution_context)
       end
       @item.__state_internal[key]
     end
@@ -573,7 +585,8 @@ module Demiurge
       end
 
       # Nope, no matching state.
-      raise ::Demiurge::Errors::NoSuchStateKeyError.new("No such state key as #{method_name.inspect}", "method" => method_name, "item" => @item.name)
+      raise ::Demiurge::Errors::NoSuchStateKeyError.new("No such state key as #{method_name.inspect}", "method" => method_name, "item" => @item.name,
+                                                        execution_context: @item.engine.execution_context)
       super
     end
 
@@ -611,7 +624,8 @@ module Demiurge
       return if @cancelled_info && @cancelled_info["silent"]
       item = @engine.item_by_name(@name)
       @engine.send_notification({ reason: @cancelled_reason, by: @cancelled_by, id: @intention_id, intention_type: self.class.to_s },
-                                type: Demiurge::Notifications::IntentionCancelled, zone: item.zone_name, location: item.location_name, actor: item.name)
+                                type: Demiurge::Notifications::IntentionCancelled, zone: item.zone_name, location: item.location_name, actor: item.name,
+                                include_context: true)
     end
 
     def apply

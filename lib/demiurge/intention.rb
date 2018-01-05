@@ -74,7 +74,8 @@ module Demiurge
                                   :intention_type => self.class.to_s,
                                   :info => @cancelled_info
                                 },
-                                type: Demiurge::Notifications::IntentionCancelled, zone: "admin", location: nil, actor: nil)
+                                type: Demiurge::Notifications::IntentionCancelled, zone: "admin", location: nil, actor: nil,
+                                include_context: true)
       nil
     end
 
@@ -90,7 +91,8 @@ module Demiurge
                                   :intention_type => self.class.to_s,
                                   :info => @cancelled_info
                                 },
-                                type: Demiurge::Notifications::IntentionApplied, zone: "admin", location: nil, actor: nil)
+                                type: Demiurge::Notifications::IntentionApplied, zone: "admin", location: nil, actor: nil,
+                                include_context: true)
       nil
     end
 

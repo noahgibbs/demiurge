@@ -7,6 +7,9 @@ require 'minitest/autorun'
 # This is basically a tiny Minitest plugin
 class Minitest::UnexpectedError
   def message
+    return exception.formatted if exception.is_a?(Demiurge::Errors::Exception)
+
+    # For non-Demiurge exceptions, still show causes
     # Build a chain of exception causes starting from the outermost
     exc = self.exception
     cause_chain = []
