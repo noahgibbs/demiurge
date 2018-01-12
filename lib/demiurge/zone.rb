@@ -103,6 +103,15 @@ module Demiurge
   # sub-location, or a small rectangle of them.
   #
   # @since 0.0.1
-  class TileZone < Zone
+  class TiledZone < Zone
+    # Return the list of valid adjacent positions from this one
+    def adjacent_positions(pos, options = {})
+      location, pos_spec = pos.split("#", 2)
+      loc = @engine.item_by_name(location)
+      x, y = pos_spec.split(",").map(&:to_i)
+
+      shape = options[:shape] || "humanoid"
+      [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].select { |xp, yp| loc.can_accomodate_shape?(xp, yp, shape) }
+    end
   end
 end

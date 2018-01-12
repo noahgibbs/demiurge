@@ -326,7 +326,7 @@ module Demiurge
     # @return [String, Integer, Integer] The location string, the X coordinate and the Y coordinate
     # @since 0.0.1
     def position_to_location_and_tile_coords(position)
-      ::Demiurge::TmxLocation.position_to_loc_coords(position)
+      ::Demiurge::TiledLocation.position_to_loc_coords(position)
     end
 
     # Cancel the current intention. Raise a NoCurrentIntentionError if there isn't one.
@@ -368,7 +368,7 @@ module Demiurge
       # TODO: We don't have a great way to do this for non-agent entities. How does "accomodate" work for non-agents?
       # This may be app-specific.
 
-      loc_name, next_x, next_y = TmxLocation.position_to_loc_coords(position)
+      loc_name, next_x, next_y = TiledLocation.position_to_loc_coords(position)
       location = @item.engine.item_by_name(loc_name)
       if !location
         cancel_intention_if_present "Location #{loc_name.inspect} doesn't exist.", "position" => position, "mover" => @item.name

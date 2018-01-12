@@ -80,7 +80,7 @@ module Demiurge
 
   # A TmxZone can extract things like exits and collision data from
   # tile structures parsed from TMX files.
-  class TmxZone < TileZone
+  class TmxZone < TiledZone
     # Let's resolve any exits through this zone. NOTE: cross-zone
     # exits may be slightly wonky because the other zone hasn't
     # necessarily performed its own finished_init yet.
@@ -120,68 +120,13 @@ module Demiurge
       end
     end
 
-    # Return the list of valid adjacent positions from this one
-    def adjacent_positions(pos, options = {})
-      location, pos_spec = pos.split("#", 2)
-      loc = @engine.item_by_name(location)
-      x, y = pos_spec.split(",").map(&:to_i)
-
-      shape = options[:shape] || "humanoid"
-      [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].select { |xp, yp| loc.can_accomodate_shape?(xp, yp, shape) }
-    end
   end
 
   # A TmxLocation is a special location that is attached to a tile
   # layout, a TMX file. This affects the size and shape of the room,
   # and how agents may travel through it. TmxLocations have X and Y
   # coordinates (grid coordinates) for their positions.
-  class TmxLocation < Location
-    # Parse a tiled position string and return the X and Y tile coordinates
-    def self.position_to_coords(pos)
-      loc, x, y = position_to_loc_coords(pos)
-      return x, y
-    end
-
-    # Parse a tiled position string and return the location name and the X and Y tile coordinates
-    def self.position_to_loc_coords(pos)
-      loc, coords = pos.split("#",2)
-      if coords
-        x, y = coords.split(",")
-        return loc, x.to_i, y.to_i
-      else
-        return loc, nil, nil
-      end
-    end
-
-    # When an item changes position in a TmxLocation, check if the new
-    # position leads out an exit. If so, send them where the exit
-    # leads instead.
-    def item_change_position(item, old_pos, new_pos)
-      exit = @state["exits"].detect { |e| e["from"] == new_pos }
-      return super unless exit  # No exit? Do what you were going to.
-
-      # Going to hit an exit? Cancel this motion and enqueue an
-      # intention to do so? Or just send them through? If the former,
-      # it's very hard to unblockably pass through an exit, even if
-      # that's what's wanted. If the latter, it's very hard to make
-      # going through an exit blockable.
-
-      # Eh, just send them through for now. We'll figure out how to
-      # make detecting and blocking exit intentions easy later.
-
-      item_change_location(item, old_pos, exit["to"])
-    end
-
-    # This just determines if the position is valid at all.  It does
-    # *not* check walkable/swimmable or even if it's big enough for a
-    # humanoid to stand in.
-    def valid_position?(pos)
-      return false unless pos[0...@name.size] == @name
-      return false unless pos[@name.size] == "#"
-      x, y = pos[(@name.size + 1)..-1].split(",", 2).map(&:to_i)
-      valid_coordinate?(x, y)
-    end
-
+  class TmxLocation < TiledLocation
     # This checks the coordinate's validity, but not relative to any
     # specific person/item/whatever that could occupy the space.
     def valid_coordinate?(x, y)
@@ -189,14 +134,6 @@ module Demiurge
       return false if x >= tiles[:spritestack][:width] || y >= tiles[:spritestack][:height]
       return true unless tiles[:collision]
       return tiles[:collision][y][x] == 0
-    end
-
-    # Determine whether this position can accomodate the given agent's shape and size.
-    def can_accomodate_agent?(agent, position)
-      loc, x, y = TmxLocation.position_to_loc_coords(position)
-      raise "Location #{@name.inspect} asked about different location #{loc.inspect} in can_accomodate_agent!" if loc != @name
-      shape = agent.state["shape"] || "humanoid"
-      can_accomodate_shape?(x, y, shape)
     end
 
     # Determine whether this coordinate location can accomodate a
@@ -213,27 +150,6 @@ module Demiurge
         end
       end
       return true
-    end
-
-    # Determine whether this coordinate location can accomodate an
-    # item of the given shape.
-    #
-    # For now, don't distinguish between walkable/swimmable or
-    # whatever, just say a collision value of 0 means valid,
-    # everything else is invalid.
-    #
-    # TODO: figure out some configurable way to specify what tile
-    # value means invalid for TMX maps with more complex collision
-    # logic.
-    def can_accomodate_shape?(left_x, upper_y, shape)
-      case shape
-      when "humanoid"
-        return can_accomodate_dimensions?(left_x, upper_y, 2, 1)
-      when "tiny"
-        return can_accomodate_dimensions?(left_x, upper_y, 1, 1)
-      else
-        raise "Unknown shape #{shape.inspect} passed to can_accomodate_shape!"
-      end
     end
 
     # For a TmxLocation's legal position, find somewhere not covered
