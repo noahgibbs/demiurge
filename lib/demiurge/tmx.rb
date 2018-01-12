@@ -276,8 +276,12 @@ module Demiurge
     spritesheet = {}
     spritestack = {}
 
-    # This recursively loads things like tileset .tsx files
-    tiles = Tmx.load filename
+    # This recursively loads things like tileset .tsx files, and
+    # probably shouldn't so we can control things like paths...
+    # Looking at the TMX code, it uses the :filename option to
+    # determine where to look for other files, such as TSX files.
+    contents = File.read(filename)
+    tiles = Tmx.parse contents, :filename => filename, :format => "tmx"
 
     spritestack[:name] = tiles.name || File.basename(filename).split(".")[0]
     spritestack[:width] = tiles.width
