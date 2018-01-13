@@ -1,5 +1,3 @@
-require_relative "../demiurge"
-
 class Demiurge::Engine
   # This method loads new World File code into an existing engine.  It
   # should be passed a list of filenames, normally roughly the same

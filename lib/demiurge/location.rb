@@ -83,14 +83,27 @@ module Demiurge
 
   end
 
+  # A TiledLocation is a location that uses #x,y format for positions
+  # for a 2D grid in the location. Something like a TMX file defines a
+  # TiledLocation, but so does an infinitely generated tiled space.
+  #
+  # @since 0.3.0
   class TiledLocation < Location
     # Parse a tiled position string and return the X and Y tile coordinates
+    #
+    # @param pos [String] The position string to parse
+    # @return [Array<Integer,Integer>] The x, y coordinates
+    # @since 0.2.0
     def self.position_to_coords(pos)
       loc, x, y = position_to_loc_coords(pos)
       return x, y
     end
 
     # Parse a tiled position string and return the location name and the X and Y tile coordinates
+    #
+    # @param pos [String] The position string to parse
+    # @return [Array<String,Integer,Integer>] The location name and x, y coordinates
+    # @since 0.2.0
     def self.position_to_loc_coords(pos)
       loc, coords = pos.split("#",2)
       if coords
@@ -104,6 +117,12 @@ module Demiurge
     # When an item changes position in a TiledLocation, check if the
     # new position leads out an exit. If so, send them where the exit
     # leads instead.
+    #
+    # @param item [String] The item changing position
+    # @param old_pos [String] The position string the item is moving *from*
+    # @param new_pos [String] The position string the item is moving *to*
+    # @return [void]
+    # @since 0.2.0
     def item_change_position(item, old_pos, new_pos)
       exit = @state["exits"].detect { |e| e["from"] == new_pos }
       return super unless exit  # No exit? Do what you were going to.
@@ -123,6 +142,10 @@ module Demiurge
     # This just determines if the position is valid at all.  It does
     # *not* check walkable/swimmable or even if it's big enough for a
     # humanoid to stand in.
+    #
+    # @param pos [String] The position being checked
+    # @return [Boolean] Whether the position is valid
+    # @since 0.2.0
     def valid_position?(pos)
       return false unless pos[0...@name.size] == @name
       return false unless pos[@name.size] == "#"
@@ -131,6 +154,11 @@ module Demiurge
     end
 
     # Determine whether this position can accomodate the given agent's shape and size.
+    #
+    # @param agent [Demiurge::Agent] The agent being checked
+    # @param position [String] The position being checked
+    # @return [Boolean] Whether the position can accomodate the agent
+    # @since 0.2.0
     def can_accomodate_agent?(agent, position)
       loc, x, y = TiledLocation.position_to_loc_coords(position)
       raise "Location #{@name.inspect} asked about different location #{loc.inspect} in can_accomodate_agent!" if loc != @name
@@ -138,10 +166,24 @@ module Demiurge
       can_accomodate_shape?(x, y, shape)
     end
 
+    # Whether the coordinate is valid
+    #
+    # @param x [Integer] The X coordinate
+    # @param y [Integer] The Y coordinate
+    # @return [Boolean] Whether the coordinate is valid
+    # @since 0.3.0
     def valid_coordinate?(x,y)
       true
     end
 
+    # Whether the location can accomodate an object of this size.
+    #
+    # @param left_x [Integer] The lower (leftmost) X coordinate
+    # @param upper_y [Integer] The higher (upper) Y coordinate
+    # @param width [Integer] How wide the checked object is
+    # @param height [Integer] How high the checked object is
+    # @return [Boolean] Whether the object can be accomodated
+    # @since 0.3.0
     def can_accomodate_dimensions?(left_x, upper_y, width, height)
       true
     end
@@ -153,9 +195,10 @@ module Demiurge
     # whatever, just say a collision value of 0 means valid,
     # everything else is invalid.
     #
-    # TODO: figure out some configurable way to specify what tile
-    # value means invalid for TMX maps with more complex collision
-    # logic.
+    # @param left_x [Integer] The lower (leftmost) X coordinate
+    # @param upper_y [Integer] The higher (upper) Y coordinate
+    # @return [Boolean] Whether the object can be accomodated
+    # @since 0.3.0
     def can_accomodate_shape?(left_x, upper_y, shape)
       case shape
       when "humanoid"
@@ -167,6 +210,10 @@ module Demiurge
       end
     end
 
+    # Return a legal position in this location
+    #
+    # @return [String] A legal position string
+    # @since 0.3.0
     def any_legal_position
       "#{@name}#0,0"
     end
