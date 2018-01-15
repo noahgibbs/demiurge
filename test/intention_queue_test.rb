@@ -7,7 +7,7 @@ COUNTER_OBJ = { "counter" => 0 }
 
 class IntentionQueueTest < Minitest::Test
   DSL_TEXT = <<-DSL
-    zone "mage city", "type" => "TmxZone" do
+    zone "mage city" do
       tmx_location "east end" do
         manasource_tile_layout "test/data/magecity_cc0_lorestrome.tmx"
       end

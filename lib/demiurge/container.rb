@@ -24,6 +24,14 @@ module Demiurge
       state["contents"]
     end
 
+    # Gets the contents array as items, not names.
+    #
+    # @return [Array<Demiurge::StateItem>] The array of items contained in this item
+    # @since 0.3.0
+    def contents
+      state["contents"].map { |name| @engine.item_by_name(name) }
+    end
+
     # The finished_init hook is called after all items are loaded. For
     # containers, this makes sure all items set as contents of this
     # container also have it correctly set as their position.

@@ -81,6 +81,16 @@ module Demiurge
       @state["exits"]
     end
 
+    # Returns an array of position strings for positions adjacent to
+    # the one given. In some areas this won't be meaningful. But for
+    # most "plain" areas, this gives possibilities of where is
+    # moveable for simple AIs.
+    #
+    # @return [Array<String>] Array of position strings
+    # @since 0.0.1
+    def adjacent_positions(pos, options = {})
+      @state["exits"].map { |e| e["to"] }
+    end
   end
 
   # A TiledLocation is a location that uses #x,y format for positions
@@ -216,6 +226,16 @@ module Demiurge
     # @since 0.3.0
     def any_legal_position
       "#{@name}#0,0"
+    end
+
+    # Return the list of valid adjacent positions from this one
+    def adjacent_positions(pos, options = {})
+      location, pos_spec = pos.split("#", 2)
+      loc = @engine.item_by_name(location)
+      x, y = pos_spec.split(",").map(&:to_i)
+
+      shape = options[:shape] || "humanoid"
+      [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].select { |xp, yp| loc.can_accomodate_shape?(xp, yp, shape) }
     end
   end
 end

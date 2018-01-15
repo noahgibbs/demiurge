@@ -5,7 +5,7 @@ require "demiurge/tmx"
 
 class PositioningTest < Minitest::Test
   DSL_TEXT = <<-DSL
-    zone "pathfinder city", "type" => "TmxZone" do
+    zone "pathfinder city" do
       tmx_location "room_exits_ne" do
         manasource_tile_layout "test/data/ms_room_exits_ne.tmx"
       end
@@ -38,7 +38,7 @@ class PositioningTest < Minitest::Test
       end
     end
 
-    zone "other test zone", "type" => "TmxZone" do
+    zone "other test zone" do
       tmx_location "east end" do
         manasource_tile_layout "test/data/magecity_cc0_lorestrome.tmx"
         state.some_var = 7
@@ -56,10 +56,10 @@ class PositioningTest < Minitest::Test
     loc = engine.item_by_name("east end")
     refute_nil loc
 
-    zone = engine.item_by_name("pathfinder city")
-    refute_nil zone
+    location = engine.item_by_name("east end")
+    refute_nil location
 
-    assert_equal [[9,4],[8,5]], zone.adjacent_positions("east end#8,4")
+    assert_equal [[9,4],[8,5]], location.adjacent_positions("east end#8,4")
   end
 
   def test_tmx_position_movement

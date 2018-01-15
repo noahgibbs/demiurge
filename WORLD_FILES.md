@@ -45,7 +45,7 @@ with this example, but you'll need to change it later.
 Here's an example file containing a very simple zone for use with
 Demiurge-CreateJS:
 
-    zone "trackless island", "type" => "TmxZone" do
+    zone "trackless island" do
       tmx_location "start location" do
         manasource_tile_layout "tmx/trackless_island_main.tmx"
         description "A Mysterious Island"

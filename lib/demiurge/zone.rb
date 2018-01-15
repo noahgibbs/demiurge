@@ -74,44 +74,5 @@ module Demiurge
       end
       intentions
     end
-
-    # Returns an array of position strings for positions adjacent to
-    # the one given. In some Zones this won't be meaningful. But for
-    # most "plain" zones, this gives possibilities of where is
-    # moveable for simple AIs.
-    #
-    # @return [Array<String>] Array of position strings
-    # @since 0.0.1
-    def adjacent_positions(pos, options = {})
-      []
-    end
-  end
-
-  # In a RoomZone, locations are simple: you are in a Location, just
-  # one at once, and exits allow movement between them. This is
-  # similar to old MUDs, as well as games that present a store or
-  # conversation as a separate screen that takes over your interface.
-  #
-  # @since 0.0.1
-  class RoomZone < Zone
-  end
-
-  # In a TileZone, each Location is permitted to contain a coordinate
-  # grid of sub-locations.  A given entity occupies one or more
-  # sub-locations, but can't really be "in between" those
-  # coordinates. Most frequently, objects take up a single
-  # sub-location, or a small rectangle of them.
-  #
-  # @since 0.0.1
-  class TiledZone < Zone
-    # Return the list of valid adjacent positions from this one
-    def adjacent_positions(pos, options = {})
-      location, pos_spec = pos.split("#", 2)
-      loc = @engine.item_by_name(location)
-      x, y = pos_spec.split(",").map(&:to_i)
-
-      shape = options[:shape] || "humanoid"
-      [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].select { |xp, yp| loc.can_accomodate_shape?(xp, yp, shape) }
-    end
   end
 end

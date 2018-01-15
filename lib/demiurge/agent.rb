@@ -323,7 +323,7 @@ module Demiurge
       agent.state["wander_counter"] += 1
       wander_every = agent.state["wander_every"] || 3
       return if agent.state["wander_counter"] < wander_every
-      next_coords = agent.zone.adjacent_positions(agent.position)
+      next_coords = agent.location.adjacent_positions(agent.position)
       if next_coords.empty?
         @engine.admin_warning("Oh no! Wandering agent #{@name.inspect} is stuck and can't get out!",
                              "zone" => agent.zone_name, "location" => agent.location_name, "agent" => @name)
