@@ -74,9 +74,6 @@ module Demiurge
 
       # Specify a TMX file as the tile layout, but assume relatively little about the TMX format.
       def tile_layout(tmx_spec)
-        # Make sure this loads correctly, but use the cache for efficiency.
-        tile_cache_entry("tmx", tmx_spec)
-
         @state["tile_layout_filename"] = tmx_spec
         @state["tile_layout_type"] = "tmx"
       end
@@ -89,9 +86,9 @@ module Demiurge
 
       # Validate built_item before returning it
       def built_item
-        raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout"] || @state["manasource_tile_layout"]
+        raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless @state["tile_layout_filename"]
         item = super
-        item.tiles  # Load the cache entry, make sure it works without error
+        item.tile_cache_entry  # Load the cache entry, make sure it works without error
         item
       end
     end
@@ -156,20 +153,21 @@ module Demiurge
       # the TMX filename.  In Demiurge, we don't let them cross zone
       # boundaries to avoid unexpected behavior in other folks'
       # zones.
-      tiles[:objects].select { |obj| obj[:type].downcase == "warp" }.each do |obj|
-        next unless obj[:properties]
-        dest_map_name = obj[:properties]["dest_map"]
-        dest_location = zone_contents.detect { |loc| loc.is_a?(::Demiurge::Tmx::TmxLocation) && loc.tiles[:tmx_name] == dest_map_name }
+      tile_cache_entry["objects"].select { |obj| obj["type"].downcase == "warp" }.each do |obj|
+        next unless obj["properties"]
+        dest_map_name = obj["properties"]["dest_map"]
+        dest_location = zone_contents.detect { |loc| loc.is_a?(::Demiurge::Tmx::TmxLocation) && loc.tile_cache_entry["tmx_name"] == dest_map_name }
         if dest_location
-          dest_position = "#{dest_location.name}##{obj[:properties]["dest_x"]},#{obj[:properties]["dest_y"]}"
-          src_x_coord = obj[:x] / location.tiles[:spritesheet][:tilewidth]
-          src_y_coord = obj[:y] / location.tiles[:spritesheet][:tileheight]
-          src_position = "#{location.name}##{src_x_coord},#{src_y_coord}"
-          raise("Exit destination position #{dest_position.inspect} loaded from TMX location #{location.name.inspect} (TMX: #{location.tiles[:filename]}) is not valid!") unless dest_location.valid_position?(dest_position)
-          exits.push({ src_loc: location, src_pos: src_position, dest_pos: dest_position })
+          entry = dest_location.tile_cache_entry
+          dest_position = "#{dest_location.name}##{obj["properties"]["dest_x"]},#{obj["properties"]["dest_y"]}"
+          src_x_coord = obj["x"] / tile_cache_entry["tilewidth"]
+          src_y_coord = obj["y"] / tile_cache_entry["tileheight"]
+          src_position = "#{name}##{src_x_coord},#{src_y_coord}"
+          raise("Exit destination position #{dest_position.inspect} loaded from TMX location #{name.inspect} (TMX: #{tile_cache_entry["filename"]}) is not valid!") unless dest_location.valid_position?(dest_position)
+          exits.push({ src_loc: self, src_pos: src_position, dest_pos: dest_position })
         else
-          @engine.admin_warning "Unresolved TMX exit in #{location.name.inspect}: #{obj[:properties].inspect}!",
-                                "location" => location.name, "properties" => obj[:properties]
+          @engine.admin_warning "Unresolved TMX exit in #{name.inspect}: #{obj["properties"].inspect}!",
+                                "location" => name, "properties" => obj["properties"]
         end
       end
 
@@ -185,9 +183,9 @@ module Demiurge
     # @since 0.2.0
     def valid_coordinate?(x, y)
       return false if x < 0 || y < 0
-      return false if x >= tiles[:spritestack][:width] || y >= tiles[:spritestack][:height]
-      return true unless tiles[:collision]
-      return tiles[:collision][y][x] == 0
+      return false if x >= tile_cache_entry["width"] || y >= tile_cache_entry["height"]
+      return true unless tile_cache_entry["collision"]
+      return tile_cache_entry["collision"][y * tile_cache_entry["width"] + x] == 0
     end
 
     # Determine whether this coordinate location can accommodate a
@@ -198,11 +196,11 @@ module Demiurge
       return false if left_x < 0 || upper_y < 0
       right_x = left_x + width - 1
       lower_y = upper_y + height - 1
-      return false if right_x >= tiles[:spritestack][:width] || lower_y >= tiles[:spritestack][:height]
-      return true unless tiles[:collision]
+      return false if right_x >= tile_cache_entry["width"] || lower_y >= tile_cache_entry["height"]
+      return true unless tile_cache_entry["collision"]
       (left_x..right_x).each do |x|
         (upper_y..lower_y).each do |y|
-          return false if tiles[:collision][y][x] != 0
+          return false if tile_cache_entry["collision"][y * tile_cache_entry["width"] + x] != 0
         end
       end
       return true
@@ -214,54 +212,39 @@ module Demiurge
     # @return [String] A legal position string within this location
     # @since 0.2.0
     def any_legal_position
-      loc_tiles = self.tiles
-      if tiles[:collision]
+      entry = tile_cache_entry
+      if entry["collision"]
         # We have a collision layer? Fabulous. Scan upper-left to lower-right until we get something non-collidable.
-        (0...tiles[:spritestack][:width]).each do |x|
-          (0...tiles[:spritestack][:height]).each do |y|
-            if tiles[:collision][y][x] == 0
+        (0...entry["width"]).each do |x|
+          (0...entry["height"]).each do |y|
+            if entry["collision"][y * tile_cache_entry["width"] + x] == 0
               # We found a walkable spot.
               return "#{@name}##{x},#{y}"
             end
           end
         end
-      else
-        # Is there a start location? If so, return it. Guaranteed good, right?
-        start_loc = tiles[:objects].detect { |obj| obj[:name] == "start location" }
-        if start_loc
-          x = start_loc[:x] / tiles[:spritestack][:tilewidth]
-          y = start_loc[:y] / tiles[:spritestack][:tileheight]
-          return "#{@name}##{x},#{y}"
-        end
-        # If no start location and no collision data, is there a first location with coordinates?
-        if tiles[:objects].first[:x]
-          obj = tiles[:objects].first
-          return "#{@name}##{x},#{y}"
-        end
-        # Screw it, just return the upper left corner.
-        return "#{@name}#0,0"
+        # If we got here, there exists no walkable spot in the whole location.
       end
+      # Screw it, just return the upper left corner.
+      return "#{@name}#0,0"
     end
 
     # Return the tile object for this location
-    def tiles
+    def tile_cache_entry
       raise("A TMX location (name: #{@name.inspect}) must have a tile layout!") unless state["tile_layout_filename"]
       cache.tmx_entry(@state["tile_layout_type"], @state["tile_layout_filename"])
     end
 
     # Return a TMX object's structure, for an object of the given name, or nil.
     def tmx_object_by_name(name)
-      tiles[:objects].detect { |o| o[:name] == name }
+      tile_cache_entry["objects"].detect { |o| o["name"] == name }
     end
 
     # Return the tile coordinates of the TMX object with the given name, or nil.
     def tmx_object_coords_by_name(name)
-      obj = tiles[:objects].detect { |o| o[:name] == name }
-      if obj
-        [ obj[:x] / tiles[:spritesheet][:tilewidth], obj[:y] / tiles[:spritesheet][:tileheight] ]
-      else
-        nil
-      end
+      obj = tmx_object_by_name(name)
+      return nil unless obj
+      [ obj["x"] / tile_cache_entry["tilewidth"], obj["y"] / tile_cache_entry["tileheight"] ]
     end
 
   end
@@ -278,6 +261,17 @@ module Demiurge::Tmx
   #
   # @since 0.3.0
   class TmxCache
+    # @return [String] Root directory the cache was created relative to
+    attr_reader :root_dir
+
+    # Create the TmxCache
+    #
+    # @param options [Hash] Options
+    # @option options [String] :root_dir The root directory to read TMX and TSX files relative to
+    def initialize(options = {})
+      @root_dir = options[:root_dir] || Dir.pwd
+    end
+
     def tmx_entry(layout_type, layout_filename)
       @tile_cache ||= {}
       @tile_cache[layout_type] ||= {}
@@ -305,100 +299,70 @@ module Demiurge::Tmx
     # Spritesheet and Spritestack. Assume this TMX file obeys ManaSource
     # conventions such as fields for exits and names for layers.
     def sprites_from_manasource_tmx(filename)
-      objs = sprites_from_tmx filename
-      stack = objs[:spritestack]
+      entry = sprites_from_tmx filename
 
-      stack_layers = stack[:layers]
+      stack_layers = entry["map"]["layers"].select { |layer| layer["type"] == "tilelayer" }
 
       # Remove the collision layer, add as separate collision top-level entry
-      collision_index = stack_layers.index { |l| l[:name].downcase == "collision" }
+      collision_index = stack_layers.index { |l| l["name"].downcase == "collision" }
       collision_layer = stack_layers.delete_at collision_index if collision_index
 
       # Some games make this true/false, others have separate visibility
       # or swimmability in it. In general, we'll just expose the data.
-      objs[:collision] = collision_layer[:data] if collision_layer
+      entry["collision"] = collision_layer["data"] if collision_layer
 
       # Remove the heights layer, add as separate heights top-level entry
-      heights_index = stack_layers.index { |l| ["height", "heights"].include?(l[:name].downcase)  }
+      heights_index = stack_layers.index { |l| ["height", "heights"].include?(l["name"].downcase)  }
       heights_layer = stack_layers.delete_at heights_index if heights_index
-      objs[:heights] = heights_layer
+      entry["heights"] = heights_layer
 
-      fringe_index = stack_layers.index { |l| l[:name].downcase == "fringe" }
+      fringe_index = stack_layers.index { |l| l["name"].downcase == "fringe" }
       raise ::Demiurge::Errors::TmxFormatError.new("No Fringe layer found in ManaSource TMX File #{filename.inspect}!", "filename" => filename) unless fringe_index
       stack_layers.each_with_index do |layer, index|
         # Assign a Z value based on layer depth, with fringe = 0 as a special case
         layer["z"] = (index - fringe_index) * 10.0
       end
 
-      objs
+      entry
     end
 
-    # Load a TMX file and calculate the objects inside including the
-    # Spritesheet and Spritestack. Do not assume this TMX file obeys any
-    # particular additional conventions beyond basic TMX format.
+    # Load a TMX file and JSONify it. This includes its various
+    # tilesets, such as embedded tilesets and TSX files.  Do not
+    # assume this TMX file obeys any particular additional conventions
+    # beyond basic TMX format.
     def sprites_from_tmx(filename)
-      spritesheet = {}
-      spritestack = {}
+      cache_entry = {}
 
-      # This recursively loads things like tileset .tsx files, and
-      # probably shouldn't so we can control things like paths...
-      # Looking at the TMX code, it uses the :filename option to
-      # determine where to look for other files, such as TSX files.
-      contents = File.read(filename)
-      tiles = Tmx.parse contents, :filename => filename, :format => "tmx"
-
-      spritestack[:name] = tiles.name || File.basename(filename).split(".")[0]
-      spritestack[:width] = tiles.width
-      spritestack[:height] = tiles.height
-      spritestack[:properties] = tiles.properties
-
-      spritesheet[:tilewidth] = tiles.tilewidth
-      spritesheet[:tileheight] = tiles.tileheight
-
-      spritesheet[:images] = tiles.tilesets.map do |tileset|
-        {
-          firstgid: tileset.firstgid,
-          tileset_name: tileset.name,
-          image: tileset.image,
-          imagewidth: tileset.imagewidth,
-          imageheight: tileset.imageheight,
-          tilewidth: tileset.tilewidth,
-          tileheight: tileset.tileheight,
-          oversize: tileset.tilewidth != tiles.tilewidth || tileset.tileheight != tiles.tileheight,
-          spacing: tileset.spacing,
-          margin: tileset.margin,
-          imagetrans: tileset.imagetrans, # Currently unused, color to treat as transparent
-          properties: tileset.properties,
-        }
-      end
-      spritesheet[:cyclic_animations] = animations_from_tilesets tiles.tilesets
-
-      spritesheet[:properties] = spritesheet[:images].map { |i| i[:properties] }.inject({}, &:merge)
-      spritesheet[:name] = spritesheet[:images].map { |i| i[:tileset_name] }.join("/")
-      spritestack[:spritesheet] = spritesheet[:name]
-
-      spritestack[:layers] = tiles.layers.map do |layer|
-        data = layer.data.each_slice(layer.width).to_a
-        {
-          name: layer.name,
-          data: data,
-          visible: layer.visible,
-          opacity: layer.opacity,
-          offsetx: layer.offsetx,  # Currently unused
-          offsety: layer.offsety,  # Currently unused
-          properties: layer.properties,
-        }
+      # This recursively loads things like tileset .tsx files, so we
+      # change to the root dir.
+      Dir.chdir(@root_dir) do
+        tmx_map = Tmx.load filename
+        filename.sub!(/\.tmx\Z/, ".json")
+        cache_entry["map"] = MultiJson.load(tmx_map.export_to_string(:filename => filename, :format => :json))
       end
 
-      objects = tiles.object_groups.flat_map { |og| og.objects.to_a }.map(&:to_h)
+      tiles = cache_entry["map"]
+      cache_entry["tilesets"] = tiles["tilesets"]
 
-      { filename: filename, tmx_name: File.basename(filename).split(".")[0], spritesheet: spritesheet, spritestack: spritestack, objects: objects }
+      # Add entries to the top-level cache entry, but not inside the "map" structure
+      cache_entry["tmx_name"] = File.basename(filename).split(".")[0]
+      cache_entry["name"] = tiles["name"] || cache_entry["tmx_name"]
+      cache_entry["filename"] = filename
+      cache_entry["animations"] = animations_from_tilesets cache_entry["tilesets"]
+      cache_entry["objects"] = tiles["layers"].flat_map { |layer| layer["objects"] || [] }
+
+      # Copy most-used properties into top-level cache entry
+      ["width", "height", "tilewidth", "tileheight"].each do |property|
+        cache_entry[property] = tiles[property]
+      end
+
+      cache_entry
     end
 
     # Find the animations included in the TMX file
     def animations_from_tilesets tilesets
       tilesets.flat_map do |tileset|
-        (tileset.tiles || []).map do |tile|
+        (tileset["tiles"] || []).map do |tile|
           p = tile["properties"]
           if p && p["animation-frame0"]
             section = 0
@@ -406,13 +370,13 @@ module Demiurge::Tmx
 
             while p["animation-frame#{section}"]
               section_hash = {
-                frame: p["animation-frame#{section}"].to_i + tileset[:firstgid],
-                duration: p["animation-delay#{section}"].to_i
+                "frame" => p["animation-frame#{section}"].to_i + tileset[:firstgid],
+                "duration" => p["animation-delay#{section}"].to_i
               }
               anim.push section_hash
               section += 1
             end
-            { "tile_anim_#{tile["id"].to_i + tileset[:firstgid]}".to_sym => anim }
+            { "tile_anim_#{tile["id"].to_i + tileset[:firstgid]}" => anim }
           else
             nil
           end

@@ -16,6 +16,7 @@ require "demiurge/zone"
 require "demiurge/location"
 require "demiurge/agent"
 require "demiurge/dsl"
+require "demiurge/tmx"
 
 require "multi_json"
 
