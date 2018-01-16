@@ -105,7 +105,7 @@ module Demiurge
     # TmxLocations. Demiurge provides one by default which can be
     # overridden.
     #
-    # @return [DemiurgeTmx::TileCache] The current default TileCache for newly-created TmxLocations
+    # @return [Demiurge::Tmx::TileCache] The current default TileCache for newly-created TmxLocations
     # @since 0.3.0
     def self.default_cache
       @default_cache ||= ::Demiurge::Tmx::TmxCache.new
@@ -268,10 +268,47 @@ module Demiurge::Tmx
     #
     # @param options [Hash] Options
     # @option options [String] :root_dir The root directory to read TMX and TSX files relative to
+    # @return [void]
+    # @since 0.3.0
     def initialize(options = {})
       @root_dir = options[:root_dir] || Dir.pwd
     end
 
+    # Clear the TMX cache. Remove all existing entries. This can
+    # potentially break existing TMX-based objects. Objects often
+    # refer repeatedly back into the cache to avoid duplicating
+    # structures, and to pick up new changes to those structures.
+    #
+    # @return [void]
+    # @since 0.3.0
+    def clear_cache
+      @tile_cache = {}
+      nil
+    end
+
+    # Change the root directory this cache uses. Note that any
+    # existing TMX files with a different root would presumably
+    # change, so this clears the cache as a side effect.
+    #
+    # @param new_root [String] The new directory to use as TMX root for this cache
+    # @return [void]
+    # @since 0.3.0
+    def root_dir=(new_root)
+      clear_cache
+      @root_dir = new_root
+      nil
+    end
+
+    # Return a TMX entry for the given layout type and filename. A
+    # "layout type" is something like normal TMX (called "tmx") or
+    # Manasource-style (called "manasource".) But additional types are
+    # likely to be added in future versions of Pixiurge.
+    #
+    # @param layout_type [String] The subtype of TMX file; currently may be one of "tmx" or "manasource"
+    # @param layout_filename [String] The path to the TMX file relative to the tile cache's TMX root directory
+    # @return [Hash] The TMX cache entry, in an internal and potentially changeable format
+    # @api private
+    # @since 0.3.0
     def tmx_entry(layout_type, layout_filename)
       @tile_cache ||= {}
       @tile_cache[layout_type] ||= {}
@@ -290,14 +327,19 @@ module Demiurge::Tmx
       @tile_cache[layout_type][layout_filename]
     end
 
+    private
+
     # This is to support TMX files for ManaSource, ManaWorld, Land of
     # Fire, Source of Tales and other Mana Project games. It can't be
     # perfect since there's some variation between them, but it can
     # follow most major conventions.
-
-    # Load a TMX file and calculate the objects inside including the
-    # Spritesheet and Spritestack. Assume this TMX file obeys ManaSource
-    # conventions such as fields for exits and names for layers.
+    #
+    # Load a TMX file and calculate additional information like
+    # animations from the given properties. Assume this TMX file obeys
+    # ManaSource conventions such as fields for exits and names for
+    # layers.
+    #
+    # @since 0.1.0
     def sprites_from_manasource_tmx(filename)
       entry = sprites_from_tmx filename
 
@@ -330,6 +372,8 @@ module Demiurge::Tmx
     # tilesets, such as embedded tilesets and TSX files.  Do not
     # assume this TMX file obeys any particular additional conventions
     # beyond basic TMX format.
+    #
+    # @since 0.1.0
     def sprites_from_tmx(filename)
       cache_entry = {}
 
@@ -359,7 +403,9 @@ module Demiurge::Tmx
       cache_entry
     end
 
-    # Find the animations included in the TMX file
+    # Extract the animations included in the TMX file
+    #
+    # @since 0.1.0
     def animations_from_tilesets tilesets
       tilesets.flat_map do |tileset|
         (tileset["tiles"] || []).map do |tile|
