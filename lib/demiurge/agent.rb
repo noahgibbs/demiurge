@@ -43,9 +43,10 @@ module Demiurge
     # happen, has happened already.
     #
     # @param pos [String] A position string to move to
+    # @param options [Hash] A hash of how to do the movement; Demiurge doesn't internally use this hash, but your World Files or display library may do so
     # @return [void]
     # @since 0.0.1
-    def move_to_position(pos)
+    def move_to_position(pos, options = {})
       old_pos = self.position
       old_loc = self.location_name
       old_zone_name = self.zone_name
@@ -64,7 +65,7 @@ module Demiurge
 
       @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
                                   type: Demiurge::Notifications::MoveFrom, zone: old_zone_name, location: old_loc, actor: @name, include_context: true)
-      @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc },
+      @engine.send_notification({ old_position: old_pos, old_location: old_loc, new_position: self.position, new_location: new_loc, options: options },
                                   type: Demiurge::Notifications::MoveTo, zone: self.zone_name, location: self.location_name, actor: @name, include_context: true)
     end
 
@@ -331,7 +332,7 @@ module Demiurge
       end
       chosen = next_coords.sample
       pos = "#{agent.location_name}##{chosen.join(",")}"
-      agent.move_to_position(pos)
+      agent.move_to_position(pos, { "method" => "wander" })
       agent.state["wander_counter"] = 0
     end
   end

@@ -362,9 +362,10 @@ module Demiurge
     # walking animation or anything. Just put it where it needs to be.
     #
     # @param position [String] The position to move to
+    # @param options [Hash] A Hash of *how* the item moves there; this can be checked by your World Files or display library, though Demiurge won't use it directly.
     # @return [void]
     # @since 0.0.1
-    def move_to_instant(position)
+    def move_to_instant(position, options = {})
       # TODO: We don't have a great way to do this for non-agent entities. How does "accomodate" work for non-agents?
       # This may be app-specific.
 
