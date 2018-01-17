@@ -392,6 +392,7 @@ module Demiurge::Tmx
       cache_entry["tmx_name"] = File.basename(filename).split(".")[0]
       cache_entry["name"] = tiles["name"] || cache_entry["tmx_name"]
       cache_entry["filename"] = filename
+      cache_entry["dir"] = filename.split("/")[0..-2].join(".")
       cache_entry["animations"] = animations_from_tilesets cache_entry["tilesets"]
       cache_entry["objects"] = tiles["layers"].flat_map { |layer| layer["objects"] || [] }
 
