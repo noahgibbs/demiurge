@@ -127,4 +127,17 @@ class ExceptionsTest < Minitest::Test
       assert_equal ::Demiurge::Errors::NoCurrentIntentionError, $!.cause.class
     end
   end
+
+  def test_location_not_found
+    engine = Demiurge::DSL.engine_from_dsl_text(["Exceptions DSL", DSL_TEXT])
+
+    agent_item = engine.item_by_name("guy on fire")
+
+    # Directly assigning the position to the state avoids all the
+    # sanity checks that should keep this from happening.
+    agent_item.state["position"] = "no such location#31,4"
+    assert_raises(Demiurge::Errors::LocationNameNotFoundError) do
+      agent_item.move_to_position("Cliffs of Error")
+    end
+  end
 end

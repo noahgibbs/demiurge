@@ -70,16 +70,16 @@ FORMATTED_BLOCK
   class RetryableError < ::Demiurge::Errors::Exception; end
 
   # A BadScriptError will normally not benefit from retrying. Instead,
-  # one or more scripts associated with this error is presumed to be
-  # bad or outdated. The primary thing to do with BadScriptErrors is
-  # to accumulate and count them and possibly to deactivate one or
-  # more bad scripts. Error counting can allow an administrator to
-  # locate (or guess) the bad script in question and disable one or
-  # more scripts to remove the problem. While it's technically
-  # possible to disable bad scripts automatically, that may sometimes
-  # have distressing side effects when a script was intended to run
-  # and didn't. It may also have false positives where a misbehaving
-  # script "frames" a correct script by causing errors downstream.
+  # one or more scripts (World Files and/or action code) associated
+  # with this error is presumed to be bad or outdated. The primary
+  # thing to do with BadScriptErrors is to accumulate and count them
+  # and possibly to deactivate one or more pieces of bad code or
+  # in-world areas containing them. Error counting can allow an
+  # administrator to locate (or guess) the bad script in question and
+  # disable one or more objects to remove the problem. While it's
+  # technically possible to disable bad scripts automatically, that
+  # will sometimes function incorrectly. At best it can sometimes
+  # help, and at worst it can cause severe damage.
   #
   # @since 0.0.1
   class BadScriptError < ::Demiurge::Errors::Exception; end
@@ -146,6 +146,15 @@ FORMATTED_BLOCK
   # @since 0.0.1
   class TooManyNotificationLoopsError < BadScriptError; end
 
+  # It's possible for bad or outdated location names to slip into the
+  # object state in various ways, such as outdated state files or
+  # incorrect actions or engine code. Sometimes this can only be
+  # detected some time later, after the fact. This error indicates our
+  # belief that this situation has occurred.
+  #
+  # @since 0.4.0
+  class LocationNameNotFoundError < BadScriptError; end
+
   # This occurs if there's a problem in the TMX file or in some kind
   # of file convention (such as using "Fringe" for a hardcoded layer)
   # in a specific subformat like ManaSource.
@@ -161,7 +170,7 @@ FORMATTED_BLOCK
 
   # When reloading, this error or a subclass can be raised if the new
   # state structure or StateItems don't seem to match the old one in
-  # illegal ways.  "Illegal" can vary, depending how conservative the
+  # illegal ways. "Illegal" can vary, depending how conservative the
   # reloading options are set.
   #
   # @since 0.0.1

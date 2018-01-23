@@ -339,6 +339,28 @@ module Demiurge::Tmx
     # ManaSource conventions such as fields for exits and names for
     # layers.
     #
+    # This will assign Z values to the layers to determine stacking
+    # order.
+    #
+    # The returned cache entry has some known fields and may have
+    # others - this is basically an internal format.
+    #
+    # @example ``` ruby
+    # {
+    #   "width" => 40,               # The width of the TMX map in tiles
+    #   "height" => 35,              # The height of the TMX map in tiles
+    #   "tilewidth" => 32,           # The width of a tile in pixels
+    #   "tileheight" => 32,          # The height of a tile in pixels
+    #   "tmx_name" => "main_board",  # The TMX filename, minus the extensions
+    #   "map" => { ... },  # The whole TMX file converted to TMX JSON format
+    #   "name" => "main_board",  # The name from the TMX file, falling back to the filename
+    #   "filename" => "../tmx/main_board.tmx", # The filename including path and extension(s)
+    #   "dir" => "../tmx"        # Just the directory part of the filename
+    #   "animations" => { ... }  # TMX tile animations extracted from tile properties in an internal format
+    #   "objects" => [ ... ]     # Extracted TMX objects
+    # }
+    # ```
+    #
     # @since 0.1.0
     def sprites_from_manasource_tmx(filename)
       entry = sprites_from_tmx filename
@@ -358,6 +380,8 @@ module Demiurge::Tmx
       heights_layer = stack_layers.delete_at heights_index if heights_index
       entry["heights"] = heights_layer
 
+      entry["tile_layers"] = stack_layers.select { |layer| layer["type"] == "tilelayer" }
+
       fringe_index = stack_layers.index { |l| l["name"].downcase == "fringe" }
       raise ::Demiurge::Errors::TmxFormatError.new("No Fringe layer found in ManaSource TMX File #{filename.inspect}!", "filename" => filename) unless fringe_index
       stack_layers.each_with_index do |layer, index|
@@ -373,6 +397,27 @@ module Demiurge::Tmx
     # assume this TMX file obeys any particular additional conventions
     # beyond basic TMX format.
     #
+    # The returned cache entry has some known fields and may have
+    # others - this is basically an internal format.
+    #
+    # @example ``` ruby
+    # {
+    #   "width" => 40,               # The width of the TMX map in tiles
+    #   "height" => 35,              # The height of the TMX map in tiles
+    #   "tilewidth" => 32,           # The width of a tile in pixels
+    #   "tileheight" => 32,          # The height of a tile in pixels
+    #   "tmx_name" => "main_board",  # The TMX filename, minus the extensions
+    #   "map" => { ... },  # The whole TMX file converted to TMX JSON format
+    #   "name" => "main_board",  # The name from the TMX file, falling back to the filename
+    #   "filename" => "../tmx/main_board.tmx", # The filename including path and extension(s)
+    #   "dir" => "../tmx"        # Just the directory part of the filename
+    #   "animations" => { ... }  # TMX tile animations extracted from tile properties in an internal format
+    #   "objects" => [ ... ]     # Extracted TMX objects
+    # }
+    # ```
+    #
+    # @param filename [String] The path to the file to parse as TMX
+    # @return [Hash] The TMX cache entry in the format given above
     # @since 0.1.0
     def sprites_from_tmx(filename)
       cache_entry = {}
@@ -386,15 +431,15 @@ module Demiurge::Tmx
       end
 
       tiles = cache_entry["map"]
-      cache_entry["tilesets"] = tiles["tilesets"]
 
       # Add entries to the top-level cache entry, but not inside the "map" structure
       cache_entry["tmx_name"] = File.basename(filename).split(".")[0]
       cache_entry["name"] = tiles["name"] || cache_entry["tmx_name"]
       cache_entry["filename"] = filename
-      cache_entry["dir"] = filename.split("/")[0..-2].join(".")
-      cache_entry["animations"] = animations_from_tilesets cache_entry["tilesets"]
+      cache_entry["dir"] = filename.split("/")[0..-2].join("/")
+      cache_entry["animations"] = animations_from_tilesets tiles["tilesets"]
       cache_entry["objects"] = tiles["layers"].flat_map { |layer| layer["objects"] || [] }
+      cache_entry["tile_layers"] = tiles["layers"].select { |layer| layer["type"] == "tilelayer" }
 
       # Copy most-used properties into top-level cache entry
       ["width", "height", "tilewidth", "tileheight"].each do |property|

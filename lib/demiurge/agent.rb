@@ -52,9 +52,15 @@ module Demiurge
       old_zone_name = self.zone_name
       expected_new_loc = pos.split("#")[0]
 
-      if expected_new_loc == old_loc
+      if old_loc && !self.location
+        raise ::Demiurge::Errors::LocationNameNotFoundError.new("Item #{@name.inspect} has an old location name (#{old_loc.inspect}) with no matching location object!",
+                                                                { "item_name" => @name, "location_name" => old_loc, "moving_to" => pos },
+                                                                execution_context: @engine.execution_context);
+      end
+
+      if old_loc != nil && expected_new_loc == old_loc
         self.location.item_change_position(self, old_pos, pos)
-      else
+      elsif old_loc != nil
         # This also handles zone changes.
         self.location.item_change_location(self, old_pos, pos)
       end
