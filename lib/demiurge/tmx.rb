@@ -364,6 +364,8 @@ module Demiurge::Tmx
     # @since 0.1.0
     def sprites_from_manasource_tmx(filename)
       entry = sprites_from_tmx filename
+      entry["format"] = "manasource"
+      entry["filename"].sub!(/\.tmx\.json\Z/, ".manasource.json")
 
       stack_layers = entry["map"]["layers"].select { |layer| layer["type"] == "tilelayer" }
 
@@ -380,14 +382,14 @@ module Demiurge::Tmx
       heights_layer = stack_layers.delete_at heights_index if heights_index
       entry["heights"] = heights_layer
 
-      entry["tile_layers"] = stack_layers.select { |layer| layer["type"] == "tilelayer" }
-
       fringe_index = stack_layers.index { |l| l["name"].downcase == "fringe" }
       raise ::Demiurge::Errors::TmxFormatError.new("No Fringe layer found in ManaSource TMX File #{filename.inspect}!", "filename" => filename) unless fringe_index
       stack_layers.each_with_index do |layer, index|
         # Assign a Z value based on layer depth, with fringe = 0 as a special case
         layer["z"] = (index - fringe_index) * 10.0
       end
+
+      entry["tile_layers"] = stack_layers.select { |layer| layer["type"] == "tilelayer" }
 
       entry
     end
@@ -420,13 +422,13 @@ module Demiurge::Tmx
     # @return [Hash] The TMX cache entry in the format given above
     # @since 0.1.0
     def sprites_from_tmx(filename)
-      cache_entry = {}
+      cache_entry = { "format": "tmx" }
 
       # This recursively loads things like tileset .tsx files, so we
       # change to the root dir.
       Dir.chdir(@root_dir) do
         tmx_map = Tmx.load filename
-        filename.sub!(/\.tmx\Z/, ".json")
+        filename.sub!(/\.tmx\Z/, ".tmx.json")
         cache_entry["map"] = MultiJson.load(tmx_map.export_to_string(:filename => filename, :format => :json))
       end
 

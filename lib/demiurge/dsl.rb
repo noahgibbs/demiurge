@@ -169,7 +169,7 @@ module Demiurge::DSL
   # @return [Demiurge::Engine] A configured Engine
   # @since 0.0.1
   def self.engine_from_dsl_files(*filenames)
-    filename_string_pairs = filenames.map { |fn| [fn, File.read(fn)] }
+    filename_string_pairs = filenames.flatten.map { |fn| [fn, File.read(fn)] }
     engine_from_dsl_text(*filename_string_pairs)
   end
 
