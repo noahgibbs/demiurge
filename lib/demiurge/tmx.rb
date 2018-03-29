@@ -158,7 +158,6 @@ module Demiurge
         dest_map_name = obj["properties"]["dest_map"]
         dest_location = zone_contents.detect { |loc| loc.is_a?(::Demiurge::Tmx::TmxLocation) && loc.tile_cache_entry["tmx_name"] == dest_map_name }
         if dest_location
-          entry = dest_location.tile_cache_entry
           dest_position = "#{dest_location.name}##{obj["properties"]["dest_x"]},#{obj["properties"]["dest_y"]}"
           src_x_coord = obj["x"] / tile_cache_entry["tilewidth"]
           src_y_coord = obj["y"] / tile_cache_entry["tileheight"]

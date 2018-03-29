@@ -369,7 +369,7 @@ module Demiurge
       # TODO: We don't have a great way to do this for non-agent entities. How does "accomodate" work for non-agents?
       # This may be app-specific.
 
-      loc_name, next_x, next_y = TiledLocation.position_to_loc_coords(position)
+      loc_name = TiledLocation.position_to_loc_coords(position)[0]
       location = @item.engine.item_by_name(loc_name)
       if !location
         cancel_intention_if_present "Location #{loc_name.inspect} doesn't exist.", "position" => position, "mover" => @item.name

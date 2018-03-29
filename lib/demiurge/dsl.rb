@@ -140,8 +140,8 @@ class Demiurge::Engine
       old_item = old_engine.item_by_name(old_name)
       new_item = new_engine.item_by_name(new_name)
 
-      old_type, _, old_state = *old_item.structured_state
-      new_type, _, new_state = *new_item.structured_state
+      _, _, old_state = *old_item.structured_state
+      new_type, _, _ = *new_item.structured_state
 
       old_engine.unregister_state_item(old_item)
       old_engine.register_state_item(StateItem.from_name_type(old_engine, new_type, new_name, old_state))

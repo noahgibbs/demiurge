@@ -516,7 +516,7 @@ module Demiurge
     def notification_spec(s)
       return s if s == :all
       if s.respond_to?(:each)
-        return s.map { |s| notification_entity(s) }
+        return s.map { |s_ent| notification_entity(s_ent) }
       end
       return [notification_entity(s)]
     end

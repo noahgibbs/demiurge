@@ -60,7 +60,7 @@ module Demiurge
     end
 
     def add_exit(from:any_legal_position, to:, to_location: nil, properties:{})
-      to_loc, to_coords = to.split("#",2)
+      to_loc = to.split("#",2)[0]
       if to_location == nil
         to_location = @engine.item_by_name(to_loc)
       end
@@ -105,7 +105,7 @@ module Demiurge
     # @return [Array<Integer,Integer>] The x, y coordinates
     # @since 0.2.0
     def self.position_to_coords(pos)
-      loc, x, y = position_to_loc_coords(pos)
+      _, x, y = position_to_loc_coords(pos)
       return x, y
     end
 
