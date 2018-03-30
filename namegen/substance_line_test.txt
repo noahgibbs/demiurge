@@ -5,7 +5,7 @@ element_adjective: heterodynamic(0.3)|electrified|aetheric|rarefied|diatomaceous
 either_silly_scientist_name: Jormundgander|Phlox|Endymion|Hyperion|Zogron
 modifiable_silly_scientist_name: Heterod|:either_silly_scientist_name(30)
 silly_scientist_name: Heterodyne|:either_silly_scientist_name(30)
-first_half_scientist_name: Arden|Avern|Bach|Eisen|Cram|Gord|Gibb|Gram|Gra|Glock|Glocken|Phlox|Phree|Fargen|Franken|Schlock|Schach|Sherben|Schmott|Jagen|Jormund|Jott|Jaunte|Wargen|Van|Wirt|("van der "+:first_half_scientist_name)(0.5)|("van den "+:first_half_scientist_name)(0.5)|("von "+:first_half_scientist_name)(0.5)|
+first_half_scientist_name: Arden|Avern|Bach|Eisen|Cram|Gord|Gibb|Gram|Gra|Glock|Glocken|Phlox|Phree|Fargen|Franken|Schlock|Schach|Sherben|Schmott|Jagen|Jormund|Jott|Jaunte|Wargen|Van|Wirt|("van der "+:first_half_scientist_name)(0.5)|("van den "+:first_half_scientist_name)(0.5)|("von "+:first_half_scientist_name)(0.5)
 second_half_scientist_name: wanger|vander|varger|saggler|feuer|farber|rich|reich|hauer|baum|triggan|ham|hammer|burg|berg|see|spiel|stein|furd|garten|gartner|:second_half_scientist_name+"-":scientist_name
 either_compound_scientist_name: :first_half_scientist_name+:second_half_scientist_name
 modifiable_compound_scientist_name: :either_compound_scientist_name
