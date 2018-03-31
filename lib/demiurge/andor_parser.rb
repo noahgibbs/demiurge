@@ -5,16 +5,29 @@ module Demiurge
   class AndorDefnParser < Parslet::Parser
     root :bar_expr
 
+    # The way we do operator precedence is to have "plus expressions"
+    # and "bar expressions", plus "value expressions". A plus_expr
+    # binds "tighter" than a bar expr, which effectively handles
+    # plusses before bars, and the same for value-expressions.
+    # Parentheses "bind" a sub-expression into a highest-precedence
+    # "value" expression like a constant.
+
     rule(:bar_expr) {
-      space? >> plus_expr.as(:left) >> (bar.as(:bar) >> plus_expr.as(:right)).repeat(1) |
-      space? >> plus_expr |
-      space? >> str('(') >> space? >> bar_expr >> space? >> str(')')
+      space? >> plus_expr.as(:left) >> space? >> (bar.as(:bar) >> space? >> plus_expr.as(:right)).repeat(1) >> space? |
+      plus_expr
     }
 
     rule(:plus_expr) {
-      str_or_name.as(:left) >> (plus.as(:plus) >> str_or_name.as(:right)).repeat(1) |
-      str_or_name |
-      str('(') >> space? >> bar_expr >> space? >> str(')')
+      space? >> value_expr.as(:left) >> space? >> (plus.as(:plus) >> space? >> value_expr.as(:right)).repeat(1) >> space? |
+      space? >> str_or_name >> space? |
+      value_expr
+    }
+
+    rule(:value_expr) {
+      space? >> quoted_string >> space? |
+      space? >> str_const >> space? |
+      space? >> name >> space? |
+      space? >> str('(') >> space? >> bar_expr >> space? >> str(')') >> space?
     }
 
     rule(:space)  { match('\s').repeat(1) }

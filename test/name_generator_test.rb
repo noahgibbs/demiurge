@@ -100,4 +100,43 @@ RULES
     gen.randomizer = fixed_randomizer
     assert_equal ["thing 2thing3", "thing1", "thing1", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing1", "thing1", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing1", "thing 2thing3", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing 4"], (1..20).map { gen.generate_from_name("start") }
   end
+
+  def test_simple_parens_with_quotes_only
+    gen = parser_from <<RULES
+start: ("bobo")
+RULES
+    assert_equal "bobo", gen.generate_from_name("start")
+  end
+
+  def test_simple_parens_no_quotes_only
+    gen = parser_from <<RULES
+start: (bobo)
+RULES
+    assert_equal "bobo", gen.generate_from_name("start")
+  end
+
+  def test_simple_parens_with_inside_ops
+    gen = parser_from <<RULES
+start: (bobo + :thing)
+thing: dyne
+RULES
+    assert_equal "bobodyne", gen.generate_from_name("start")
+  end
+
+  def test_simple_parens_with_outside_ops
+    gen = parser_from <<RULES
+start: (bobo) + :thing
+thing: dyne
+RULES
+    assert_equal "bobodyne", gen.generate_from_name("start")
+  end
+
+  def test_parens_operator_precedence
+    gen = parser_from <<RULES
+start: (:thing1 | "thing2") + :thing_3 | "thing4"
+thing1: "thing1"
+thing_3: thing3
+RULES
+    assert_equal [ "thing1thing3", "thing2thing3", "thing4" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
+  end
 end
