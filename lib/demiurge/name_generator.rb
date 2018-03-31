@@ -14,12 +14,14 @@ module Demiurge
     NAME_REGEXP = /\A[-_$a-zA-Z0-9]+\Z/
 
     attr_reader :rules
+    attr :randomizer, true
 
     # Create a new generator with an empty ruleset
     #
     # @since 0.4.0
     def initialize
       @rules = {}
+      @randomizer = Random.new(Time.now.to_i)
     end
 
     # Return all names currently defined by rules.
@@ -54,14 +56,14 @@ module Demiurge
 
         symbols = defn_parser.parse(defn)
 
-        STDERR.puts "Parser result: #{symbols.inspect}"
         @rules[name] = symbols  # Need to transform to proper ast
       end
       nil
     end
 
     def generate_from_name(name)
-      unless @rules[name]
+      unless @rules.has_key?(name)
+        STDERR.puts "Known rules: #{@rules.keys.inspect}"
         raise ::Demiurge::Errors::NoSuchNameInGenerator.new("Unknown name #{name.inspect} in generator!", "name" => name)
       end
 
@@ -77,13 +79,29 @@ module Demiurge
           return ast[:str_const]
         elsif ast.has_key?(:str_val)
           return ast[:str_val].map { |h| h[:char] }.join
+        elsif ast.has_key?(:name)
+          return generate_from_name(ast[:name].to_s)
+        else
+          raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Malformed rule internal structure: (Hash) #{ast.inspect}!", "ast" => ast.inspect)
         end
+      elsif ast.is_a?(Array)
+        if ast[0].has_key?(:left)
+          if ast[1].has_key?(:plus)
+            left_side = evaluate_ast(ast[0][:left])
+            return ast[1..-1].map { |term| evaluate_ast(term[:right]) }.inject(left_side, &:+)
+          elsif ast[1].has_key?(:bar)
+            left_side = evaluate_ast(ast[0][:left])
+            choices = [left_side] + ast[1..-1].map { |term| evaluate_ast(term[:right]) }
+            return choices.sample(random: @randomizer)
+          else
+            raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Malformed rule internal structure: (Array/op) #{ast.inspect}!", "ast" => ast.inspect)
+          end
+        else
+          raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Malformed rule internal structure: (Array) #{ast.inspect}!", "ast" => ast.inspect)
+        end
+      else
+        raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Malformed rule internal structure: (#{ast.class}) #{ast.inspect}!", "ast" => ast.inspect)
       end
-
-      return generate_from_name(ast[1..-1]) if ast.is_a?(String) && ast[0] == ":"
-      return ast if ast.is_a?(String) # And by elimination, the first character was *not* a colon
-
-      raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Malformed rule internal structure!", "ast" => ast.inspect) unless ast.is_a?(Array)
 
       if ast[0] == "|"
         choices = ast[1..-1]

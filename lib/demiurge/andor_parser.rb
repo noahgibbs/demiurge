@@ -6,13 +6,13 @@ module Demiurge
     root :bar_expr
 
     rule(:bar_expr) {
-      space? >> plus_expr.as(:l) >> (bar >> plus_expr.as(:r)).repeat(1) |
+      space? >> plus_expr.as(:left) >> (bar.as(:bar) >> plus_expr.as(:right)).repeat(1) |
       space? >> plus_expr |
       space? >> str('(') >> space? >> bar_expr >> space? >> str(')')
     }
 
     rule(:plus_expr) {
-      str_or_name.as(:l) >> (plus >> str_or_name.as(:r)).repeat(1) |
+      str_or_name.as(:left) >> (plus.as(:plus) >> str_or_name.as(:right)).repeat(1) |
       str_or_name |
       str('(') >> space? >> bar_expr >> space? >> str(')')
     }
@@ -32,7 +32,7 @@ module Demiurge
     rule(:quoted_string) { quote >> (
         string_escape |
         nonquote.as(:char)
-        ).repeat(1).as(:str_val) >> quote }
+        ).repeat(1).as(:str_val) >> quote >> space? }
 
   end
 end

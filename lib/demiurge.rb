@@ -18,6 +18,11 @@ require "demiurge/agent"
 require "demiurge/dsl"
 require "demiurge/tmx"
 
+# The Demiurge NameGenerator is extractable - it doesn't really depend
+# on the rest of Demiurge, but integrates with it. It may become a
+# separate gem at some point.
+require "demiurge/name_generator"
+
 require "multi_json"
 
 # Demiurge is a state and simulation library which can be used to
