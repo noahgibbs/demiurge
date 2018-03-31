@@ -41,9 +41,9 @@ module Demiurge
 
     rule(:quote) { str('"') }
     rule(:nonquote) { str('"').absnt? >> any }
-    rule(:string_escape)     { str('\\') >> any.as(:esc) }
+    rule(:escaped_quote) { str('\\"') }
     rule(:quoted_string) { quote >> (
-        string_escape |
+        escaped_quote.as(:char) |
         nonquote.as(:char)
         ).repeat(1).as(:str_val) >> quote >> space? }
 

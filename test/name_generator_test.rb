@@ -30,6 +30,13 @@ RULES
     assert_equal "frodo", gen.generate_from_name("start")
   end
 
+  def test_simple_quoted_string_escape_rule
+    gen = parser_from <<RULES
+start: "bobo\\ yes"
+RULES
+    assert_equal "bobo\\ yes", gen.generate_from_name("start")
+  end
+
   def test_simple_name_rule
     gen = parser_from <<RULES
 start: :other_sym
@@ -138,5 +145,16 @@ thing1: "thing1"
 thing_3: thing3
 RULES
     assert_equal [ "thing1thing3", "thing2thing3", "thing4" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
+  end
+
+  def test_fake_bar_probability
+    gen = parser_from <<RULES
+start: thing1 | thing1 | thing1 | thing2 | thing3
+RULES
+    gen.randomizer = fixed_randomizer
+    entries = (1..200).map { gen.generate_from_name("start") }
+    assert_equal 120, entries.select { |s| s == "thing1" }.size
+    assert_equal 38, entries.select { |s| s == "thing2" }.size
+    assert_equal 42, entries.select { |s| s == "thing3" }.size
   end
 end
