@@ -81,4 +81,23 @@ thing_3: thing3
 RULES
     assert_equal [ "thing 2", "thing 4", "thing1", "thing3" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
   end
+
+  def test_operator_precedence
+    gen = parser_from <<RULES
+start: :thing1 | "thing 2" + :thing_3 | "thing 4"
+thing1: "thing1"
+thing_3: thing3
+RULES
+    assert_equal [ "thing 2thing3", "thing 4", "thing1" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
+  end
+
+  def test_operator_precedence_fixed_randomizer
+    gen = parser_from <<RULES
+start: :thing1 | "thing 2" + :thing_3 | "thing 4"
+thing1: "thing1"
+thing_3: thing3
+RULES
+    gen.randomizer = fixed_randomizer
+    assert_equal ["thing 2thing3", "thing1", "thing1", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing1", "thing1", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing1", "thing 2thing3", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing 4"], (1..20).map { gen.generate_from_name("start") }
+  end
 end
