@@ -72,4 +72,13 @@ RULES
     gen.randomizer = fixed_randomizer
     assert_equal ["thing two", "thing two", "bob", "bob", "thing two", "thing two", "thing two", "bob", "bob", "bob", "bob", "bob", "thing two", "bob", "bob", "bob", "thing two", "bob", "thing two", "thing two"], (1..20).map { gen.generate_from_name("start") }
   end
+
+  def test_simple_four_arg_bar_rule
+    gen = parser_from <<RULES
+start: :thing1 | "thing 2" | :thing_3 | "thing 4"
+thing1: "thing1"
+thing_3: thing3
+RULES
+    assert_equal [ "thing 2", "thing 4", "thing1", "thing3" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
+  end
 end

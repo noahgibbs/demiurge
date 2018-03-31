@@ -92,7 +92,7 @@ module Demiurge
           elsif ast[1].has_key?(:bar)
             left_side = evaluate_ast(ast[0][:left])
             choices = [left_side] + ast[1..-1].map { |term| evaluate_ast(term[:right]) }
-            return choices.sample(random: @randomizer)
+            return choices.sample(random: @randomizer).to_s
           else
             raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Malformed rule internal structure: (Array/op) #{ast.inspect}!", "ast" => ast.inspect)
           end
