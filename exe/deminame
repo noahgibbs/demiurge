@@ -8,7 +8,7 @@ if ARGV.size < 1
 end
 
 gen = Demiurge::NameGenerator.new
-ARGV.each { |arg| gen.load_rules_from_demirule_string(File.read arg) }
+ARGV.each { |arg| gen.load_rules_from_andor_string(File.read arg) }
 
 names = gen.names
 start_name = names.include?("start") ? "start" : names.first
