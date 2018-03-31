@@ -14,7 +14,7 @@ module Demiurge
     NAME_REGEXP = /\A[-_$a-zA-Z0-9]+\Z/
 
     attr_reader :rules
-    attr :randomizer, true
+    attr_accessor :randomizer
 
     # Create a new generator with an empty ruleset
     #
