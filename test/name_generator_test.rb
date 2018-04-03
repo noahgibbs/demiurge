@@ -176,4 +176,14 @@ RULES
     assert_equal 48, entries.select { |s| s == "thing2" }.size
     assert_equal 29, entries.select { |s| s == "thing3" }.size
   end
+
+  # "Random testcase" here means "I was doing something and this broke, so let's add a test."
+  def test_probability_in_bar_expressions_random_testcase
+    gen = parser_from <<RULES
+plural_number: two | three | four | five | six (0.5) | seven (0.3) | eight (0.2) | nine (0.1) | ten (0.5) | fifty (0.1) | "a hundred" (0.1)
+RULES
+    gen.randomizer = fixed_randomizer
+    entries = (1..10).map { gen.generate_from_name("plural_number") }
+    assert_equal [ "two", "three", "five" ], entries
+  end
 end

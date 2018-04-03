@@ -1,0 +1,16 @@
+start: :intro + " " + :who + " " + :what_happens + " " + :final_twist + "."
+intro: :intro_setting + " " + :intro_truth + ","
+intro_setting: "In a world" | "In a land" | "In a time" | "On the edge of space" | "Beyond any known land" | "In a " + :place | "In the " + :place_adjective + " " + :place | "In a spaceship" | "At the old haunted house" (0.2)
+intro_truth: "before time" | "where no one can hear you scream" | "where everything you know is wrong" | "far from anyone you've ever known" | "where friends become enemies" | "where boys go to become men" (0.2) | "built on an ancient burial ground" | "beyond the " + :place_adjective + " sea" | "on the edge of town" | (:intro_truth + ", " + :intro_truth) (0.5)
+who: "one man" | "one woman" | "one non-binary person" (0.1) | "a robot" | "a cop" | "a renegade robot cop" | :random_noun | :random_plural_noun (0.3)
+what_happens: "must destroy " + :random_plural_noun | "must bring justice to the world" | "must fulfill an ancient prophecy" | "must choose between " + :random_plural_noun | "must balance justice and romance" | "must choose between love and destiny" | "must keep his deepest secret" | "must keep " + :place_adjective + " secrets from " + :extras
+final_twist: "with the help of " + :extras | "despite the interference of " + :extras | "to save " + :extras | "but never go home again" (0.2) | "and return to live with " + :extras | "and make a choice he can no longer avoid" | "and face its guardian" | "and face a reckoning with a long-abandoned family: " + :extras | "and bring " + :extras + " forever beyond the reach of " + :random_noun
+
+random_noun: "a giraffe" | "a hippo" | "a chimpanzee" | "an elite commando" | "a soldier" | "an ancient evil" | "a dragon" | "the guardian of the " + :place | "the " + :title + " of the " + :place_adjective + " " + :place
+random_plural_noun: :plural_number + " " + (giraffes | hippos | chimpanzees | corporations | rebels | "elite commandos" | soldiers | aliens | clowns | lawyers)
+plural_number: two | three | four | five | six (0.5) | seven (0.3) | eight (0.2) | nine (0.1) | ten (0.5) | fifty (0.1) | "a hundred" (0.1) | "a thousand" (0.05) | "all of the"
+extras: :random_noun (2) | :random_plural_noun
+
+place: palace | cemetery | skyscraper | town | village | "ice-cream shop" | jungle | neighborhood | savannah | nation
+place_adjective: haunted | grim | out-of-the-way | ancient | deep | mysterious | haunting | quaint
+title: King|Queen|Monarch|Autarch|Viscount|Baron|Duke|Guru|"Grand Poobah"

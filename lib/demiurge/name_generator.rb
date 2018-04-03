@@ -42,6 +42,7 @@ module Demiurge
 
       rules.split("\n").each_with_index do |line, line_no|
         content, _ = line.split("#", 2)
+        next if content == nil
         next if content.strip == ""
         name, defn = content.split(":", 2)
         unless name && defn
