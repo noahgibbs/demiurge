@@ -5,20 +5,20 @@ element_adjective: heterodynamic(0.3)|electrified|aetheric|rarefied|diatomaceous
 either_silly_scientist_name: Jormundgander|Phlox|Endymion|Hyperion|Zogron
 modifiable_silly_scientist_name: Heterod|:either_silly_scientist_name(30)
 silly_scientist_name: Heterodyne|:either_silly_scientist_name(30)
-first_half_scientist_name: Arden|Avern|Bach|Eisen|Cram|Gord|Gibb|Gram|Gra|Glock|Glocken|Phlox|Phree|Fargen|Franken|Schlock|Schach|Sherben|Schmott|Jagen|Jormund|Jott|Jaunte|Wargen|Van|Wirt|("van der "+:first_half_scientist_name)(0.5)|("van den "+:first_half_scientist_name)(0.5)|("von "+:first_half_scientist_name)(0.5)
-second_half_scientist_name: wanger|vander|varger|saggler|feuer|farber|rich|reich|hauer|baum|triggan|ham|hammer|burg|berg|see|spiel|stein|furd|garten|gartner|:second_half_scientist_name+"-":scientist_name
+first_half_scientist_name: Arden | Avern | Bach | Eisen | Cram | Gord | Gibb | Gram | Gra | Glock | Glocken | Phlox | Phree | Fargen | Franken | Schlock | Schach | Sherben | Schmott | Jagen | Jormund | Jott| Jaunte | Wargen | Van | Wirt | ("van der " + :first_half_scientist_name)(0.5) | ("van den " + :first_half_scientist_name)(0.5) | ("von " + :first_half_scientist_name)(0.5)
+second_half_scientist_name: wanger | vander | varger | saggler | feuer | farber | rich | reich | hauer | baum | triggan | ham | hammer | burg | berg | see | spiel | stein | furd | garten | gartner | :second_half_scientist_name+"-"+:scientist_name
 either_compound_scientist_name: :first_half_scientist_name+:second_half_scientist_name
 modifiable_compound_scientist_name: :either_compound_scientist_name
 compound_scientist_name: :either_compound_scientist_name
-scientist_name: :silly_scientist_name|:compound_scientist_name(8)
-modifiable_scientist_name: :modifiable_silly_scientist_name|:modifiable_compound_scientist_name(8)
+scientist_name: :silly_scientist_name | :compound_scientist_name(8)
+modifiable_scientist_name: :modifiable_silly_scientist_name | :modifiable_compound_scientist_name(8)
 scientist_possessive: :scientist_name+"'s"|:modifiable_scientist_name+"-ian"|:modifiable_scientist_name+"-ized"|:modifiable_scientist_name+"-ified"
 common_object: diamond|demantoid(0.2)|topaz|sapphire(0.9)|earth|islet(0.1)|crown(0.5)|horn|sword|eye|hand|copper(0.2)|iron(0.2)|ash|topaz|zircon|ruby(0.5)
-gemmy_name: :optional_gemmy_color+:optional_gemmy_adjective+:syllables+:consonant+:gemmy_suffix
-optional_gemmy_color: :color|""
-optional_gemmy_adjective: :gemmy_adjective+" "|""
+gemmy_name: :optional_gemmy_color + :optional_gemmy_adjective + :syllables + :consonant + :gemmy_suffix
+optional_gemmy_color: :color + " " | ""
+optional_gemmy_adjective: :gemmy_adjective + " " | ""
 optional_scientist_possessive: :scientist_possessive+" "(0.15)|""
-optional_element_adjective: :element_adjective+" "(0.3)|""
+optional_element_adjective: :element_adjective + " " (0.3) | ""
 element_name: :optional_scientist_possessive+:optional_element_adjective+:syllables+:consonant+:element_suffix
 scientist_element_name: :scientist_possessive+" "+:syllables+:consonant+:element_suffix
 color: red|green|chartreuse(0.2)|white|clear|crystal|black|brown|yellow|silver(0.6)|blue|cyan(0.5)|crimson(0.5)|maroon(0.5)|golden(0.6)

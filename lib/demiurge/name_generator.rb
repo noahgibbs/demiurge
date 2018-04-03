@@ -54,7 +54,11 @@ module Demiurge
           raise ::Demiurge::Errors::DemiRuleFormatError.new("Duplicate name #{name.inspect} in DemiRule format on line #{line_no.inspect}", "name" => name, "line_no" => line_no)
         end
 
-        symbols = defn_parser.parse(defn)
+        begin
+          symbols = defn_parser.parse(defn)
+        rescue Parslet::ParseFailed => error
+          raise ::Demiurge::Errors::DemiRuleFormatError.new("Can't parse Andor name definition for #{name.inspect}", "definition" => defn, "name" => name, "line_no" => line_no, "error" => error.parse_failure_cause.ascii_tree)
+        end
 
         @rules[name] = symbols  # Need to transform to proper ast
       end
@@ -67,12 +71,12 @@ module Demiurge
         raise ::Demiurge::Errors::NoSuchNameInGenerator.new("Unknown name #{name.inspect} in generator!", "name" => name)
       end
 
-      evaluate_ast @rules[name]
+      evaluate_ast @rules[name], name: name
     end
 
     #private
 
-    def evaluate_ast(ast)
+    def evaluate_ast(ast, name: "some name")
       # Let's grow out a Parslet-based evaluator to remove the outdated evaluation code below.
       if ast.is_a?(Hash)
         if ast.has_key?(:str_const)
@@ -90,9 +94,7 @@ module Demiurge
             left_side = evaluate_ast(ast[0][:left])
             return ast[1..-1].map { |term| evaluate_ast(term[:right]) }.inject(left_side, &:+)
           elsif ast[1].has_key?(:bar)
-            left_side = evaluate_ast(ast[0][:left])
             left_prob = ast[0][:left_prob] ? ast[0][:left_prob][:prob].to_f : 1.0
-            choices = [left_side] + ast[1..-1].map { |term| evaluate_ast(term[:right]) }
             choice_prob = [left_prob] + ast[1..-1].map { |term| term[:right_prob] ? term[:right_prob][:prob].to_f : 1.0 }
 
             unless choice_prob.all? { |p| p.is_a?(Float) }
@@ -106,14 +108,19 @@ module Demiurge
 
             # Subtract probability from our random sample until we get that far into the CDF
             cur_index = 0
-            while cur_index < choices.size && r >= choice_prob[cur_index]
+            while cur_index < choice_prob.size && r >= choice_prob[cur_index]
               r -= choice_prob[cur_index]
               cur_index += 1
             end
             # Shouldn't hit this, but just in case...
-            cur_index = (choices.size - 1) if cur_index >= choices.size
+            cur_index = (choice_prob.size - 1) if cur_index >= choice_prob.size
+            if cur_index == 0
+              bar_choice = evaluate_ast(ast[0][:left]).to_s
+            else
+              bar_choice = evaluate_ast(ast[cur_index][:right]).to_s
+            end
 
-            return choices[cur_index].to_s
+            return bar_choice
           else
             raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Malformed rule internal structure: (Array/op) #{ast.inspect}!", "ast" => ast.inspect)
           end

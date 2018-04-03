@@ -37,7 +37,7 @@ module Demiurge
     rule(:space)  { match('\s').repeat(1) }
     rule(:space?) { space.maybe }
     rule(:name) { str(':') >> match('[-_$a-zA-Z0-9]').repeat(1).as(:name) >> space? }
-    rule(:str_const) { match('[-_$a-zA-Z0-9]').repeat(1).as(:str_const) >> space? }
+    rule(:str_const) { match("[-_$a-zA-Z0-9']").repeat(1).as(:str_const) >> space? }
     rule(:str_or_name) { quoted_string | str_const | name }
     rule(:plus) { str('+').as(:plus) >> space? }
     rule(:bar) { str('|').as(:bar) >> space? }
@@ -50,7 +50,7 @@ module Demiurge
     rule(:quoted_string) { quote >> (
         escaped_quote.as(:char) |
         nonquote.as(:char)
-        ).repeat(1).as(:str_val) >> quote >> space? }
+        ).repeat.as(:str_val) >> quote >> space? }
 
   end
 end
