@@ -1,7 +1,11 @@
 require "parslet"
 module Demiurge
   # This parser syntax, used for name-generator files, gets called
-  # "Andor" for its simple "and/or" formulation of name rules.
+  # "Andor" for its simple "and/or" formulation of name rules.  This
+  # parser is used only for definitions - a much simpler parser based
+  # on "split" and Ruby code cuts apart the simple outer structure.
+  #
+  # @since 0.4.0
   class AndorDefnParser < Parslet::Parser
     root :bar_expr
 
@@ -13,7 +17,7 @@ module Demiurge
     # "value" expression like a constant.
 
     rule(:bar_expr) {
-      space? >> plus_expr.as(:left) >> space? >> (bar.as(:bar) >> space? >> plus_expr.as(:right)).repeat(1) >> space? |
+      space? >> plus_expr.as(:left) >> space? >> prob?.as(:left_prob) >> space? >> (bar.as(:bar) >> space? >> plus_expr.as(:right) >> space? >> prob?.as(:right_prob) >> space?).repeat(1) >> space? |
       plus_expr
     }
 
@@ -38,6 +42,7 @@ module Demiurge
     rule(:plus) { str('+').as(:plus) >> space? }
     rule(:bar) { str('|').as(:bar) >> space? }
     rule(:prob) { str('(') >> space? >> (match('[0-9]').repeat(1) >> (str('.') >> match('[0-9]').repeat(1)).maybe).as(:prob) >> space? >> str(')') >> space? }
+    rule(:prob?) { prob.maybe }
 
     rule(:quote) { str('"') }
     rule(:nonquote) { str('"').absnt? >> any }

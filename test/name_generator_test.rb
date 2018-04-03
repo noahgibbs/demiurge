@@ -71,13 +71,13 @@ RULES
     assert_equal [ "bob", "thing two" ], (1..100).map { gen.generate_from_name("start") }.uniq.sort
   end
 
-  def test_simple_two_arg_bar_rule_zero_randomizer
+  def test_simple_two_arg_bar_rule_fixed_randomizer
     gen = parser_from <<RULES
 start: :thing1 | "thing two"
 thing1: "bob"
 RULES
     gen.randomizer = fixed_randomizer
-    assert_equal ["thing two", "thing two", "bob", "bob", "thing two", "thing two", "thing two", "bob", "bob", "bob", "bob", "bob", "thing two", "bob", "bob", "bob", "thing two", "bob", "thing two", "thing two"], (1..20).map { gen.generate_from_name("start") }
+    assert_equal ["bob", "bob", "bob", "bob", "bob", "thing two", "bob", "thing two", "thing two", "bob", "bob", "thing two", "bob", "thing two", "bob", "thing two", "thing two", "bob", "bob", "thing two"], (1..20).map { gen.generate_from_name("start") }
   end
 
   def test_simple_four_arg_bar_rule
@@ -87,6 +87,25 @@ thing1: "thing1"
 thing_3: thing3
 RULES
     assert_equal [ "thing 2", "thing 4", "thing1", "thing3" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
+  end
+
+  def test_simple_four_arg_bar_rule_with_one_prob
+    gen = parser_from <<RULES
+start: :thing1 | "thing 2" | :thing_3 (0.1) | "thing 4"
+thing1: "thing1"
+thing_3: thing3
+RULES
+    assert_equal [ "thing 2", "thing 4", "thing1", "thing3" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
+  end
+
+  def test_simple_four_arg_bar_rule_with_one_prob_fixed_randomizer
+    gen = parser_from <<RULES
+start: :thing1 (0.4) | "thing 2" | :thing_3 (0.1) | "thing 4"
+thing1: "thing1"
+thing_3: thing3
+RULES
+    gen.randomizer = fixed_randomizer
+    assert_equal ["thing 2", "thing1", "thing 2", "thing 2", "thing 2", "thing 2", "thing 2", "thing 4", "thing 4", "thing1", "thing 2", "thing 4", "thing1", "thing 4", "thing 2", "thing 4", "thing 4", "thing 2", "thing 2", "thing3"], (1..20).map { gen.generate_from_name("start") }
   end
 
   def test_operator_precedence
@@ -105,7 +124,7 @@ thing1: "thing1"
 thing_3: thing3
 RULES
     gen.randomizer = fixed_randomizer
-    assert_equal ["thing 2thing3", "thing1", "thing1", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing1", "thing1", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing1", "thing 2thing3", "thing 2thing3", "thing 4", "thing 4", "thing 4", "thing 4"], (1..20).map { gen.generate_from_name("start") }
+    assert_equal ["thing1", "thing1", "thing1", "thing 2thing3", "thing1", "thing 2thing3", "thing1", "thing 4", "thing 4", "thing1", "thing 2thing3", "thing 2thing3", "thing1", "thing 4", "thing 2thing3", "thing 4", "thing 4", "thing 2thing3", "thing 2thing3", "thing 2thing3"], (1..20).map { gen.generate_from_name("start") }
   end
 
   def test_simple_parens_with_quotes_only
@@ -153,8 +172,8 @@ start: thing1 | thing1 | thing1 | thing2 | thing3
 RULES
     gen.randomizer = fixed_randomizer
     entries = (1..200).map { gen.generate_from_name("start") }
-    assert_equal 120, entries.select { |s| s == "thing1" }.size
-    assert_equal 38, entries.select { |s| s == "thing2" }.size
-    assert_equal 42, entries.select { |s| s == "thing3" }.size
+    assert_equal 123, entries.select { |s| s == "thing1" }.size
+    assert_equal 48, entries.select { |s| s == "thing2" }.size
+    assert_equal 29, entries.select { |s| s == "thing3" }.size
   end
 end

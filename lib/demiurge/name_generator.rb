@@ -91,8 +91,29 @@ module Demiurge
             return ast[1..-1].map { |term| evaluate_ast(term[:right]) }.inject(left_side, &:+)
           elsif ast[1].has_key?(:bar)
             left_side = evaluate_ast(ast[0][:left])
+            left_prob = ast[0][:left_prob] ? ast[0][:left_prob][:prob].to_f : 1.0
             choices = [left_side] + ast[1..-1].map { |term| evaluate_ast(term[:right]) }
-            return choices.sample(random: @randomizer).to_s
+            choice_prob = [left_prob] + ast[1..-1].map { |term| term[:right_prob] ? term[:right_prob][:prob].to_f : 1.0 }
+
+            unless choice_prob.all? { |p| p.is_a?(Float) }
+              raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Probability isn't a float: #{choice_prob.select { |p| !p.is_a?(Float) }.inspect}!", "ast" => ast.inspect)
+            end
+            total_prob = choice_prob.inject(0.0, &:+)
+            if total_prob < 0.000001
+              raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Total probability less than epsilon: #{total_prob.inspect}!", "ast" => ast.inspect)
+            end
+            r = @randomizer.rand(total_prob)
+
+            # Subtract probability from our random sample until we get that far into the CDF
+            cur_index = 0
+            while cur_index < choices.size && r >= choice_prob[cur_index]
+              r -= choice_prob[cur_index]
+              cur_index += 1
+            end
+            # Shouldn't hit this, but just in case...
+            cur_index = (choices.size - 1) if cur_index >= choices.size
+
+            return choices[cur_index].to_s
           else
             raise ::Demiurge::Errors::BadlyFormedGeneratorRule.new("Malformed rule internal structure: (Array/op) #{ast.inspect}!", "ast" => ast.inspect)
           end
