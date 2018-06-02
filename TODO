@@ -1,0 +1,28 @@
+Interface Consistency, Documentation, Polish
+
+* Rearrange TMX namespaces
+* Switch from intentions_for_next_step to queueing intentions for the next step? Do we still want to be able to precalculate intentions?
+* Context: make sure it's printed w/ exceptions in Minitest; make sure current zone is set in context during tick; make sure current intention ID is set during tick
+* More documentation for notifications, include their data schema with at least one example for each notification
+
+Name Generator
+
+* Separate into a different gem?
+
+## Below this line: features that seemed important when I wrote them down, but they'll wait until I have a better reason to use them
+
+World Reloading
+
+* Observers and resettable state - what state is transient? Declare it as such. (Test w/ home zones)
+* Figure out what to do with "orphan" items whose World File entry or home zone go away completely. (Test w/ home zones)
+
+World File DSL
+
+* Put DSL builder classes in the same files as the classes they build
+* Add some kind of DSL property list so that subclasses can declare a list of properties they accept
+
+Zones and Isolation
+
+* Separate ticks into various per-zone ticks so that we can move the zones forward more individually. Eventually, zones could be separated into multiple threads or processes.
+* Count things like BadScriptErrors per-zone and do some kind of provisional disabling, possibly only if a human chooses to.
+* Catch RetryableErrors (and other errors) per-zone so that an error in one zone doesn't necessarily take down other zones
