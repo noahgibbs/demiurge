@@ -195,4 +195,13 @@ RULES
     entries = (1..10).map { gen.generate_from_name("plural_number") }
     assert_equal ["three", "two", "three", "four", "three", "five", "three", "fifty", "six", "two"], entries
   end
+
+  def test_no_spaces_probabilities
+    gen = parser_from <<RULES
+plural_number: two(2)|three(3)|four(4)
+RULES
+    gen.randomizer = fixed_randomizer
+    entries = (1..10).map { gen.generate_from_name("plural_number") }
+    assert_equal ["three", "two", "three", "three", "three", "three", "three", "four", "four", "two"], entries
+  end
 end
