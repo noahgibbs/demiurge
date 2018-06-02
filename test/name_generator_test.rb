@@ -98,6 +98,15 @@ RULES
     assert_equal [ "thing 2", "thing 4", "thing1", "thing3" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
   end
 
+  def test_no_decimal_point_prob
+    gen = parser_from <<RULES
+start: :thing1 (10) | "thing 2" (10) | :thing_3 | "thing 4" (10)
+thing1: "thing1"
+thing_3: thing3
+RULES
+    assert_equal [ "thing 2", "thing 4", "thing1", "thing3" ], (1..200).map { gen.generate_from_name("start") }.uniq.sort
+  end
+
   def test_simple_four_arg_bar_rule_with_one_prob_fixed_randomizer
     gen = parser_from <<RULES
 start: :thing1 (0.4) | "thing 2" | :thing_3 (0.1) | "thing 4"
