@@ -193,6 +193,6 @@ plural_number: two | three | four | five | six (0.5) | seven (0.3) | eight (0.2)
 RULES
     gen.randomizer = fixed_randomizer
     entries = (1..10).map { gen.generate_from_name("plural_number") }
-    assert_equal [ "two", "three", "five" ], entries
+    assert_equal ["three", "two", "three", "four", "three", "five", "three", "fifty", "six", "two"], entries
   end
 end
