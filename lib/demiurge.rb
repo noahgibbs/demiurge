@@ -390,6 +390,9 @@ module Demiurge
     # any action not overridden in the child item will fall back to
     # the parent's action of the same name.
     #
+    # If the parent item has an action named "new", it will be called
+    # on the newly-copied child item after the copy is complete.
+    #
     # @param name [String] The new item name to register with the engine
     # @param parent [Demiurge::StateItem] The parent StateItem
     # @param extra_state [Hash] Additional state data for the child
