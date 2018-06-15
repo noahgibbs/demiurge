@@ -14,6 +14,19 @@ class CopyItemTest < Minitest::Test
           notification description: "The moss slowly grows longer and more lush here."
         end
       end
+
+      location "next moss cave" do
+        state.moss = 0
+        state.growth = 0
+
+        every_X_ticks("grow", 1) do
+          state.growth += 1
+        end
+
+        define_action("new") do
+          state.moss = 7
+        end
+      end
     end
   GOBLIN_DSL
 
@@ -37,7 +50,7 @@ class CopyItemTest < Minitest::Test
     refute_nil zone
     second_cave_item = engine.instantiate_new_item("second moss cave", first_cave_item)
     refute_nil engine.item_by_name("second moss cave")
-    assert_equal ["first moss cave", "second moss cave"], zone.contents_names.sort
+    assert ["first moss cave", "second moss cave"].all? { |name| zone.contents_names.include?(name) }
 
     6.times do
       engine.advance_one_tick
@@ -45,5 +58,23 @@ class CopyItemTest < Minitest::Test
 
     assert_equal 2, second_cave_item.state["moss"]
     assert_equal 2, first_cave_item.state["moss"]
+  end
+
+  def test_item_new_action
+    engine = Demiurge::DSL.engine_from_dsl_text(["Goblin DSL", DSL_TEXT])
+    cave_item = engine.item_by_name("next moss cave")
+    refute_nil cave_item
+    child_cave_item = engine.instantiate_new_item("child moss cave", cave_item)
+    assert_equal child_cave_item, engine.item_by_name("child moss cave")
+
+    16.times do
+      engine.advance_one_tick
+    end
+
+    assert_equal 0, cave_item.state["moss"]
+    assert_equal 7, child_cave_item.state["moss"]
+
+    assert_equal 16, cave_item.state["growth"]
+    assert_equal 16, child_cave_item.state["growth"]
   end
 end

@@ -413,6 +413,9 @@ module Demiurge
       if @finished_init && child.respond_to?(:finished_init)
         child.finished_init
       end
+      if child.get_action("new")
+        child.run_action("new")
+      end
       child
     end
 
