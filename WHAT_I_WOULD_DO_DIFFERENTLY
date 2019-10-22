@@ -1,0 +1,36 @@
+
+## Zones
+
+All item names should be scoped by their Zone. Duplicates between
+multiple zones should be fine. World files should be divided up by
+Zone. A Zone should be the unit of modularity, basically, with minimal
+crossing of zones in nearly any case. This gives solid stories for a
+lot of important features.
+
+Scalability: add more zones until a zone is significantly smaller than
+a purchasable compute unit. Instanceability: duplicate the Zone
+object. Reproducibility: random seeds have defined behavior within
+zones but not across zones.
+
+It's not perfect. We'd like an Agent to be able to reason across
+zones, and that's not entirely clear here. But zones and complex
+agents seem like the obvious units that may want to be separated from
+each other, so that seems reasonable. At some point, it can be a
+single ball of mud as an architecture. Agents have a natural tendency
+for their information to be out of date, so updating at tick
+boundaries isn't a hardship. And other zones will usually not need
+instant access to what's inside the zone either. Which makes copying,
+MVCC and similar approaches more reasonable - they scale better when
+they break at zone boundaries.
+
+By scoping everything else to a zone, that limits the need to check
+inside other zones for what item names are used and similar... It's a
+little odd for entities that operate across multiple zones in some
+sense (agents, weather, communication), but those things are already
+special cases in some sense.
+
+Unresolved: when an object like an agent moves around, if its item
+name is scoped by zone, does it allocate a new item name in the zone
+it just moved into? Is there some kind of "player zone" and they're
+handled as cross-zone items? But then, that can break scalability and
+stuff just like "everything in one big zone" does.
